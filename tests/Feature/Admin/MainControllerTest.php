@@ -10,6 +10,7 @@ namespace Tests\Feature\Admin;
 use App\Http\Controllers\Admin\MainController;
 use App\Models\Admin\Admin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -83,5 +84,52 @@ class MainControllerTest extends TestCase
         $response = $this->actingAsAdmin()->getJson('/admin/routes');
         $response->assertOk();
         $this->assertCount($enabledCount, $response->json());
+    }
+
+    #[Test]
+    #[TestDox('未登录用户无法清理缓存')]
+    public function guest_cannot_clear_cache(): void
+    {
+        $this->postJson('/admin/cache/clear')->assertUnauthorized();
+    }
+
+    #[Test]
+    #[TestDox('管理员清理全部缓存成功')]
+    public function admin_can_clear_all_cache(): void
+    {
+        Cache::put('test:key', 'value', 60);
+
+        $response = $this->actingAsAdmin()->postJson('/admin/cache/clear');
+
+        $response->assertOk()
+            ->assertJson([
+                'message' => '缓存清理成功',
+                'types' => ['all'],
+            ]);
+        $this->assertNull(Cache::get('test:key'));
+    }
+
+    #[Test]
+    #[TestDox('管理员按类型清理 settings 缓存')]
+    public function admin_can_clear_settings_cache(): void
+    {
+        Cache::put('test:key', 'value', 60);
+        // 预热 settings 缓存
+        settings()->all();
+        $this->assertNotNull(Cache::get(\App\Enums\CacheKey::SETTINGS));
+
+        $response = $this->actingAsAdmin()->postJson('/admin/cache/clear', [
+            'types' => ['settings'],
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'message' => '缓存清理成功',
+                'types' => ['settings'],
+            ]);
+        // settings 缓存已清理
+        $this->assertNull(Cache::get(\App\Enums\CacheKey::SETTINGS));
+        // 其他缓存仍在
+        $this->assertSame('value', Cache::get('test:key'));
     }
 }

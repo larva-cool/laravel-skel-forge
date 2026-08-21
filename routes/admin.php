@@ -29,6 +29,9 @@ Route::apiResource('roles', \App\Http\Controllers\Admin\RoleController::class);
 // 前端路由配置
 Route::get('routes', [\App\Http\Controllers\Admin\MainController::class, 'routes'])->name('routes');
 
+// 清理应用缓存
+Route::post('cache/clear', [\App\Http\Controllers\Admin\MainController::class, 'clearCache'])->name('cache.clear');
+
 // 数据概览
 Route::get('dashboard/stats', [\App\Http\Controllers\Admin\DashboardController::class, 'stats'])->name('dashboard.stats');
 
