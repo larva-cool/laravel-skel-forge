@@ -1,0 +1,4 @@
+{
+    "(and :count more error)": "(还有 :count 个错误)",
+    "(and :count more errors)": "(还有 :count 个错误)"
+}

@@ -1,0 +1,522 @@
+<?php
+
+/**
+ * This is NOT a freeware, use is subject to license terms.
+ */
+declare(strict_types=1);
+
+use App\Enums\AdminStatus;
+use App\Enums\MenuType;
+use App\Models\Admin\Admin;
+use App\Models\Admin\AdminMenu;
+use App\Models\System\Permission;
+use App\Models\System\Role;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        if (! Schema::hasTable('admin_users') || ! Schema::hasTable('admin_menus')) {
+            return;
+        }
+
+        // 1. 创建超级管理员角色
+        $superRole = Role::create([
+            'name' => 'super_admin',
+            'display_name' => '超级管理员',
+            'guard_name' => AdminMenu::GUARD_NAME,
+        ]);
+
+        // 2. 创建默认管理员账号
+        $admin = Admin::query()->firstOrCreate(
+            ['username' => 'admin'],
+            [
+                'name' => '超级管理员',
+                'email' => 'admin@example.com',
+                'phone' => '13800000000',
+                'password' => Hash::make('12345678'),
+                'status' => AdminStatus::ACTIVE,
+                'login_count' => 0,
+            ]
+        );
+
+        $admin->assignRole($superRole);
+
+        // 3. 初始化菜单与权限
+        $this->seedMenus();
+
+        // 4. 将所有权限赋给超级管理员角色
+        $permissions = Permission::where('guard_name', AdminMenu::GUARD_NAME)->pluck('name');
+        $superRole->syncPermissions($permissions);
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        if (! Schema::hasTable('admin_users')) {
+            return;
+        }
+
+        // 仅删除初始化创建的管理员账号，不删除角色和菜单
+        Admin::query()->where('username', 'admin')->forceDelete();
+    }
+
+    /**
+     * 初始化菜单数据
+     */
+    private function seedMenus(): void
+    {
+        $menus = $this->menus();
+
+        $idMap = [];
+        foreach ($menus as $menu) {
+            $children = $menu['children'] ?? [];
+            $buttons = $menu['buttons'] ?? [];
+            $menuKey = $menu['key'] ?? null;
+            unset($menu['children'], $menu['buttons'], $menu['key']);
+
+            $menu['parent_id'] = null;
+
+            $model = AdminMenu::query()->create($menu);
+            if ($menuKey !== null) {
+                $idMap[$menuKey] = $model->id;
+            }
+
+            foreach ($children as $child) {
+                $childButtons = $child['buttons'] ?? [];
+                $childKey = $child['key'] ?? null;
+                unset($child['buttons'], $child['key']);
+
+                $child['parent_id'] = $model->id;
+                $childModel = AdminMenu::query()->create($child);
+                if ($childKey !== null) {
+                    $idMap[$childKey] = $childModel->id;
+                }
+
+                $this->createButtons($childModel->id, $childButtons);
+            }
+        }
+    }
+
+    /**
+     * 创建按钮（权限）子项
+     *
+     * @param  array<int, array<string, mixed>>  $buttons
+     */
+    private function createButtons(int $parentId, array $buttons): void
+    {
+        foreach ($buttons as $i => $btn) {
+            AdminMenu::query()->create(array_merge([
+                'parent_id' => $parentId,
+                'type' => MenuType::BUTTON,
+                'sort' => $i + 1,
+                'is_enable' => true,
+            ], $btn));
+        }
+    }
+
+    /**
+     * 菜单数据
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function menus(): array
+    {
+        return [
+            // ========== Dashboard ==========
+            [
+                'key' => 'dashboard',
+                'path' => '/dashboard',
+                'name' => 'Dashboard',
+                'component' => '/index/index',
+                'title' => '仪表盘',
+                'icon' => 'ri:pie-chart-line',
+                'type' => MenuType::DIRECTORY,
+                'sort' => 1,
+                'children' => [
+                    [
+                        'key' => 'dashboard.console',
+                        'path' => 'console',
+                        'name' => 'Console',
+                        'component' => '/dashboard/console',
+                        'title' => '工作台',
+                        'icon' => 'ri:home-smile-2-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 1,
+                        'keep_alive' => false,
+                        'fixed_tab' => true,
+                    ],
+                ],
+            ],
+
+            // ========== 用户管理 ==========
+            [
+                'key' => 'user',
+                'path' => '/user',
+                'name' => 'User',
+                'component' => '/index/index',
+                'title' => '用户管理',
+                'icon' => 'ri:user-line',
+                'type' => MenuType::DIRECTORY,
+                'sort' => 2,
+                'children' => [
+                    [
+                        'key' => 'user.list',
+                        'path' => 'list',
+                        'name' => 'UserList',
+                        'component' => '/user/list/index',
+                        'title' => '用户列表',
+                        'icon' => 'ri:user-search-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 1,
+                        'keep_alive' => true,
+                        'permission' => 'users.index',
+                        'buttons' => [
+                            ['title' => '编辑用户', 'permission' => 'users.edit'],
+                            ['title' => '删除用户', 'permission' => 'users.delete'],
+                            ['title' => '冻结/启用用户', 'permission' => 'users.edit'],
+                            ['title' => '重置用户密码', 'permission' => 'users.edit'],
+                            ['title' => '重置联系方式', 'permission' => 'users.edit'],
+                            ['title' => '调整余额', 'permission' => 'users.edit'],
+                            ['title' => '延长VIP', 'permission' => 'users.edit'],
+                        ],
+                    ],
+                ],
+            ],
+
+            // ========== 系统管理 ==========
+            [
+                'key' => 'system',
+                'path' => '/system',
+                'name' => 'System',
+                'component' => '/index/index',
+                'title' => '系统管理',
+                'icon' => 'ri:settings-3-line',
+                'type' => MenuType::DIRECTORY,
+                'sort' => 90,
+                'children' => [
+                    [
+                        'key' => 'system.config',
+                        'path' => 'config',
+                        'name' => 'SystemConfig',
+                        'component' => '/system/config/index',
+                        'title' => '系统设置',
+                        'icon' => 'ri:settings-4-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 0,
+                        'keep_alive' => true,
+                        'permission' => 'settings.index',
+                        'buttons' => [
+                            ['title' => '保存系统设置', 'permission' => 'settings.edit'],
+                        ],
+                    ],
+                    [
+                        'key' => 'system.admin',
+                        'path' => 'admin',
+                        'name' => 'AdminUser',
+                        'component' => '/system/admin/index',
+                        'title' => '管理员管理',
+                        'icon' => 'ri:admin-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 1,
+                        'keep_alive' => true,
+                        'permission' => 'admins.index',
+                        'buttons' => [
+                            ['title' => '新增管理员', 'permission' => 'admins.create'],
+                            ['title' => '编辑管理员', 'permission' => 'admins.edit'],
+                            ['title' => '删除管理员', 'permission' => 'admins.delete'],
+                            ['title' => '重置管理员密码', 'permission' => 'admins.edit'],
+                            ['title' => '管理员分配角色', 'permission' => 'admins.edit'],
+                        ],
+                    ],
+                    [
+                        'key' => 'system.role',
+                        'path' => 'role',
+                        'name' => 'Role',
+                        'component' => '/system/role/index',
+                        'title' => '角色管理',
+                        'icon' => 'ri:shield-user-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 2,
+                        'keep_alive' => true,
+                        'permission' => 'roles.index',
+                        'buttons' => [
+                            ['title' => '新增角色', 'permission' => 'roles.create'],
+                            ['title' => '编辑角色', 'permission' => 'roles.edit'],
+                            ['title' => '删除角色', 'permission' => 'roles.delete'],
+                            ['title' => '分配角色权限', 'permission' => 'roles.edit'],
+                        ],
+                    ],
+                    [
+                        'key' => 'system.user-center',
+                        'path' => 'user-center',
+                        'name' => 'UserCenter',
+                        'component' => '/system/user-center/index',
+                        'title' => '个人中心',
+                        'icon' => 'ri:user-3-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 6,
+                        'is_hide' => true,
+                        'is_hide_tab' => true,
+                        'keep_alive' => true,
+                    ],
+                    [
+                        'key' => 'system.menu',
+                        'path' => 'menu',
+                        'name' => 'Menu',
+                        'component' => '/system/menu/index',
+                        'title' => '菜单管理',
+                        'icon' => 'ri:menu-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 3,
+                        'keep_alive' => true,
+                        'permission' => 'menus.index',
+                        'buttons' => [
+                            ['title' => '新增菜单', 'permission' => 'menus.create'],
+                            ['title' => '编辑菜单', 'permission' => 'menus.edit'],
+                            ['title' => '删除菜单', 'permission' => 'menus.delete'],
+                        ],
+                    ],
+                    [
+                        'key' => 'system.setting',
+                        'path' => 'setting',
+                        'name' => 'Setting',
+                        'component' => '/system/setting/index',
+                        'title' => '设置项管理',
+                        'icon' => 'ri:settings-2-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 4,
+                        'keep_alive' => true,
+                        'permission' => 'settings.index',
+                        'buttons' => [
+                            ['title' => '新增配置', 'permission' => 'settings.create'],
+                            ['title' => '编辑配置', 'permission' => 'settings.edit'],
+                            ['title' => '删除配置', 'permission' => 'settings.delete'],
+                        ],
+                    ],
+                    [
+                        'key' => 'system.area',
+                        'path' => 'area',
+                        'name' => 'Area',
+                        'component' => '/system/area/index',
+                        'title' => '地区管理',
+                        'icon' => 'ri:map-pin-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 5,
+                        'keep_alive' => true,
+                        'permission' => 'areas.index',
+                        'buttons' => [
+                            ['title' => '新增地区', 'permission' => 'areas.create'],
+                            ['title' => '编辑地区', 'permission' => 'areas.edit'],
+                            ['title' => '删除地区', 'permission' => 'areas.delete'],
+                        ],
+                    ],
+                    [
+                        'key' => 'system.phone-code',
+                        'path' => 'phone-code',
+                        'name' => 'PhoneCode',
+                        'component' => '/system/phone-code/index',
+                        'title' => '短信验证码',
+                        'icon' => 'ri:message-2-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 6,
+                        'keep_alive' => true,
+                        'permission' => 'phone-codes.index',
+                    ],
+                    [
+                        'key' => 'system.mail-code',
+                        'path' => 'mail-code',
+                        'name' => 'MailCode',
+                        'component' => '/system/mail-code/index',
+                        'title' => '邮件验证码',
+                        'icon' => 'ri:mail-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 7,
+                        'keep_alive' => true,
+                        'permission' => 'mail-codes.index',
+                    ],
+                    [
+                        'key' => 'system.notification',
+                        'path' => 'notification',
+                        'name' => 'Notification',
+                        'component' => '/system/notification/index',
+                        'title' => '通知管理',
+                        'icon' => 'ri:notification-3-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 8,
+                        'keep_alive' => true,
+                    ],
+                    [
+                        'key' => 'system.attachment',
+                        'path' => 'attachment',
+                        'name' => 'Attachment',
+                        'component' => '/system/attachment/index',
+                        'title' => '附件管理',
+                        'icon' => 'ri:folder-image-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 9,
+                        'keep_alive' => true,
+                        'permission' => 'attachments.index',
+                        'buttons' => [
+                            ['title' => '登记附件', 'permission' => 'attachments.create'],
+                            ['title' => '编辑附件', 'permission' => 'attachments.edit'],
+                            ['title' => '删除附件', 'permission' => 'attachments.delete'],
+                        ],
+                    ],
+                ],
+            ],
+
+            // ========== 监控管理 ==========
+            [
+                'key' => 'monitor',
+                'path' => '/monitor',
+                'name' => 'Monitor',
+                'component' => '/index/index',
+                'title' => '系统监控',
+                'icon' => 'ri:computer-line',
+                'type' => MenuType::DIRECTORY,
+                'sort' => 95,
+                'children' => [
+                    [
+                        'key' => 'monitor.horizon',
+                        'path' => 'horizon',
+                        'name' => 'Horizon',
+                        'component' => '/monitor/horizon/index',
+                        'title' => '队列监控',
+                        'icon' => 'ri:flow-chart',
+                        'type' => MenuType::MENU,
+                        'sort' => 0,
+                        'keep_alive' => true,
+                        'permission' => 'horizon.index',
+                        'buttons' => [
+                            ['title' => '重试失败任务', 'permission' => 'horizon.index'],
+                            ['title' => '重试批次', 'permission' => 'horizon.index'],
+                            ['title' => '管理标签监控', 'permission' => 'horizon.index'],
+                        ],
+                    ],
+                    [
+                        'key' => 'monitor.pulse',
+                        'path' => 'pulse',
+                        'name' => 'Pulse',
+                        'component' => '/monitor/pulse/index',
+                        'title' => '性能监控',
+                        'icon' => 'ri:pulse-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 1,
+                        'keep_alive' => false,
+                        'permission' => 'pulse.index',
+                    ],
+                    [
+                        'key' => 'monitor.debug',
+                        'path' => 'debug',
+                        'name' => 'Debug',
+                        'component' => '/monitor/debug/index',
+                        'title' => '调试面板',
+                        'icon' => 'ri:bug-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 2,
+                        'keep_alive' => false,
+                        'permission' => 'debug.index',
+                        'buttons' => [
+                            ['title' => '管理调试记录', 'permission' => 'debug.manage'],
+                        ],
+                    ],
+                    [
+                        'key' => 'monitor.schedule-log',
+                        'path' => 'schedule-log',
+                        'name' => 'ScheduleLog',
+                        'component' => '/monitor/schedule-log/index',
+                        'title' => '调度日志',
+                        'icon' => 'ri:time-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 3,
+                        'keep_alive' => true,
+                        'permission' => 'schedule-logs.index',
+                    ],
+                    [
+                        'key' => 'monitor.audit-log',
+                        'path' => 'audit-log',
+                        'name' => 'AuditLog',
+                        'component' => '/monitor/audit-log/index',
+                        'title' => '操作日志',
+                        'icon' => 'ri:file-list-3-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 4,
+                        'keep_alive' => true,
+                        'permission' => 'audit-logs.index',
+                    ],
+                ],
+            ],
+
+            // ========== AI 助手 ==========
+            [
+                'key' => 'ai',
+                'path' => '/ai',
+                'name' => 'AI',
+                'component' => '/index/index',
+                'title' => 'AI 助手',
+                'icon' => 'ri:robot-line',
+                'type' => MenuType::DIRECTORY,
+                'sort' => 96,
+                'children' => [
+                    [
+                        'key' => 'ai.chat',
+                        'path' => 'chat',
+                        'name' => 'AIChat',
+                        'component' => '/ai/chat/index',
+                        'title' => 'AI 聊天',
+                        'icon' => 'ri:chat-3-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 1,
+                        'keep_alive' => false,
+                    ],
+                ],
+            ],
+
+            // ========== 外部页面示例 ==========
+            [
+                'key' => 'outside',
+                'path' => '/outside',
+                'name' => 'Outside',
+                'component' => '/index/index',
+                'title' => '外部页面',
+                'icon' => 'ri:links-line',
+                'type' => MenuType::DIRECTORY,
+                'sort' => 100,
+                'children' => [
+                    [
+                        'key' => 'outside.iframe',
+                        'path' => '/outside/iframe/element',
+                        'name' => 'ElementUI',
+                        'component' => '',
+                        'title' => '内嵌文档',
+                        'icon' => 'ri:apps-2-line',
+                        'type' => MenuType::IFRAME,
+                        'link' => 'https://element-plus.org/zh-CN/component/overview.html',
+                        'is_iframe' => true,
+                        'sort' => 1,
+                    ],
+                    [
+                        'key' => 'outside.docs',
+                        'path' => 'https://laravel.com/docs',
+                        'name' => 'LaravelDocs',
+                        'component' => '',
+                        'title' => 'Laravel 文档',
+                        'icon' => 'ri:book-2-line',
+                        'type' => MenuType::LINK,
+                        'link' => 'https://laravel.com/docs',
+                        'sort' => 2,
+                    ],
+                ],
+            ],
+        ];
+    }
+};

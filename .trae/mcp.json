@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "php84",
+            "args": [
+                "artisan",
+                "boost:mcp"
+            ],
+            "cwd": "${workspaceFolder}"
+        }
+    }
+}
