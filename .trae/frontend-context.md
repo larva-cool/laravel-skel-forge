@@ -1,16 +1,16 @@
 # Frontend Architecture Context (记忆文件)
 
 > 自动生成于代码调研阶段，供 AI/开发者快速理解前端架构。
-> 前端项目路径：`/Users/xutongle/Skel/laravel-art-admin`（独立 Vue SPA，与 laravel-skel-pro 后端分离）
+> 前端项目路径：`/Users/xutongle/Skel/laravel-skel-admin`（独立 Vue SPA，与 laravel-skel-forge 后端分离）
 
 ---
 
 ## 一、项目定位
 
 - **架构模式**：前后端分离 SPA
-- **前端**：`laravel-art-admin`（独立 Vue 3 + TS + Vite 项目，pnpm workspace，node 22.x）
-- **后端**：`laravel-skel-pro`（Laravel 13，仅提供 `/admin/*` 和 `/api/*` 接口，前端通过 Vite proxy 访问）
-- **开发代理**：Vite dev server 将 `/api`、`/admin` 代理到 `http://laravel-skel-pro.test`
+- **前端**：`laravel-skel-admin`（独立 Vue 3 + TS + Vite 项目，pnpm workspace，node 22.x）
+- **后端**：`laravel-skel-forge`（Laravel 13，仅提供 `/admin/*` 和 `/api/*` 接口，前端通过 Vite proxy 访问）
+- **开发代理**：Vite dev server 将 `/api`、`/admin` 代理到 `http://laravel-skel-forge.test`
 - **路由模式**：Hash (`createWebHashHistory()`)
 - **部署**：SPA 独立构建/部署；后端 `resources/` 仅保留 Blade 默认欢迎页、邮件模板、Pulse 面板、Echo 初始化
 
@@ -182,15 +182,15 @@ src/
 |---|---|---|
 | VITE_BASE_URL | `/` | 按部署子目录 |
 | VITE_API_URL | `/`（走代理） | 完整后端地址 |
-| VITE_API_PROXY_URL | `http://laravel-skel-pro.test` | — |
-| VITE_REVERB_HOST | `laravel-skel-pro.test` | 生产主机 |
+| VITE_API_PROXY_URL | `http://laravel-skel-forge.test` | — |
+| VITE_REVERB_HOST | `laravel-skel-forge.test` | 生产主机 |
 | VITE_REVERB_PORT | `8080` | — |
 | VITE_REVERB_SCHEME | `http` | — |
 | VITE_ACCESS_MODE | （前端/后端权限模式） | — |
 
 ---
 
-## 七、Laravel 后端侧（laravel-skel-pro/resources）
+## 七、Laravel 后端侧（laravel-skel-forge/resources）
 
 - `views/main/index.blade.php`：Laravel 默认欢迎页（未替换为 SPA 入口，SPA 独立运行）
 - `views/main/redirect.blade.php`：通用重定向中转页
@@ -249,24 +249,24 @@ src/
 
 ## 十、关键文件绝对路径索引
 
-- HTTP 核心：`/Users/xutongle/Skel/laravel-art-admin/src/utils/http/index.ts`
-- HTTP 错误：`/Users/xutongle/Skel/laravel-art-admin/src/utils/http/error.ts`
-- 路由守卫：`/Users/xutongle/Skel/laravel-art-admin/src/router/guards/beforeEach.ts`
-- 路由核心：`/Users/xutongle/Skel/laravel-art-admin/src/router/core/`
-- useTable Hook：`/Users/xutongle/Skel/laravel-art-admin/src/hooks/core/useTable.ts`
-- useAuth Hook：`/Users/xutongle/Skel/laravel-art-admin/src/hooks/core/useAuth.ts`
-- 主题 Hook：`/Users/xutongle/Skel/laravel-art-admin/src/hooks/core/useTheme.ts`
-- Echo 封装：`/Users/xutongle/Skel/laravel-art-admin/src/utils/echo/index.ts`
-- WebSocket 类：`/Users/xutongle/Skel/laravel-art-admin/src/utils/socket/index.ts`
-- mitt 事件总线：`/Users/xutongle/Skel/laravel-art-admin/src/utils/sys/mittBus.ts`
-- Pinia 入口：`/Users/xutongle/Skel/laravel-art-admin/src/store/index.ts`
-- 全局配置：`/Users/xutongle/Skel/laravel-art-admin/src/config/index.ts`
-- 默认设置：`/Users/xutongle/Skel/laravel-art-admin/src/config/setting.ts`
-- 国际化：`/Users/xutongle/Skel/laravel-art-admin/src/locales/index.ts`
-- 指令注册：`/Users/xutongle/Skel/laravel-art-admin/src/directives/index.ts`
-- ECharts 插件：`/Users/xutongle/Skel/laravel-art-admin/src/plugins/echarts.ts`
-- Vite 配置：`/Users/xutongle/Skel/laravel-art-admin/vite.config.ts`
-- package.json：`/Users/xutongle/Skel/laravel-art-admin/package.json`
-- 用户列表页：`/Users/xutongle/Skel/laravel-art-admin/src/views/user/list/index.vue`
-- 用户API：`/Users/xutongle/Skel/laravel-art-admin/src/api/user-manage.ts`
-- 全局Api命名空间：`/Users/xutongle/Skel/laravel-art-admin/src/types/api/api.d.ts`
+- HTTP 核心：`/Users/xutongle/Skel/laravel-skel-admin/src/utils/http/index.ts`
+- HTTP 错误：`/Users/xutongle/Skel/laravel-skel-admin/src/utils/http/error.ts`
+- 路由守卫：`/Users/xutongle/Skel/laravel-skel-admin/src/router/guards/beforeEach.ts`
+- 路由核心：`/Users/xutongle/Skel/laravel-skel-admin/src/router/core/`
+- useTable Hook：`/Users/xutongle/Skel/laravel-skel-admin/src/hooks/core/useTable.ts`
+- useAuth Hook：`/Users/xutongle/Skel/laravel-skel-admin/src/hooks/core/useAuth.ts`
+- 主题 Hook：`/Users/xutongle/Skel/laravel-skel-admin/src/hooks/core/useTheme.ts`
+- Echo 封装：`/Users/xutongle/Skel/laravel-skel-admin/src/utils/echo/index.ts`
+- WebSocket 类：`/Users/xutongle/Skel/laravel-skel-admin/src/utils/socket/index.ts`
+- mitt 事件总线：`/Users/xutongle/Skel/laravel-skel-admin/src/utils/sys/mittBus.ts`
+- Pinia 入口：`/Users/xutongle/Skel/laravel-skel-admin/src/store/index.ts`
+- 全局配置：`/Users/xutongle/Skel/laravel-skel-admin/src/config/index.ts`
+- 默认设置：`/Users/xutongle/Skel/laravel-skel-admin/src/config/setting.ts`
+- 国际化：`/Users/xutongle/Skel/laravel-skel-admin/src/locales/index.ts`
+- 指令注册：`/Users/xutongle/Skel/laravel-skel-admin/src/directives/index.ts`
+- ECharts 插件：`/Users/xutongle/Skel/laravel-skel-admin/src/plugins/echarts.ts`
+- Vite 配置：`/Users/xutongle/Skel/laravel-skel-admin/vite.config.ts`
+- package.json：`/Users/xutongle/Skel/laravel-skel-admin/package.json`
+- 用户列表页：`/Users/xutongle/Skel/laravel-skel-admin/src/views/user/list/index.vue`
+- 用户API：`/Users/xutongle/Skel/laravel-skel-admin/src/api/user-manage.ts`
+- 全局Api命名空间：`/Users/xutongle/Skel/laravel-skel-admin/src/types/api/api.d.ts`
