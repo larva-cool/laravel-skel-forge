@@ -213,7 +213,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->morphMany(LoginHistory::class, 'user')->latest('login_at');
     }
 
-
     /**
      * 手机号路由通知
      *
@@ -222,30 +221,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function routeNotificationForPhone($notification): ?string
     {
         return $this->phone ?: null;
-    }
-
-    /**
-     * 获取微信 Openid
-     *
-     * @param  \Illuminate\Notifications\Notification|null  $notification
-     */
-    public function routeNotificationForWechat($notification): ?string
-    {
-        $this->loadMissing('wechatMp');
-
-        return ! empty($this->wechatMp->openid) ? $this->wechatMp->openid : null;
-    }
-
-    /**
-     * 获取微信小程序 Openid
-     *
-     * @param  \Illuminate\Notifications\Notification|null  $notification
-     */
-    public function routeNotificationForWechatMini($notification): ?string
-    {
-        $this->loadMissing('wechatMiniProgram');
-
-        return ! empty($this->wechatMiniProgram->openid) ? $this->wechatMiniProgram->openid : null;
     }
 
     /**

@@ -37,7 +37,7 @@ class AuthController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:admin')->except(['login']);
+        $this->middleware('auth:admin')->except(['login', 'wxLogin', 'appleLogin']);
     }
 
     /**
@@ -91,7 +91,7 @@ class AuthController extends Controller
     public function appleLogin(AppleLoginRequest $request): JsonResponse
     {
         $admin = $request->authenticate();
-        $token = $admin->createToken('admin-token', ['user']);
+        $token = $admin->createToken('admin-token', ['admin']);
         Event::dispatch(new Login('sanctum', $admin, false));
         Event::dispatch(new LoginSucceeded($admin, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
 

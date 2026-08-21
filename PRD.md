@@ -1146,7 +1146,7 @@ php artisan storage:link
 ## 14. 附录
 
 ### 14.1 默认账号
-- 超级管理员：用户名 `admin`，密码 `123456`（由 `DatabaseSeeder` 创建）
+- 超级管理员：用户名 `admin`，密码 `12345678`（由 `DatabaseSeeder` 创建）
 
 ### 14.2 相关文档
 - Laravel 官方文档：https://laravel.com/docs
