@@ -1,14 +1,14 @@
-# Laravel Skel Pro
+# Laravel Skel Forge
 
 基于 Laravel 13 的后台管理系统骨架，采用 DDD 架构并遵循 RESTful API 设计规范。
 
-- 前端项目：[laravel-skel-admin](https://github.com/larva-cool/laravel-skel-pro)
+- 前端项目：[laravel-skel-admin](https://codeup.aliyun.com/xutongle/Skel/laravel-skel-admin)
 
 ## 技术栈
 
 | 分层 | 技术 | 版本 |
 |------|------|------|
-| PHP | ^8.3 |
+| PHP | ^8.4 |
 | 框架 | Laravel | 13.x |
 | 认证 | Laravel Sanctum | 4.x |
 | 权限 | spatie/laravel-permission | 8.x |
@@ -17,6 +17,7 @@
 | 应用服务器 | Laravel Octane | 2.x |
 | 监控 | Laravel Pulse / Telescope | 1.x / 5.x |
 | 全文搜索 | Laravel Scout | 11.x |
+| AI | laravel/ai | 0.10.x |
 | 缓存 | Redis (predis) |
 | 前端 | Tailwind CSS v4 + Vite 8.x |
 | 测试 | PHPUnit | 12.x |
@@ -26,47 +27,64 @@
 
 ```
 app/
-├── Enums/                  # 枚举类（AdminStatus、ScheduleStatus、UserStatus 等）
+├── Ai/                     # AI 能力（Agents、Tools）
+│   ├── Agents/             # AI Agent（Assistant）
+│   └── Tools/              # AI 工具（Audit/Settings/Stats/System/Users/Web）
+├── Console/Commands/       # Artisan 命令
+├── Enums/                  # 枚举类（AdminStatus、AttachmentType、UserStatus 等）
 │   └── Traits/HasLabel.php
-├── Events/                 # 事件（Admin/LoginSucceeded、User/LoginSucceeded）
+├── Events/                 # 事件（Admin/LoginSucceeded、User/* 等）
+├── Exceptions/             # 自定义异常
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Admin/          # 后台控制器（AuthController、ScheduleLogController 等）
-│   │   └── Api/            # API 控制器
-│   ├── Requests/           # 表单请求验证
-│   └── Resources/          # Eloquent API Resources
-├── Listeners/              # 事件监听器（System/ScheduleLogListener）
+│   │   ├── Admin/          # 后台控制器（Auth、User、Role、Menu、Attachment、Chat、Monitor 等）
+│   │   └── Api/V1/         # API v1 控制器（Auth、Register、Common、User）
+│   ├── Middleware/         # 中间件（RecordAuditLog）
+│   ├── Requests/           # 表单请求验证（Admin/、Api/V1/）
+│   └── Resources/          # Eloquent API Resources（Admin/、Api/V1/）
+├── Jobs/                   # 队列任务（User/DeleteAccessTokenJob、StatUserJob）
+├── Listeners/              # 事件监听器（Admin/、System/、User/）
+├── Mail/                   # 邮件类（MailVerifyCode）
 ├── Models/
 │   ├── Admin/              # 后台模型（Admin、AdminMenu）
-│   ├── System/             # 系统模型（Area、Setting、MailCode、ScheduleLog）
-│   ├── User/               # 前台用户模型（LoginHistory）
-│   ├── Sanctum/            # Sanctum 个人访问令牌
-│   └── Traits/             # 模型 Trait
-├── Providers/              # 服务提供者（App、Horizon、Telescope）
-└── Services/               # 业务服务
+│   ├── Coin/               # 金币模型（CoinTrade）
+│   ├── Point/              # 积分模型（PointRecord、PointTrade）
+│   ├── System/             # 系统模型（Area、Attachment、AuditLog、Setting、Role、Permission 等）
+│   ├── User/               # 前台用户模型（UserExtra、UserProfile、UserStat）
+│   ├── Traits/             # 模型 Trait（DateTimeFormatter、HasSettingsProperty、HasUser）
+│   ├── Model.php           # 模型基类
+│   └── User.php            # 前台用户模型
+├── Observers/              # 模型观察者（UserObserver）
+├── Policies/               # 授权策略（UserPolicy）
+├── Providers/              # 服务提供者（App、DynamicConfig、Horizon、Telescope）
+├── Rules/                  # 自定义验证规则（PhoneRule、MailCaptchaRule 等）
+├── Services/               # 业务服务（Attachment、SmsCaptcha、WechatService 等）
+├── Sms/                    # 短信类（VerifyCodeMessage）
+└── Support/                # 辅助类（CoinHelper、PointHelper、UserHelper）
 
 config/                     # 配置文件
 database/
 ├── factories/              # 模型工厂
 ├── migrations/             # 数据库迁移
-└── seeders/                # 数据填充（AdminSeeder、AdminMenuSeeder）
+└── seeders/                # 数据填充
 routes/
 ├── web.php                 # Web 路由
-├── admin.php               # 后台路由（前缀 /admin）
+├── admin.php               # 后台路由（前缀 /admin，通过 bootstrap/app.php 注册）
 ├── api_v1.php              # API v1 路由
 ├── api_v2.php              # API v2 路由
 ├── channels.php            # 广播频道
 └── console.php             # 定时任务
 lang/                       # 语言文件（zh_CN、en）
 bootstrap/helpers.php       # 全局辅助函数
+stubs/                      # 自定义 Artisan stub（agent、tool）
 ```
 
 ## 环境要求
 
-- PHP >= 8.3（推荐 8.4+）
+- PHP >= 8.4
 - PHP 扩展：`pdo`、`mbstring`、`openssl`、`redis`、`bcmath`、`ctype`、`json`、`fileinfo`、`tokenizer`、`xml`
 - Composer >= 2.x
-- Node.js >= 20.x + pnpm
+- Node.js >= 20.x
 - MySQL 8.0+ / PostgreSQL / SQLite
 - Redis（推荐，用于缓存、队列、会话）
 
@@ -105,7 +123,7 @@ npm run build
 
 ### 本地开发
 
-推荐使用 [Laravel Herd](https://herd.laravel.com/) 提供本地服务，访问地址为 `https://laravel-skel-pro.test`（项目目录 kebab-case 名 + `.test`）。
+推荐使用 [Laravel Herd](https://herd.laravel.com/) 提供本地服务，访问地址为 `http://laravel-skel-forge.test`（项目目录 kebab-case 名 + `.test`）。
 
 启动完整开发环境（包含 server、queue、pail 日志、Vite）：
 
@@ -187,7 +205,7 @@ Authorization: Bearer {token}
 Accept: application/json
 ```
 
-默认管理员账号：`admin` / `123456`（由 `AdminSeeder` 创建）。
+默认管理员账号：`admin` / `123456`（由 `DatabaseSeeder` 创建）。
 
 ### 统一响应格式
 
@@ -240,6 +258,15 @@ Accept: application/json
 
 HTTP 状态码遵循 RESTful 规范：2xx 成功、4xx 客户端错误、5xx 服务器错误。创建资源返回 201，无内容操作返回 204，表单验证错误返回 422，未认证返回 401。
 
+### 审计日志接口（`/admin/audit-logs`）
+
+| 方法 | 路径 | 说明 | 认证 | 权限 |
+|------|------|------|------|------|
+| GET | `/admin/audit-logs` | 审计日志列表（分页） | 是 | `audit-logs.index` |
+| GET | `/admin/audit-logs/{id}` | 审计日志详情 | 是 | `audit-logs.index` |
+
+通过 `RecordAuditLog` 中间件自动记录后台操作日志，包含请求路径、方法、参数、响应状态、IP、用户代理等信息。
+
 ### 调度任务日志接口（`/admin/schedule-logs`）
 
 | 方法 | 路径 | 说明 | 认证 | 权限 |
@@ -247,46 +274,20 @@ HTTP 状态码遵循 RESTful 规范：2xx 成功、4xx 客户端错误、5xx 服
 | GET | `/admin/schedule-logs` | 调度日志列表（分页） | 是 | `schedule-logs.index` |
 | GET | `/admin/schedule-logs/{id}` | 调度日志详情 | 是 | `schedule-logs.index` |
 
-列表支持以下查询参数：
+### 附件管理接口（`/admin/attachments`）
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `per_page` | integer | 每页条数（1~100，默认 15） |
-| `name` | string | 任务名称关键词（模糊匹配） |
-| `type` | string | 任务类型：`command`、`callback`、`exec` |
-| `status` | integer | 执行状态：0 执行中、1 成功、2 失败、3 跳过 |
-| `start_date` | date | 开始时间起始 |
-| `end_date` | date | 开始时间截止 |
-
-**列表响应示例：**
-
-```json
-{
-  "data": [
-    {
-      "id": 10000012,
-      "name": "telescope:prune --hours=48",
-      "type": "command",
-      "expression": "0 1 * * *",
-      "status": 1,
-      "status_text": "执行成功",
-      "exit_code": 0,
-      "runtime": 1.235,
-      "exception": null,
-      "hostname": "app-server-01",
-      "started_at": "2026-08-19 01:00:00",
-      "finished_at": "2026-08-19 01:00:01"
-    }
-  ],
-  "links": { "...": "分页链接" },
-  "meta": { "total": 1, "...": "分页元信息" }
-}
-```
+| 方法 | 路径 | 说明 | 认证 | 权限 |
+|------|------|------|------|------|
+| GET | `/admin/attachments` | 附件列表（分页） | 是 | `attachments.index` |
+| POST | `/admin/attachments` | 注册附件记录 | 是 | `attachments.create` |
+| GET | `/admin/attachments/{id}` | 附件详情 | 是 | `attachments.index` |
+| PUT | `/admin/attachments/{id}` | 重命名/移动附件 | 是 | `attachments.edit` |
+| DELETE | `/admin/attachments/{id}` | 删除附件 | 是 | `attachments.delete` |
 
 ## 认证与权限
 
 - **双端认证模型**：
-  - 前台用户（`User` 模型）：session + SPA 认证（guard: `web`）
+  - 前台用户（`User` 模型）：Sanctum Token 认证（guard: `web`）
   - 后台管理员（`Admin` 模型）：Sanctum Token 认证（guard: `admin`）
 - **权限系统**：spatie/laravel-permission v8，支持角色（Role）和权限（Permission）
 - **中间件别名**：`role`、`permission`、`role_or_permission`、`ability`、`abilities`
@@ -302,18 +303,23 @@ HTTP 状态码遵循 RESTful 规范：2xx 成功、4xx 客户端错误、5xx 服
 | `admins` | 后台管理员 |
 | `admin_menus` | 后台菜单/按钮（树结构） |
 | `users` | 前台用户 |
+| `user_extra` / `user_profiles` / `user_stats` | 用户扩展资料/画像/统计 |
 | `roles` / `permissions` | 角色/权限（spatie-permission） |
 | `settings` | 系统设置 |
 | `areas` | 地区数据 |
+| `attachments` | 附件管理 |
+| `audit_logs` | 审计日志 |
 | `personal_access_tokens` | Sanctum Token |
 | `sessions` / `cache` / `jobs` | 会话/缓存/队列 |
 | `mail_codes` / `phone_codes` | 邮件/手机验证码 |
 | `login_histories` | 登录历史 |
+| `socials` | 第三方账号绑定 |
+| `coin_trades` / `point_records` / `point_trades` | 金币/积分流水 |
 | `schedule_logs` | 调度任务执行日志 |
-| `attachments` | 附件管理 |
+| `agent_conversations` | AI Agent 对话记录 |
 | `pulse_*` / `telescope_*` | 监控数据 |
 
-初始数据由 `AdminSeeder` 和 `AdminMenuSeeder` 填充，包含超级管理员角色和完整的后台菜单结构。
+初始数据由 `DatabaseSeeder` 填充，包含超级管理员角色和完整的后台菜单结构。
 
 ## 全局辅助函数
 
@@ -338,7 +344,7 @@ HTTP 状态码遵循 RESTful 规范：2xx 成功、4xx 客户端错误、5xx 服
 
 ## 编码规范
 
-- 遵循 PSR-12，使用 PHP 8 特性（构造器属性提升、命名参数、枚举、match 表达式）
+- 遵循 PSR-12，使用 PHP 8.4 特性（构造器属性提升、命名参数、枚举、match 表达式）
 - 所有 PHP 文件强制 `declare(strict_types=1)` 和文件头 License 注释
 - **修改 PHP 文件后必须运行格式化**：
   ```bash
@@ -351,7 +357,7 @@ HTTP 状态码遵循 RESTful 规范：2xx 成功、4xx 客户端错误、5xx 服
 
 ## 测试
 
-使用 PHPUnit 12，采用新属性语法（`#[Test]`、`#[CoversClass]`、`#[Group]`、`#[TestDox]`）。测试使用内存 SQLite（`:memory:`）。
+使用 PHPUnit 12，采用新属性语法（`#[Test]`、`#[CoversClass]`、`#[Group]`、`#[TestDox]`）。
 
 ```bash
 # 运行全部测试
@@ -427,6 +433,7 @@ npm run build  # 生产构建
 ```
 
 前端使用 Tailwind CSS v4（通过 `@tailwindcss/vite` 插件集成），入口文件为 `resources/css/app.css` 和 `resources/js/app.js`。
+前端 SPA 项目位于独立仓库 `laravel-skel-admin`，通过 Vite 代理访问后端 API。
 
 ## 配置说明
 
@@ -437,13 +444,13 @@ npm run build  # 生产构建
 | `APP_NAME` | `Laravel` | 应用名称 |
 | `APP_ENV` | `local` | 运行环境 |
 | `APP_DEBUG` | `true` | 调试模式 |
-| `APP_URL` | `http://localhost` | 应用 URL |
+| `APP_URL` | `http://laravel-skel-forge.test` | 应用 URL |
 | `APP_LOCALE` | `zh_CN` | 默认语言 |
 | `APP_TIMEZONE` | `Asia/Shanghai` | 默认时区 |
 | `DB_CONNECTION` | `sqlite` | 数据库驱动 |
 | `CACHE_STORE` | `database` | 缓存驱动（推荐 redis） |
 | `QUEUE_CONNECTION` | `database` | 队列驱动（推荐 redis） |
-| `SESSION_DRIVER` | `database` | Session 驱动（推荐 redis/redis） |
+| `SESSION_DRIVER` | `database` | Session 驱动（推荐 redis） |
 | `REDIS_CLIENT` | `phpredis` | Redis 客户端（可选 predis） |
 | `BROADCAST_CONNECTION` | `log` | 广播驱动（生产用 reverb） |
 
@@ -456,13 +463,16 @@ npm run build  # 生产构建
 - 密码使用 bcrypt 加密（BCRYPT_ROUNDS=12）
 - Telescope 在生产环境默认禁用
 - 异常消息不暴露敏感字段
+- 操作审计日志（RecordAuditLog 中间件）
 
-## 持续集成
+## AI 能力
 
-项目配置了 GitHub Actions（`.github/workflows/tests.yml`）：
-- 触发条件：push 到主分支、PR、每日定时执行
-- 测试矩阵：PHP 8.3 / 8.4 / 8.5
-- 运行全部测试并生成覆盖率报告
+项目集成 `laravel/ai` 提供 AI Agent 能力：
+
+- **Assistant Agent**：后台 AI 助手，支持多工具调用
+- **内置工具**：审计日志查询、验证码查询、系统设置读写、仪表盘统计、地区查询、系统信息、用户管理（余额调整/VIP延期/状态设置/重置密码等）、网页抓取
+- **SSE 流式输出**：前端通过 `/admin/chat` 接口以 Server-Sent Events 实时接收 AI 响应
+- **工具审批**：敏感操作（如调整用户余额）需管理员审批后继续执行
 
 ## License
 
