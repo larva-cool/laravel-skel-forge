@@ -389,7 +389,7 @@ return new class extends Migration
                             ['title' => '版本管理', 'permission' => 'app-versions.index'],
                         ],
                     ],
-                    [
+                    [// 应用版本管理 隐藏在应用管理下
                         'key' => 'system.app-version',
                         'path' => 'app/:id/versions',
                         'name' => 'AppVersion',
