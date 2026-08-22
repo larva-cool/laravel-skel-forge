@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * This is NOT a freeware, use is subject to license terms.
+ */
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Requests\Admin\Dict\DictSaveRequest;
+use App\Http\Resources\Admin\DictResource;
+use App\Models\System\Dict;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+
+/**
+ * 后台字典管理控制器
+ *
+ * @author Tongle Xu <xutongle@msn.com>
+ */
+class DictController extends Controller
+{
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        $this->middleware('auth:admin');
+        $this->middleware('permission:dicts.index')->only(['index', 'show']);
+        $this->middleware('permission:dicts.create')->only(['store']);
+        $this->middleware('permission:dicts.edit')->only(['update']);
+        $this->middleware('permission:dicts.delete')->only(['destroy']);
+    }
+
+    /**
+     * 字典列表（分页）
+     */
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $perPage = per_page($request);
+
+        $query = Dict::query();
+
+        if ($keyword = $request->query('keyword')) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                    ->orWhere('code', 'like', "%{$keyword}%");
+            });
+        }
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        $items = $query->orderBy('sort')->orderByDesc('id')->paginate($perPage);
+
+        return DictResource::collection($items);
+    }
+
+    /**
+     * 创建字典
+     */
+    public function store(DictSaveRequest $request): JsonResponse
+    {
+        $dict = Dict::create($request->validated());
+
+        return response()->json(new DictResource($dict), 201);
+    }
+
+    /**
+     * 获取字典详情
+     */
+    public function show(int $id): DictResource
+    {
+        return new DictResource(Dict::findOrFail($id));
+    }
+
+    /**
+     * 更新字典
+     */
+    public function update(DictSaveRequest $request, int $id): DictResource
+    {
+        $dict = Dict::findOrFail($id);
+        $dict->update($request->validated());
+
+        return new DictResource($dict);
+    }
+
+    /**
+     * 删除字典
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $dict = Dict::findOrFail($id);
+        $dict->delete();
+
+        return response()->json(status: 204);
+    }
+}

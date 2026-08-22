@@ -186,6 +186,10 @@ Route::group(['prefix' => 'queue'], function (Registrar $registrar) {
     $registrar->get('jobs/{id}', [\App\Http\Controllers\Admin\QueueController::class, 'jobDetail'])->name('queue.jobs.detail');
 });
 
+// 字典管理
+Route::apiResource('dicts', \App\Http\Controllers\Admin\DictController::class);
+Route::apiResource('dict-items', \App\Http\Controllers\Admin\DictItemController::class);
+
 // AI 聊天
 Route::get('chat/conversations', [\App\Http\Controllers\Admin\ChatController::class, 'conversations'])->name('chat.conversations');
 Route::get('chat/conversations/{conversationId}', [\App\Http\Controllers\Admin\ChatController::class, 'conversation'])->name('chat.conversation');
