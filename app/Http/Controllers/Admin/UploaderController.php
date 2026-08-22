@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\Admin\Uploader\ApkUploadRequest;
 use App\Http\Requests\Admin\Uploader\FileUploadRequest;
 use App\Http\Requests\Admin\Uploader\ImageUploadRequest;
 use App\Http\Requests\Admin\Uploader\UploadTokenRequest;
@@ -57,6 +58,16 @@ class UploaderController extends Controller
      * @throws ValidationException
      */
     public function video(VideoUploadRequest $request): array
+    {
+        return $request->handleUpload();
+    }
+
+    /**
+     * 通用APK文件上传
+     *
+     * @throws ValidationException
+     */
+    public function apk(ApkUploadRequest $request): array
     {
         return $request->handleUpload();
     }

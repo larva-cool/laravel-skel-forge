@@ -103,6 +103,7 @@ Route::get('mail-codes/{id}', [\App\Http\Controllers\Admin\MailCodeController::c
 Route::post('uploader/file', [\App\Http\Controllers\Admin\UploaderController::class, 'file'])->name('uploader.file');
 Route::post('uploader/image', [\App\Http\Controllers\Admin\UploaderController::class, 'image'])->name('uploader.image');
 Route::post('uploader/video', [\App\Http\Controllers\Admin\UploaderController::class, 'video'])->name('uploader.video');
+Route::post('uploader/apk', [\App\Http\Controllers\Admin\UploaderController::class, 'apk'])->name('uploader.apk');
 Route::post('uploader/token', [\App\Http\Controllers\Admin\UploaderController::class, 'uploadToken'])->name('uploader.token');
 
 // 附件管理
