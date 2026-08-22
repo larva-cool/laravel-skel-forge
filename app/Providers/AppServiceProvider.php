@@ -29,20 +29,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // 注册系统设置服务
+        // 注册系统设置服务（应用级单例，不含请求态，可安全跨请求复用）
         $this->app->singleton(\App\Services\SettingManagerService::class, function () {
             return new \App\Services\SettingManagerService;
         });
-        // 注册SMS
+        // 注册SMS（无状态服务，可安全跨请求复用）
         $this->app->singleton(\Overtrue\EasySms\EasySms::class, function () {
             return new \Overtrue\EasySms\EasySms($this->app['config']['sms']);
         });
-        // 注册微信公众号服务
-        $this->app->singleton(\App\Services\WechatService::class, function () {
+        // 注册微信公众号服务（使用 scoped 绑定，每请求重建实例，
+        // 避免 $wechatApp 持有的 Symfony Request 跨请求泄漏）
+        $this->app->scoped(\App\Services\WechatService::class, function () {
             return new \App\Services\WechatService;
         });
-        // 注册微信小程序服务
-        $this->app->singleton(\App\Services\WechatMiniService::class, function () {
+        // 注册微信小程序服务（同上，防止请求态污染）
+        $this->app->scoped(\App\Services\WechatMiniService::class, function () {
             return new \App\Services\WechatMiniService;
         });
     }

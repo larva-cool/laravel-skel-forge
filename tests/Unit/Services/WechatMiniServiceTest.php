@@ -73,8 +73,8 @@ class WechatMiniServiceTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('make 从容器解析出同一个单例')]
-    public function make_resolves_singleton_from_container(): void
+    #[TestDox('make 从容器解析出同一个 scoped 实例')]
+    public function make_resolves_scoped_instance_from_container(): void
     {
         $this->assertSame(WechatMiniService::make(), WechatMiniService::make());
     }
