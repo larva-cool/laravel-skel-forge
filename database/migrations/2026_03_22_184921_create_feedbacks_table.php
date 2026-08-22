@@ -20,7 +20,7 @@ return new class extends Migration
     {
         Schema::create('feedbacks', function (Blueprint $table) {
             $table->id()->from(10000000)->comment('反馈ID');
-            $table->string('code', 32)->unique('uk_feedbacks_code')->comment('反馈编号');
+            $table->string('code', 32)->unique('uk_code')->comment('反馈编号');
             $table->string('title', 200)->comment('标题');
             $table->text('content')->comment('详细描述');
             $table->json('images')->nullable()->comment('反馈图片列表（URL 数组）');
