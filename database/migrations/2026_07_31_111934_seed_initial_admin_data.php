@@ -317,6 +317,7 @@ return new class extends Migration
                             ['title' => '新增字典', 'permission' => 'dicts.create'],
                             ['title' => '编辑字典', 'permission' => 'dicts.edit'],
                             ['title' => '删除字典', 'permission' => 'dicts.delete'],
+                            ['title' => '字典数据管理', 'permission' => 'dict-items.index'],
                             ['title' => '新增字典数据', 'permission' => 'dict-items.create'],
                             ['title' => '编辑字典数据', 'permission' => 'dict-items.edit'],
                             ['title' => '删除字典数据', 'permission' => 'dict-items.delete'],
