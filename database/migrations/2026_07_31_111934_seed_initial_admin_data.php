@@ -215,7 +215,24 @@ return new class extends Migration
                 'icon' => 'ri:bar-chart-box-line',
                 'type' => MenuType::DIRECTORY,
                 'sort' => 20,
-                'children' => [],
+                'children' => [
+                    [
+                        'key' => 'operation.feedback',
+                        'path' => 'feedback',
+                        'name' => 'Feedback',
+                        'component' => '/operation/feedback',
+                        'title' => '反馈管理',
+                        'icon' => 'ri:feedback-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 1,
+                        'keep_alive' => true,
+                        'permission' => 'feedbacks.index',
+                        'buttons' => [
+                            ['title' => '处理反馈', 'permission' => 'feedbacks.edit'],
+                            ['title' => '删除反馈', 'permission' => 'feedbacks.delete'],
+                        ],
+                    ],
+                ],
             ],
 
             // ========== 系统管理 ==========

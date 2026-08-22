@@ -60,6 +60,12 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     });
 
     /**
+     * 用户反馈（公开提交，登录用户可查看自己的反馈）
+     */
+    Route::post('feedbacks', [\App\Http\Controllers\Api\V1\FeedbackController::class, 'store'])->name('feedbacks.store'); // 提交反馈
+    Route::get('feedbacks/my', [\App\Http\Controllers\Api\V1\FeedbackController::class, 'my'])->name('feedbacks.my'); // 我的反馈列表（需登录）
+
+    /**
      * 用户接口
      */
     Route::group(['prefix' => 'user', 'as' => 'user.'], function (Registrar $registrar) {

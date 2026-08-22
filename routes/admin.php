@@ -197,3 +197,7 @@ Route::get('chat/conversations/{conversationId}', [\App\Http\Controllers\Admin\C
 Route::post('chat', [\App\Http\Controllers\Admin\ChatController::class, 'stream'])->name('chat.send');
 Route::post('chat/approve', [\App\Http\Controllers\Admin\ChatController::class, 'approve'])->name('chat.approve');
 Route::delete('chat/conversations/{conversationId}', [\App\Http\Controllers\Admin\ChatController::class, 'destroy'])->name('chat.destroy');
+
+// 用户反馈
+Route::get('feedbacks/stats', [\App\Http\Controllers\Admin\FeedbackController::class, 'stats'])->name('feedbacks.stats');
+Route::apiResource('feedbacks', \App\Http\Controllers\Admin\FeedbackController::class)->except(['store']);
