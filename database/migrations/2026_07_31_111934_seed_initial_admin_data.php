@@ -192,6 +192,32 @@ return new class extends Migration
                 ],
             ],
 
+            // ========== 内容管理 ==========
+            [
+                'key' => 'content',
+                'path' => '/content',
+                'name' => 'Content',
+                'component' => '/index/index',
+                'title' => '内容管理',
+                'icon' => 'ri:article-line',
+                'type' => MenuType::DIRECTORY,
+                'sort' => 10,
+                'children' => [],
+            ],
+
+            // ========== 运营管理 ==========
+            [
+                'key' => 'operation',
+                'path' => '/operation',
+                'name' => 'Operation',
+                'component' => '/index/index',
+                'title' => '运营管理',
+                'icon' => 'ri:bar-chart-box-line',
+                'type' => MenuType::DIRECTORY,
+                'sort' => 20,
+                'children' => [],
+            ],
+
             // ========== 系统管理 ==========
             [
                 'key' => 'system',
