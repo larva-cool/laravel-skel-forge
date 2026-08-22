@@ -387,9 +387,6 @@ return new class extends Migration
                             ['title' => '编辑应用', 'permission' => 'apps.edit'],
                             ['title' => '删除应用', 'permission' => 'apps.delete'],
                             ['title' => '版本管理', 'permission' => 'app-versions.index'],
-                            ['title' => '新增版本', 'permission' => 'app-versions.create'],
-                            ['title' => '编辑版本', 'permission' => 'app-versions.edit'],
-                            ['title' => '删除版本', 'permission' => 'app-versions.delete'],
                         ],
                     ],
                     [
@@ -404,6 +401,11 @@ return new class extends Migration
                         'keep_alive' => true,
                         'is_hide' => true,
                         'is_hide_tab' => true,
+                        'buttons' => [
+                            ['title' => '新增版本', 'permission' => 'app-versions.create'],
+                            ['title' => '编辑版本', 'permission' => 'app-versions.edit'],
+                            ['title' => '删除版本', 'permission' => 'app-versions.delete'],
+                        ],
                     ],
                 ],
             ],
