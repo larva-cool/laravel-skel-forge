@@ -39,6 +39,7 @@ class AppReleaseController extends Controller
     public function index(AppReleaseIndexRequest $request): AnonymousResourceCollection
     {
         $apps = AppRelease::query()
+            ->with(['latestVersions' => fn ($q) => $q->limit(3)])
             ->filter($request->filters())
             ->orderByDesc('sort')
             ->orderByDesc('id')

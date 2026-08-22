@@ -71,6 +71,14 @@ class AppRelease extends Model
     }
 
     /**
+     * 各平台最新发布版本
+     */
+    public function latestVersions(): HasMany
+    {
+        return $this->versions()->published()->orderByDesc('build');
+    }
+
+    /**
      * 作用域：仅启用
      */
     public function scopeActive(Builder $query): Builder

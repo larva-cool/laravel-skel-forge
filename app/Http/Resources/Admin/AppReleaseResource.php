@@ -7,9 +7,11 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
+use App\Enums\AppPlatform;
 use App\Models\App\AppRelease;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 /**
  * 应用资源
@@ -35,8 +37,35 @@ class AppReleaseResource extends JsonResource
             'icon' => $this->icon,
             'sort' => $this->sort,
             'status' => $this->status,
+            'latest_versions' => $this->formatLatestVersions($this->whenLoaded('latestVersions')),
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
+    }
+
+    /**
+     * 格式化各平台最新发布版本
+     *
+     * @param  Collection<int, \App\Models\App\AppVersion>|null  $versions
+     * @return array<string, array<string, mixed>>
+     */
+    private function formatLatestVersions($versions): array
+    {
+        if ($versions === null) {
+            return [];
+        }
+
+        $result = [];
+        foreach (AppPlatform::cases() as $platform) {
+            $version = $versions->firstWhere('platform', $platform);
+            $result[$platform->value] = $version !== null ? [
+                'version' => $version->version,
+                'build' => $version->build,
+                'force_update' => $version->force_update,
+                'published_at' => $version->published_at?->toDateTimeString(),
+            ] : null;
+        }
+
+        return $result;
     }
 }
