@@ -100,7 +100,11 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 |------|------|
 | 配置管理 | 管理系统配置项（支持 string/int/float/bool/json 数据类型），支持分组查看和批量更新 |
 | 菜单管理 | 管理后台菜单/按钮结构（树结构，支持目录/菜单/按钮三种类型） |
+| 字典管理 | 管理数据字典类型和字典项（支持标签样式 default/primary/success/warning/danger/info），字典项按排序权重排列，删除字典时级联删除字典项 |
 | 地区管理 | 管理省市区地区数据（树结构，含经纬度、区号、邮编） |
+| 应用管理 | 管理客户端应用（名称、唯一标识 slug、描述、图标、排序、启用状态），支持查看各平台最新发布版本 |
+| 应用版本管理 | 管理应用版本（平台：安卓/iOS/鸿蒙；版本号、构建号、下载地址、更新说明、最低支持版本、强制更新标记、文件大小/哈希），支持草稿/发布/撤回/废弃四种状态，发布时自动将同应用同平台的旧发布版本置为废弃 |
+| 应用缓存清理 | 支持清理全部缓存或仅清理系统设置缓存（`types=all` 或 `types=settings`） |
 | 操作审计日志 | 通过中间件自动记录后台操作（路径、方法、参数、状态码、IP、UA、耗时），只读查看 |
 | 调度任务日志 | 自动记录定时任务执行情况（成功/失败/跳过、退出码、耗时、异常），支持按保留天数自动清理 |
 
@@ -109,7 +113,7 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 |------|------|
 | 短信验证码记录 | 查看短信验证码发送记录（只读） |
 | 邮件验证码记录 | 查看邮件验证码发送记录（只读） |
-| 上传服务 | 文件/图片/视频上传接口，生成直传 Token（兼容 S3 协议云存储） |
+| 上传服务 | 文件/图片/视频/APK 上传接口，生成直传 Token（兼容 S3 协议云存储） |
 | 通知管理 | 站内通知列表、未读数、标记已读、批量已读、清理已读 |
 
 #### 3.3.3 附件管理（上传文件管理器）
@@ -186,6 +190,7 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 | 文件上传 | 通用文件上传接口 |
 | 图片上传 | 图片专用上传接口 |
 | 视频上传 | 视频专用上传接口 |
+| APK 上传 | Android 安装包专用上传接口（返回附件 id 和文件元信息） |
 | 上传Token生成 | 生成临时直传 Token（兼容 S3 协议） |
 | 文件安全 | 上传文件类型和大小限制，自动写入附件台账 |
 
@@ -237,12 +242,16 @@ laravel-skel-forge/
 │   ├── Console/
 │   │   └── Commands/        # Artisan 命令
 │   ├── Enums/               # 枚举类（含 Traits/HasLabel）
+│   │   ├── AppPlatform.php          # 应用平台枚举（android/ios/harmony）
+│   │   ├── DictLabelType.php        # 字典标签样式枚举
+│   │   ├── DictStatus.php           # 字典状态枚举
+│   │   └── ReleaseStatus.php        # 版本发布状态枚举（draft/published/withdrawn/obsolete）
 │   ├── Events/              # 事件类（Admin/、User/、System/ 等子目录）
 │   ├── Exceptions/          # 自定义异常
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── Admin/       # 后台控制器（Auth、Admin、User、Role、Menu、Setting、Area、Attachment、Uploader、PhoneCode、MailCode、Notification、Chat、Dashboard、Monitor、Debug、Queue、AuditLog、ScheduleLog）
-│   │   │   └── Api/V1/      # API v1 控制器（Auth、Register、Common、User）
+│   │   │   ├── Admin/       # 后台控制器（Auth、Admin、User、Role、Menu、Setting、Area、Attachment、Uploader、PhoneCode、MailCode、Notification、Chat、Dashboard、Monitor、Debug、Queue、AuditLog、ScheduleLog、AppRelease、AppVersion、Dict、DictItem、Main）
+│   │   │   └── Api/V1/      # API v1 控制器（Auth、Register、Common、User、App）
 │   │   ├── Middleware/      # 中间件（RecordAuditLog）
 │   │   ├── Requests/        # 表单请求验证（Admin/、Api/V1/）
 │   │   └── Resources/       # API 资源（Admin/、Api/V1/）
@@ -251,10 +260,10 @@ laravel-skel-forge/
 │   ├── Mail/                # 邮件类（MailVerifyCode）
 │   ├── Models/
 │   │   ├── Admin/           # 管理员模型（Admin、AdminMenu）
+│   │   ├── App/             # 应用版本模型（AppRelease、AppVersion）
 │   │   ├── Coin/            # 金币模型（CoinTrade）
 │   │   ├── Point/           # 积分模型（PointRecord、PointTrade）
-│   │   ├── Sanctum/         # Sanctum 个人访问令牌
-│   │   ├── System/          # 系统模型（Area、Attachment、AuditLog、Setting、Role、Permission、Notification、MailCode、PhoneCode、ScheduleLog 等）
+│   │   ├── System/          # 系统模型（Area、Attachment、AuditLog、Dict、DictItem、Setting、Role、Permission、Notification、MailCode、PhoneCode、ScheduleLog 等）
 │   │   ├── User/            # 用户扩展模型（UserExtra、UserProfile、UserStat）
 │   │   ├── Traits/          # 模型 Trait（DateTimeFormatter、HasSettingsProperty、HasUser）
 │   │   ├── Model.php        # 模型基类
@@ -280,7 +289,6 @@ laravel-skel-forge/
 │   ├── web.php              # Web 路由
 │   ├── admin.php            # 后台路由（前缀 /admin，通过 bootstrap/app.php 注册）
 │   ├── api_v1.php           # API v1 路由
-│   ├── api_v2.php           # API v2 路由
 │   ├── channels.php         # 广播频道
 │   └── console.php          # 定时任务
 ├── stubs/                   # 自定义 Artisan stub（agent、tool）
@@ -515,7 +523,74 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | agent_conversations | AI 会话列表（管理员 ID、标题、模型、创建/更新时间） |
 | agent_messages | AI 消息记录（会话 ID、角色 user/assistant/tool、内容、工具调用信息等） |
 
-#### 5.1.14 其他核心表
+#### 5.1.14 数据字典表 (dicts / dict_items)
+**字典类型表 (dicts)**
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | BIGINT | 主键 |
+| name | VARCHAR | 字典名称 |
+| code | VARCHAR | 字典编码（唯一） |
+| status | TINYINT | 状态（0 禁用，1 启用） |
+| sort | INT | 排序权重（越小越靠前） |
+| remark | VARCHAR | 备注 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+**字典数据表 (dict_items)**
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | BIGINT | 主键 |
+| dict_id | BIGINT | 所属字典 ID |
+| label | VARCHAR | 字典项标签 |
+| value | VARCHAR | 字典项值 |
+| label_type | VARCHAR | 标签样式（default/primary/success/warning/danger/info，对应 Element Plus Tag type） |
+| status | TINYINT | 状态（0 禁用，1 启用） |
+| sort | INT | 排序权重 |
+| remark | VARCHAR | 备注 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+删除字典时通过模型 `booted` 事件级联删除其所有字典项。
+
+#### 5.1.15 应用发布表 (app_releases)
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | BIGINT | 主键 |
+| name | VARCHAR | 应用名称 |
+| slug | VARCHAR | 应用唯一标识（客户端传参用） |
+| description | VARCHAR | 应用描述 |
+| icon | VARCHAR | 应用图标 URL |
+| sort | INT | 排序权重 |
+| status | BOOLEAN | 启用状态 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+| deleted_at | TIMESTAMP | 删除时间（软删除） |
+
+#### 5.1.16 应用版本表 (app_versions)
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | BIGINT | 主键 |
+| app_release_id | BIGINT | 所属应用 ID |
+| platform | VARCHAR | 平台（android/ios/harmony，枚举 AppPlatform） |
+| version | VARCHAR | 语义化版本号（如 1.2.0） |
+| build | INT | 构建号（整数递增，用于版本比较） |
+| download_url | VARCHAR | 安装包下载地址 |
+| release_notes | TEXT | 更新说明 |
+| min_supported_version | VARCHAR | 最低支持版本号 |
+| min_supported_build | INT | 最低支持构建号（低于此构建号需强制更新） |
+| force_update | BOOLEAN | 是否强制更新 |
+| file_size | BIGINT | 安装包大小（字节） |
+| file_hash | VARCHAR | 文件哈希（校验用） |
+| status | VARCHAR | 发布状态（draft/published/withdrawn/obsolete，枚举 ReleaseStatus） |
+| published_at | TIMESTAMP | 发布时间 |
+| created_by | BIGINT | 创建人管理员 ID |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+| deleted_at | TIMESTAMP | 删除时间（软删除） |
+
+发布版本时会自动将同应用同平台下其他已发布版本置为 `obsolete`；已发布状态的版本不可删除，需先撤回或废弃。
+
+#### 5.1.17 其他核心表
 | 表名 | 说明 |
 |------|------|
 | personal_access_tokens | Sanctum 个人访问令牌 |
@@ -525,6 +600,10 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | coin_trades | 金币流水记录 |
 | point_records | 积分记录 |
 | point_trades | 积分流水记录 |
+| dicts | 数据字典类型 |
+| dict_items | 字典数据项 |
+| app_releases | 应用发布 |
+| app_versions | 应用版本 |
 | sessions | 会话存储 |
 | cache / cache_locks | 缓存/缓存锁 |
 | jobs / job_batches / failed_jobs | 队列任务/批次/失败任务 |
@@ -664,7 +743,12 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | DELETE | `/admin/menus/{id}` | 删除菜单 | menus.delete |
 | GET | `/admin/routes` | 获取前端路由配置（按当前管理员权限过滤） | - |
 
-#### 6.3.6 配置管理（/admin/settings）
+#### 6.3.6 缓存管理（/admin/cache）
+| 方法 | 路径 | 说明 | 认证 |
+|------|------|------|------|
+| POST | `/admin/cache/clear` | 清理应用缓存（types=all/settings，支持数组多选） | 是 |
+
+#### 6.3.7 配置管理（/admin/settings）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/settings` | 配置列表（分页） | settings.index |
@@ -676,7 +760,25 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/settings/input-types` | 获取支持的输入类型 | settings.index |
 | PUT | `/admin/settings/batch` | 批量更新配置值 | settings.edit |
 
-#### 6.3.7 地区管理（/admin/areas）
+#### 6.3.8 字典管理（/admin/dicts）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/dicts` | 字典类型列表（分页，支持关键字/状态筛选） | dicts.index |
+| POST | `/admin/dicts` | 创建字典类型 | dicts.create |
+| GET | `/admin/dicts/{id}` | 字典详情（含字典项） | dicts.index |
+| PUT | `/admin/dicts/{id}` | 更新字典 | dicts.edit |
+| DELETE | `/admin/dicts/{id}` | 删除字典（级联删除字典项） | dicts.delete |
+
+#### 6.3.9 字典数据管理（/admin/dict-items）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/dict-items` | 字典项列表（分页，支持按 dict_id 筛选） | dict-items.index |
+| POST | `/admin/dict-items` | 创建字典项 | dict-items.create |
+| GET | `/admin/dict-items/{id}` | 字典项详情 | dict-items.index |
+| PUT | `/admin/dict-items/{id}` | 更新字典项 | dict-items.edit |
+| DELETE | `/admin/dict-items/{id}` | 删除字典项 | dict-items.delete |
+
+#### 6.3.10 地区管理（/admin/areas）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/areas` | 获取地区树 | areas.index |
@@ -685,7 +787,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | PUT | `/admin/areas/{id}` | 更新地区 | areas.edit |
 | DELETE | `/admin/areas/{id}` | 删除地区 | areas.delete |
 
-#### 6.3.8 通知管理（/admin/notifications）
+#### 6.3.11 通知管理（/admin/notifications）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | GET | `/admin/notifications` | 通知列表（分页） | 是 |
@@ -694,7 +796,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | PUT | `/admin/notifications/mark-all-read` | 全部标记已读 | 是 |
 | DELETE | `/admin/notifications/clear-read` | 清理已读通知 | 是 |
 
-#### 6.3.9 验证码管理
+#### 6.3.12 验证码管理
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/phone-codes` | 短信验证码列表 | phone-codes.index |
@@ -702,17 +804,18 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/mail-codes` | 邮件验证码列表 | mail-codes.index |
 | GET | `/admin/mail-codes/{id}` | 邮件验证码详情 | mail-codes.index |
 
-#### 6.3.10 上传管理（/admin/uploader）
+#### 6.3.13 上传管理（/admin/uploader）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | POST | `/admin/uploader/file` | 上传通用文件 | 是 |
 | POST | `/admin/uploader/image` | 上传图片 | 是 |
 | POST | `/admin/uploader/video` | 上传视频 | 是 |
+| POST | `/admin/uploader/apk` | 上传 APK 安装包 | 是 |
 | POST | `/admin/uploader/token` | 获取直传 Token（S3 兼容） | 是 |
 
 上传成功后返回字段包含附件 `id`，前端可直接用于附件管理。
 
-#### 6.3.11 附件管理（/admin/attachments）
+#### 6.3.14 附件管理（/admin/attachments）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/attachments/disks` | 获取可用存储磁盘列表 | attachments.index |
@@ -746,24 +849,49 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | uploader | object\|null | 上传者摘要（id + name） |
 | created_at | string | 创建时间 |
 
-#### 6.3.12 审计日志（/admin/audit-logs）
+#### 6.3.15 应用管理（/admin/apps）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/apps` | 应用列表（分页，支持关键字/状态/日期筛选，预加载各平台最新版本） | apps.index |
+| POST | `/admin/apps` | 创建应用 | apps.create |
+| GET | `/admin/apps/{id}` | 应用详情 | apps.index |
+| PUT | `/admin/apps/{id}` | 更新应用 | apps.edit |
+| DELETE | `/admin/apps/{id}` | 删除应用（软删除） | apps.delete |
+
+应用资源字段包含 `latest_versions`（各平台最多 3 条已发布版本，按 build 倒序）。
+
+#### 6.3.16 应用版本管理（/admin/apps/{app}/versions）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/apps/{app}/versions` | 版本列表（分页，支持平台/状态/版本号/强制更新/日期筛选） | app-versions.index |
+| POST | `/admin/apps/{app}/versions` | 创建版本 | app-versions.create |
+| GET | `/admin/apps/{app}/versions/{version}` | 版本详情 | app-versions.index |
+| PUT | `/admin/apps/{app}/versions/{version}` | 更新版本 | app-versions.edit |
+| DELETE | `/admin/apps/{app}/versions/{version}` | 删除版本（已发布状态不可删除） | app-versions.delete |
+| POST | `/admin/apps/{app}/versions/{version}/publish` | 发布版本（自动将同平台旧已发布版本置为废弃） | app-versions.edit |
+| POST | `/admin/apps/{app}/versions/{version}/withdraw` | 撤回版本（仅已发布状态可撤回） | app-versions.edit |
+| POST | `/admin/apps/{app}/versions/{version}/obsolete` | 废弃版本 | app-versions.edit |
+
+版本状态流转：`draft` → `published`（publish）→ `withdrawn`（withdraw）/ `obsolete`（obsolete 或被新版本自动替换）。
+
+#### 6.3.17 审计日志（/admin/audit-logs）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/audit-logs` | 审计日志列表（分页，支持时间范围/管理员/方法筛选） | audit-logs.index |
 | GET | `/admin/audit-logs/{id}` | 审计日志详情（含请求体、响应） | audit-logs.index |
 
-#### 6.3.13 调度任务日志（/admin/schedule-logs）
+#### 6.3.18 调度任务日志（/admin/schedule-logs）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/schedule-logs` | 调度日志列表（分页，支持任务名/状态/时间范围筛选） | schedule-logs.index |
 | GET | `/admin/schedule-logs/{id}` | 调度日志详情 | schedule-logs.index |
 
-#### 6.3.14 数据概览（/admin/dashboard）
+#### 6.3.19 数据概览（/admin/dashboard）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | GET | `/admin/dashboard/stats` | 仪表盘统计数据 | 是 |
 
-#### 6.3.15 监控接口（/admin/monitor，读取 Pulse 数据）
+#### 6.3.20 监控接口（/admin/monitor，读取 Pulse 数据）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/monitor/servers` | 服务器性能指标 |
@@ -778,7 +906,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/monitor/slow-outgoing-requests` | 慢外部请求 |
 | GET | `/admin/monitor/usage` | 使用情况 |
 
-#### 6.3.16 调试接口（/admin/debug，仅 local 环境，读取 Telescope）
+#### 6.3.21 调试接口（/admin/debug，仅 local 环境，读取 Telescope）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/debug/tags` | 获取标签列表 |
@@ -790,7 +918,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | PUT | `/admin/debug/entries/{id}/resolve` | 标记已解决 |
 | DELETE | `/admin/debug/entries` | 删除条目 |
 
-#### 6.3.17 队列管理（/admin/queue，代理 Horizon 数据）
+#### 6.3.22 队列管理（/admin/queue，代理 Horizon 数据）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/queue/stats` | 队列总体统计 |
@@ -815,7 +943,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | POST | `/admin/queue/jobs/failed/{id}/retry` | 重试失败任务 |
 | GET | `/admin/queue/jobs/{id}` | 任务详情 |
 
-#### 6.3.18 AI 聊天（/admin/chat，SSE 流式）
+#### 6.3.23 AI 聊天（/admin/chat，SSE 流式）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | GET | `/admin/chat/conversations` | 会话列表 | 是 |
@@ -835,12 +963,13 @@ SSE 流式响应通过 `text/event-stream` 逐行推送以下事件类型：
 ### 6.4 API v1 前台接口（/api/v1）
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/v1/auth/login` | 用户登录 |
-| POST | `/api/v1/auth/register` | 用户注册 |
+| POST | `/api/v1/auth/login` | 用户登录（密码/手机验证码/微信/Apple） |
+| POST | `/api/v1/auth/register` | 用户注册（手机/邮箱） |
 | POST | `/api/v1/auth/logout` | 退出登录 |
 | GET | `/api/v1/auth/info` | 当前用户信息 |
-| GET | `/api/v1/common/*` | 公共接口（配置、地区等） |
-| GET | `/api/v1/user/*` | 用户个人中心 |
+| GET | `/api/v1/common/*` | 公共接口（短信/邮件验证码、地区等） |
+| POST | `/api/v1/apps/check-update` | App 版本检查更新（传 slug/platform/build，返回是否有更新、是否强制、最新版本信息） |
+| GET | `/api/v1/user/*` | 用户个人中心（资料、密码、通知、积分、金币、登录历史等） |
 
 ## 7. 附件管理技术方案
 
@@ -1146,7 +1275,7 @@ php artisan storage:link
 ## 14. 附录
 
 ### 14.1 默认账号
-- 超级管理员：用户名 `admin`，密码 `12345678`（由 `DatabaseSeeder` 创建）
+- 超级管理员：用户名 `admin`，密码 `12345678`（由迁移 `2026_07_31_111934_seed_initial_admin_data.php` 创建）
 
 ### 14.2 相关文档
 - Laravel 官方文档：https://laravel.com/docs
@@ -1158,6 +1287,6 @@ php artisan storage:link
 
 ---
 
-**文档版本**：v2.0  
-**最后更新**：2026-08-21  
+**文档版本**：v2.1  
+**最后更新**：2026-08-22  
 **维护人员**：Tongle Xu

@@ -31,14 +31,14 @@ app/
 │   ├── Agents/             # AI Agent（Assistant）
 │   └── Tools/              # AI 工具（Audit/Settings/Stats/System/Users/Web）
 ├── Console/Commands/       # Artisan 命令
-├── Enums/                  # 枚举类（AdminStatus、AttachmentType、UserStatus 等）
+├── Enums/                  # 枚举类（AdminStatus、AppPlatform、AttachmentType、DictStatus、DictLabelType、ReleaseStatus、UserStatus 等）
 │   └── Traits/HasLabel.php
 ├── Events/                 # 事件（Admin/LoginSucceeded、User/* 等）
 ├── Exceptions/             # 自定义异常
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Admin/          # 后台控制器（Auth、User、Role、Menu、Attachment、Chat、Monitor 等）
-│   │   └── Api/V1/         # API v1 控制器（Auth、Register、Common、User）
+│   │   ├── Admin/          # 后台控制器（Auth、User、Role、Menu、Setting、Dict、AppRelease、AppVersion、Attachment、Chat、Monitor 等）
+│   │   └── Api/V1/         # API v1 控制器（Auth、Register、Common、User、App）
 │   ├── Middleware/         # 中间件（RecordAuditLog）
 │   ├── Requests/           # 表单请求验证（Admin/、Api/V1/）
 │   └── Resources/          # Eloquent API Resources（Admin/、Api/V1/）
@@ -47,9 +47,10 @@ app/
 ├── Mail/                   # 邮件类（MailVerifyCode）
 ├── Models/
 │   ├── Admin/              # 后台模型（Admin、AdminMenu）
+│   ├── App/                # 应用版本模型（AppRelease、AppVersion）
 │   ├── Coin/               # 金币模型（CoinTrade）
 │   ├── Point/              # 积分模型（PointRecord、PointTrade）
-│   ├── System/             # 系统模型（Area、Attachment、AuditLog、Setting、Role、Permission 等）
+│   ├── System/             # 系统模型（Area、Attachment、AuditLog、Dict、DictItem、Setting、Role、Permission 等）
 │   ├── User/               # 前台用户模型（UserExtra、UserProfile、UserStat）
 │   ├── Traits/             # 模型 Trait（DateTimeFormatter、HasSettingsProperty、HasUser）
 │   ├── Model.php           # 模型基类
@@ -71,7 +72,6 @@ routes/
 ├── web.php                 # Web 路由
 ├── admin.php               # 后台路由（前缀 /admin，通过 bootstrap/app.php 注册）
 ├── api_v1.php              # API v1 路由
-├── api_v2.php              # API v2 路由
 ├── channels.php            # 广播频道
 └── console.php             # 定时任务
 lang/                       # 语言文件（zh_CN、en）
@@ -160,7 +160,7 @@ composer run dev
 POST /admin/auth/login
 {
   "account": "admin",
-  "password": "123456"
+  "password": "12345678"
 }
 ```
 
@@ -205,7 +205,7 @@ Authorization: Bearer {token}
 Accept: application/json
 ```
 
-默认管理员账号：`admin` / `123456`（由 `DatabaseSeeder` 创建）。
+默认管理员账号：`admin` / `12345678`（由迁移 `2026_07_31_111934_seed_initial_admin_data.php` 初始化）。
 
 ### 统一响应格式
 
@@ -279,10 +279,61 @@ HTTP 状态码遵循 RESTful 规范：2xx 成功、4xx 客户端错误、5xx 服
 | 方法 | 路径 | 说明 | 认证 | 权限 |
 |------|------|------|------|------|
 | GET | `/admin/attachments` | 附件列表（分页） | 是 | `attachments.index` |
-| POST | `/admin/attachments` | 注册附件记录 | 是 | `attachments.create` |
+| POST | `/admin/attachments/register` | 直传完成后登记元数据 | 是 | `attachments.create` |
 | GET | `/admin/attachments/{id}` | 附件详情 | 是 | `attachments.index` |
-| PUT | `/admin/attachments/{id}` | 重命名/移动附件 | 是 | `attachments.edit` |
-| DELETE | `/admin/attachments/{id}` | 删除附件 | 是 | `attachments.delete` |
+| PUT | `/admin/attachments/{id}/rename` | 重命名显示名 | 是 | `attachments.edit` |
+| PUT | `/admin/attachments/{id}/move` | 移动物理路径 | 是 | `attachments.edit` |
+| DELETE | `/admin/attachments/{id}` | 删除单个附件 | 是 | `attachments.delete` |
+| DELETE | `/admin/attachments` | 批量删除附件 | 是 | `attachments.delete` |
+| GET | `/admin/attachments/{id}/download` | 流式下载 | 是 | `attachments.index` |
+| GET | `/admin/attachments/{id}/temporary-url` | 私有盘临时签名 URL | 是 | `attachments.index` |
+
+### 字典管理接口（`/admin/dicts`、`/admin/dict-items`）
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET/POST | `/admin/dicts` | 字典类型列表/创建 | `dicts.index` / `dicts.create` |
+| GET/PUT/DELETE | `/admin/dicts/{id}` | 字典详情/更新/删除（级联删除字典项） | 按操作 |
+| GET/POST | `/admin/dict-items` | 字典项列表（支持 dict_id 筛选）/创建 | `dict-items.index` / `dict-items.create` |
+| GET/PUT/DELETE | `/admin/dict-items/{id}` | 字典项详情/更新/删除 | 按操作 |
+
+### 应用与版本管理接口
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET/POST | `/admin/apps` | 应用列表/创建 | `apps.index` / `apps.create` |
+| GET/PUT/DELETE | `/admin/apps/{id}` | 应用详情/更新/删除 | 按操作 |
+| GET/POST | `/admin/apps/{app}/versions` | 版本列表/创建 | `app-versions.index` / `app-versions.create` |
+| GET/PUT/DELETE | `/admin/apps/{app}/versions/{version}` | 版本详情/更新/删除（已发布不可删） | 按操作 |
+| POST | `/admin/apps/{app}/versions/{version}/publish` | 发布版本（同平台旧版本自动置为废弃） | `app-versions.edit` |
+| POST | `/admin/apps/{app}/versions/{version}/withdraw` | 撤回已发布版本 | `app-versions.edit` |
+| POST | `/admin/apps/{app}/versions/{version}/obsolete` | 废弃版本 | `app-versions.edit` |
+
+### 缓存清理接口
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/admin/cache/clear` | 清理应用缓存（body 传 `types: ["all"]` 或 `["settings"]`） |
+
+### App 版本检查接口（公开，`/api/v1/apps/check-update`）
+
+客户端传入 `slug`（应用标识）、`platform`（android/ios/harmony）、`build`（当前构建号），返回：
+
+```json
+{
+  "has_update": true,
+  "force_update": false,
+  "latest_version": {
+    "version": "1.2.0",
+    "build": 120,
+    "platform": "android",
+    "download_url": "https://...",
+    "release_notes": "...",
+    "force_update": false,
+    "min_supported_build": 100
+  }
+}
+```
 
 ## 认证与权限
 
@@ -307,6 +358,8 @@ HTTP 状态码遵循 RESTful 规范：2xx 成功、4xx 客户端错误、5xx 服
 | `roles` / `permissions` | 角色/权限（spatie-permission） |
 | `settings` | 系统设置 |
 | `areas` | 地区数据 |
+| `dicts` / `dict_items` | 数据字典类型/字典项 |
+| `app_releases` / `app_versions` | 应用及版本管理 |
 | `attachments` | 附件管理 |
 | `audit_logs` | 审计日志 |
 | `personal_access_tokens` | Sanctum Token |
@@ -319,7 +372,7 @@ HTTP 状态码遵循 RESTful 规范：2xx 成功、4xx 客户端错误、5xx 服
 | `agent_conversations` | AI Agent 对话记录 |
 | `pulse_*` / `telescope_*` | 监控数据 |
 
-初始数据由 `DatabaseSeeder` 填充，包含超级管理员角色和完整的后台菜单结构。
+初始数据由迁移 `2026_07_31_111934_seed_initial_admin_data.php` 填充，包含超级管理员角色和完整的后台菜单结构（含字典管理、应用管理等菜单与按钮权限）。
 
 ## 全局辅助函数
 
