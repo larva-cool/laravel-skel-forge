@@ -37,7 +37,7 @@ class AppReleaseResource extends JsonResource
             'icon' => $this->icon,
             'sort' => $this->sort,
             'status' => $this->status,
-            'latest_versions' => $this->formatLatestVersions($this->whenLoaded('latestVersions')),
+            'latest_versions' => $this->whenLoaded('latestVersions', fn () => $this->formatLatestVersions($this->latestVersions)),
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
@@ -46,15 +46,11 @@ class AppReleaseResource extends JsonResource
     /**
      * 格式化各平台最新发布版本
      *
-     * @param  Collection<int, \App\Models\App\AppVersion>|null  $versions
+     * @param  Collection<int, \App\Models\App\AppVersion>  $versions
      * @return array<string, array<string, mixed>>
      */
-    private function formatLatestVersions($versions): array
+    private function formatLatestVersions(Collection $versions): array
     {
-        if ($versions === null) {
-            return [];
-        }
-
         $result = [];
         foreach (AppPlatform::cases() as $platform) {
             $version = $versions->firstWhere('platform', $platform);
