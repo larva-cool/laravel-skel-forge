@@ -26,6 +26,19 @@ Route::get('roles/{role}/permissions', [\App\Http\Controllers\Admin\RoleControll
 Route::put('roles/{role}/permissions', [\App\Http\Controllers\Admin\RoleController::class, 'assignPermissions'])->name('roles.assign-permissions');
 Route::apiResource('roles', \App\Http\Controllers\Admin\RoleController::class);
 
+// 应用管理
+Route::apiResource('apps', \App\Http\Controllers\Admin\AppReleaseController::class);
+
+// 版本管理
+Route::get('apps/{app}/versions', [\App\Http\Controllers\Admin\AppVersionController::class, 'index'])->name('apps.versions.index');
+Route::post('apps/{app}/versions', [\App\Http\Controllers\Admin\AppVersionController::class, 'store'])->name('apps.versions.store');
+Route::get('apps/{app}/versions/{version}', [\App\Http\Controllers\Admin\AppVersionController::class, 'show'])->name('apps.versions.show');
+Route::put('apps/{app}/versions/{version}', [\App\Http\Controllers\Admin\AppVersionController::class, 'update'])->name('apps.versions.update');
+Route::delete('apps/{app}/versions/{version}', [\App\Http\Controllers\Admin\AppVersionController::class, 'destroy'])->name('apps.versions.destroy');
+Route::post('apps/{app}/versions/{version}/publish', [\App\Http\Controllers\Admin\AppVersionController::class, 'publish'])->name('apps.versions.publish');
+Route::post('apps/{app}/versions/{version}/withdraw', [\App\Http\Controllers\Admin\AppVersionController::class, 'withdraw'])->name('apps.versions.withdraw');
+Route::post('apps/{app}/versions/{version}/obsolete', [\App\Http\Controllers\Admin\AppVersionController::class, 'obsolete'])->name('apps.versions.obsolete');
+
 // 前端路由配置
 Route::get('routes', [\App\Http\Controllers\Admin\MainController::class, 'routes'])->name('routes');
 

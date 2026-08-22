@@ -53,6 +53,13 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     });
 
     /**
+     * App 版本管理
+     */
+    Route::group(['prefix' => 'apps', 'as' => 'apps.'], function (Registrar $registrar) {
+        $registrar->post('check-update', [\App\Http\Controllers\Api\V1\AppController::class, 'checkUpdate'])->name('check_update'); // 检查版本更新
+    });
+
+    /**
      * 用户接口
      */
     Route::group(['prefix' => 'user', 'as' => 'user.'], function (Registrar $registrar) {
