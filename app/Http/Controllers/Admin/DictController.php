@@ -7,12 +7,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\CacheKey;
 use App\Http\Requests\Admin\Dict\DictSaveRequest;
+use App\Http\Resources\Admin\DictItemResource;
 use App\Http\Resources\Admin\DictResource;
 use App\Models\System\Dict;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * 后台字典管理控制器
@@ -95,6 +99,37 @@ class DictController extends Controller
         $dict = Dict::findOrFail($id);
         $dict->delete();
 
+        // 清除该字典缓存
+        Cache::forget(CacheKey::key(CacheKey::DICT_TYPE, $dict->code));
+
         return response()->json(status: 204);
+    }
+
+    /**
+     * 按字典编码获取启用的字典项（用于前端下拉选项/标签渲染，带缓存）
+     */
+    public function itemsByCode(string $code): AnonymousResourceCollection
+    {
+        $cacheKey = CacheKey::key(CacheKey::DICT_TYPE, $code);
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\System\DictItem>|null $items */
+        $items = Cache::remember($cacheKey, Carbon::now()->addHours(2), function () use ($code) {
+            $dict = Dict::query()
+                ->where('code', $code)
+                ->where('status', 1)
+                ->first();
+
+            if (! $dict) {
+                return collect();
+            }
+
+            return $dict->dictItems()
+                ->where('status', 1)
+                ->orderBy('sort')
+                ->orderBy('id')
+                ->get();
+        });
+
+        return DictItemResource::collection($items);
     }
 }

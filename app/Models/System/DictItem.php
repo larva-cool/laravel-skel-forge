@@ -7,11 +7,13 @@ declare(strict_types=1);
 
 namespace App\Models\System;
 
+use App\Enums\CacheKey;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * 字典数据模型
@@ -66,6 +68,25 @@ class DictItem extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Perform any actions required after the model boots.
+     */
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        // 字典项变更时清除对应字典缓存
+        $flushCache = function (self $item): void {
+            $dict = $item->dict;
+            if ($dict) {
+                Cache::forget(CacheKey::key(CacheKey::DICT_TYPE, $dict->code));
+            }
+        };
+
+        static::saved($flushCache);
+        static::deleted($flushCache);
     }
 
     /**

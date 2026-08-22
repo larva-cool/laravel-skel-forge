@@ -187,6 +187,7 @@ Route::group(['prefix' => 'queue'], function (Registrar $registrar) {
 });
 
 // 字典管理
+Route::get('dicts/by-code/{code}/items', [\App\Http\Controllers\Admin\DictController::class, 'itemsByCode'])->name('dicts.items-by-code');
 Route::apiResource('dicts', \App\Http\Controllers\Admin\DictController::class);
 Route::apiResource('dict-items', \App\Http\Controllers\Admin\DictItemController::class);
 

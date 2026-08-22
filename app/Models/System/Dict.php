@@ -7,12 +7,14 @@ declare(strict_types=1);
 
 namespace App\Models\System;
 
+use App\Enums\CacheKey;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * 字典类型模型
@@ -73,6 +75,12 @@ class Dict extends Model
 
         static::deleted(function (Dict $dict) {
             $dict->dictItems()->delete();
+            Cache::forget(CacheKey::key(CacheKey::DICT_TYPE, $dict->code));
+        });
+
+        // 字典本身更新时也清除缓存（例如状态变更）
+        static::saved(function (Dict $dict) {
+            Cache::forget(CacheKey::key(CacheKey::DICT_TYPE, $dict->code));
         });
     }
 
