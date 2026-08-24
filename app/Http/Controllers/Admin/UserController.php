@@ -129,6 +129,59 @@ class UserController extends Controller
     }
 
     /**
+     * 回收站用户列表（已软删除的用户）
+     */
+    public function trash(Request $request): AnonymousResourceCollection
+    {
+        $perPage = $request->integer('per_page', 20);
+        $keyword = $request->query('keyword');
+        $trashedQuery = User::onlyTrashed()->withCount(['points', 'coins']);
+
+        if ($keyword) {
+            $trashedQuery->where(function ($query) use ($keyword): void {
+                $query->where('username', 'like', "%{$keyword}%")
+                    ->orWhere('name', 'like', "%{$keyword}%")
+                    ->orWhere('email', 'like', "%{$keyword}%")
+                    ->orWhere('phone', 'like', "%{$keyword}%");
+            });
+        }
+
+        if ($request->filled('sort_field')) {
+            $sortField = $request->query('sort_field', 'deleted_at');
+            $sortOrder = $request->query('sort_order', 'desc');
+            $trashedQuery->orderBy($sortField, $sortOrder);
+        } else {
+            $trashedQuery->latest('deleted_at');
+        }
+
+        $items = $trashedQuery->paginate($perPage);
+
+        return UserResource::collection($items);
+    }
+
+    /**
+     * 恢复软删除的用户
+     */
+    public function restore(int $user): JsonResponse
+    {
+        $trashedUser = User::onlyTrashed()->findOrFail($user);
+        $trashedUser->restore();
+
+        return response()->json(status: 204);
+    }
+
+    /**
+     * 彻底删除用户（不可恢复）
+     */
+    public function forceDelete(int $user): JsonResponse
+    {
+        $trashedUser = User::onlyTrashed()->findOrFail($user);
+        $trashedUser->forceDelete();
+
+        return response()->json(status: 204);
+    }
+
+    /**
      * 启用/冻结用户
      */
     public function toggleStatus(User $user): UserResource
