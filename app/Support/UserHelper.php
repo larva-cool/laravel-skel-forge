@@ -30,6 +30,7 @@ class UserHelper
     {
         return User::create([
             'name' => $name,
+            'username' => self::generateUsername($phone),
             'phone' => $phone,
             'password' => $password,
         ]);
@@ -42,7 +43,7 @@ class UserHelper
     {
         /** @var User $user */
         $user = User::withTrashed()->where('phone', $phone)->first();
-        if (!$user) {
+        if (! $user) {
             $user = User::create([
                 'name' => self::generateUsername(mobile_replace($phone)),
                 'phone' => $phone,
