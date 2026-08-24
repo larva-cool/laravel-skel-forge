@@ -27,15 +27,10 @@ use Psr\Http\Message\ResponseInterface;
  */
 class WechatController extends Controller
 {
-    private WechatService $wechatService;
-
     /**
      * 构造函数
      */
-    public function __construct(WechatService $wechatService)
-    {
-        $this->wechatService = $wechatService;
-    }
+    public function __construct(private WechatService $wechatService) {}
 
     /**
      * 网络通信检测
