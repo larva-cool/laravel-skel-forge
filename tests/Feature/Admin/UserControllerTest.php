@@ -293,4 +293,84 @@ class UserControllerTest extends TestCase
         $response->assertNoContent();
         $this->assertEquals('13800138001', $user->fresh()->phone);
     }
+
+    #[Test]
+    #[TestDox('回收站列表只返回已软删除的用户')]
+    public function admin_can_view_trash_users(): void
+    {
+        User::factory()->count(2)->create();
+        $deletedUser = User::factory()->create(['username' => 'deleted_user']);
+        $deletedUser->delete();
+
+        $response = $this->actingAsAdmin()->getJson('/admin/users/trash');
+        $response->assertOk()
+            ->assertJsonStructure(['data', 'links', 'meta'])
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.username', 'deleted_user')
+            ->assertJsonPath('data.0.deleted_at', fn ($v) => ! is_null($v));
+    }
+
+    #[Test]
+    #[TestDox('回收站列表支持关键字搜索')]
+    public function admin_can_search_trash_users_by_keyword(): void
+    {
+        $deletedUser = User::factory()->create(['username' => 'will_restore', 'name' => '待恢复']);
+        $deletedUser->delete();
+        $otherDeleted = User::factory()->create(['username' => 'other_deleted']);
+        $otherDeleted->delete();
+
+        $response = $this->actingAsAdmin()->getJson('/admin/users/trash?keyword=will_restore');
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.username', 'will_restore');
+    }
+
+    #[Test]
+    #[TestDox('恢复软删除的用户')]
+    public function admin_can_restore_soft_deleted_user(): void
+    {
+        $user = User::factory()->create();
+        $user->delete();
+
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+
+        $response = $this->actingAsAdmin()->putJson("/admin/users/{$user->id}/restore");
+        $response->assertNoContent();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    #[Test]
+    #[TestDox('彻底删除用户不可恢复')]
+    public function admin_can_force_delete_user(): void
+    {
+        $user = User::factory()->create();
+        $user->delete();
+
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+
+        $response = $this->actingAsAdmin()->deleteJson("/admin/users/{$user->id}/force-delete");
+        $response->assertNoContent();
+
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    }
+
+    #[Test]
+    #[TestDox('恢复不存在的用户返回 404')]
+    public function restore_non_existent_user_returns_404(): void
+    {
+        $response = $this->actingAsAdmin()->putJson('/admin/users/99999/restore');
+        $response->assertNotFound();
+    }
+
+    #[Test]
+    #[TestDox('彻底删除不存在的用户返回 404')]
+    public function force_delete_non_existent_user_returns_404(): void
+    {
+        $response = $this->actingAsAdmin()->deleteJson('/admin/users/99999/force-delete');
+        $response->assertNotFound();
+    }
 }

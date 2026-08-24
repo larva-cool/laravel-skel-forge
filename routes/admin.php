@@ -71,6 +71,9 @@ Route::put('admins/change-password', [\App\Http\Controllers\Admin\AdminControlle
 Route::apiResource('admins', \App\Http\Controllers\Admin\AdminController::class);
 
 // 用户管理
+Route::get('users/trash', [\App\Http\Controllers\Admin\UserController::class, 'trash'])->name('users.trash');
+Route::put('users/{user}/restore', [\App\Http\Controllers\Admin\UserController::class, 'restore'])->name('users.restore');
+Route::delete('users/{user}/force-delete', [\App\Http\Controllers\Admin\UserController::class, 'forceDelete'])->name('users.force-delete');
 Route::get('users/{user}/login-histories', [\App\Http\Controllers\Admin\UserController::class, 'loginHistories'])->name('users.login-histories');
 Route::get('users/{user}/socials', [\App\Http\Controllers\Admin\UserController::class, 'socials'])->name('users.socials');
 Route::get('users/{user}/point-trades', [\App\Http\Controllers\Admin\UserController::class, 'pointTrades'])->name('users.point-trades');

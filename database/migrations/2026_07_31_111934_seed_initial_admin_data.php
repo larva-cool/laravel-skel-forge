@@ -189,6 +189,22 @@ return new class extends Migration
                             ['title' => '延长VIP', 'permission' => 'users.edit'],
                         ],
                     ],
+                    [
+                        'key' => 'user.trash',
+                        'path' => 'trash',
+                        'name' => 'UserTrash',
+                        'component' => '/user/trash/index',
+                        'title' => '回收站',
+                        'icon' => 'ri:delete-bin-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 2,
+                        'keep_alive' => true,
+                        'permission' => 'users.index',
+                        'buttons' => [
+                            ['title' => '恢复用户', 'permission' => 'users.edit'],
+                            ['title' => '彻底删除用户', 'permission' => 'users.delete'],
+                        ],
+                    ],
                 ],
             ],
 
