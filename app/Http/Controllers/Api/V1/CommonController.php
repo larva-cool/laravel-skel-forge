@@ -14,6 +14,7 @@ use App\Http\Requests\Api\V1\Common\SmsCaptchaRequest;
 use App\Http\Resources\Api\V1\PublicDictItemResource;
 use App\Models\System\Area;
 use App\Models\System\Dict;
+use App\Models\System\DictItem;
 use App\Services\MailCaptchaService;
 use App\Services\SmsCaptchaService;
 use Illuminate\Http\JsonResponse;
@@ -96,23 +97,29 @@ class CommonController extends Controller
 
         $cacheKey = CacheKey::key(CacheKey::DICT_TYPE, $code);
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\System\DictItem> $items */
-        $items = Cache::remember($cacheKey, Carbon::now()->addHours(2), function () use ($code) {
+        // 缓存纯数组而非 Eloquent Collection，避免 Octane/反序列化场景下
+        // 出现 "incomplete object" 错误；读取时再 hydrate 为模型集合。
+        /** @var array<int, array<string, mixed>> $itemsArray */
+        $itemsArray = Cache::remember($cacheKey, Carbon::now()->addHours(2), function () use ($code) {
             $dict = Dict::query()
                 ->where('code', $code)
                 ->where('status', 1)
                 ->first();
 
             if (! $dict) {
-                return collect();
+                return [];
             }
 
             return $dict->dictItems()
                 ->where('status', 1)
                 ->orderBy('sort')
                 ->orderBy('id')
-                ->get();
+                ->get()
+                ->toArray();
         });
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, DictItem> $items */
+        $items = DictItem::hydrate($itemsArray);
 
         return PublicDictItemResource::collection($items);
     }
