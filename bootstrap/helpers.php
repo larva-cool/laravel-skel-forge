@@ -205,3 +205,27 @@ if (! function_exists('source_types')) {
         return array_keys($maps);
     }
 }
+
+if (! function_exists('base64_urlencode')) {
+    /**
+     * URL 安全的 Base64 编码
+     *
+     * 将标准 Base64 的 + 替换为 -、/ 替换为 _，并去除末尾填充符 =
+     */
+    function base64_urlencode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+}
+
+if (! function_exists('base64_urldecode')) {
+    /**
+     * URL 安全的 Base64 解码
+     *
+     * base64_urlencode 的逆操作
+     */
+    function base64_urldecode(string $data): string
+    {
+        return base64_decode(strtr($data, '-_', '+/'));
+    }
+}
