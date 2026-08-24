@@ -27,9 +27,6 @@ Route::prefix('wechat')->name('wechat.')->group(function () {
     // 通过 Code 获取用户资料
     Route::get('user-info', [App\Http\Controllers\WechatController::class, 'getUserInfo'])->name('user-info');
 
-    // Access Token
-    Route::get('token', [App\Http\Controllers\WechatController::class, 'token'])->name('token');
-
     // 微信服务端消息回调
     Route::any('serve', [App\Http\Controllers\WechatController::class, 'serve'])->name('serve');
 });

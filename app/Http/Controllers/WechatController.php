@@ -149,16 +149,6 @@ class WechatController extends Controller
     }
 
     /**
-     * 读取 Token
-     */
-    public function token(Request $request): JsonResponse
-    {
-        $accessToken = $this->wechatService->getApp()->getAccessToken();
-
-        return response()->json(['token' => $accessToken->getToken()]);
-    }
-
-    /**
      * 处理微信请求
      */
     public function serve(Request $request): ResponseInterface
