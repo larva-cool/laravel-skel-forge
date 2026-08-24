@@ -23,7 +23,7 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * 微信公众号控制器
  *
- * 处理微信公众号相关请求
+ * @author Tongle Xu <xutongle@msn.com>
  */
 class WechatController extends Controller
 {
