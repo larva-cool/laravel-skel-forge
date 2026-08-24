@@ -23,7 +23,20 @@
 - 修改 PHP 文件后必须运行 `vendor/bin/pint --dirty --format agent` 格式化代码
 - 优先使用 Laravel Boost MCP 工具（`database-query`、`database-schema`、`search-docs`）而非手动操作
 - 代码变更前使用 `search-docs` 查阅版本相关文档
-- 未经用户明确请求，不创建文档文件（`*.md`、README 等）
+- 当用户提到"发布到apifox"时，自动执行以下流程：
+  1. 调用 `apifox-cli` skill 获取 Apifox CLI 使用指引
+  2. 根据具体场景调用对应的 apifox skill（如 `apifox-import-export`、`apifox-branch`、`apifox-workflow-api-lifecycle` 等）
+  3. 使用 Apifox CLI 执行实际的发布操作（如导入/导出 OpenAPI 文档、同步接口到 Apifox 项目等）
+  4. 执行完成后，使用 `apifox-cli-checkup` skill 验证操作结果是否生效
+- Apifox 分页接口设计规范：
+  - Apifox 项目中已预定义两个全局查询参数：`page`（分页页码，默认值 1）和 `per_page`（每页条数，默认值 15）
+  - 这两个参数默认处于**禁用**状态，仅在需要分页的接口中启用
+  - 设计分页接口时，必须先启用这两个全局参数，禁止重复创建新的分页参数
+  - 分页接口使用 Laravel 标准分页（`paginate()` + `Resource::collection()`），响应体为 Laravel 默认分页结构，包含以下字段：`data`（当前页数据数组）、`current_page`（当前页码）、`last_page`（最后一页页码）、`per_page`（每页条数）、`total`（总条数）、`from`（当前页起始条目序号）、`to`（当前页结束条目序号）、`first_page_url`、`last_page_url`、`next_page_url`、`prev_page_url`、`path`、`links`（分页导航链接数组）
+- 创建新功能或接口后的自动化流程：
+  1. 将新接口同步发布到 Apifox（遵循上述"发布到apifox"流程）
+  2. 更新 README.md 中相关功能说明（接口列表、使用方式等）
+  3. 更新 PRD 文档中对应模块的需求描述与接口定义
 
 ## 编码标准和规范
 
