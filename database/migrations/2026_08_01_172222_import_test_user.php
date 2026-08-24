@@ -9,33 +9,24 @@ use App\Models\User;
 use App\Support\UserHelper;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
+    /**
+     * 测试用户昵称
+     */
+    private array $nicknames = [
+        '�', '🐱', '🐭', '🐹', '🐰', '�', '🐼', '�', '🐯', '🦁',
+        '�', '🐷', '🐸', '�', '🐵', '�', '🦆', '🐥', '�', '🐌', '🐞',
+    ];
+
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        UserHelper::createByPhone('测试号🐶', '14000000000', 'password');
-        UserHelper::createByPhone('测试号🐱', '14000000001', 'password');
-        UserHelper::createByPhone('测试号🐭', '14000000002', 'password');
-        UserHelper::createByPhone('测试号🐹', '14000000003', 'password');
-        UserHelper::createByPhone('测试号🐰', '14000000004', 'password');
-        UserHelper::createByPhone('测试号🐻', '14000000005', 'password');
-        UserHelper::createByPhone('测试号🐼', '14000000006', 'password');
-        UserHelper::createByPhone('测试号🐨', '14000000007', 'password');
-        UserHelper::createByPhone('测试号🐯', '14000000008', 'password');
-        UserHelper::createByPhone('测试号🦁', '14000000009', 'password');
-        UserHelper::createByPhone('测试号🐮', '14000000010', 'password');
-        UserHelper::createByPhone('测试号🐷', '14000000011', 'password');
-        UserHelper::createByPhone('测试号🐸', '14000000012', 'password');
-        UserHelper::createByPhone('测试号🐙', '14000000013', 'password');
-        UserHelper::createByPhone('测试号🐵', '14000000014', 'password');
-        UserHelper::createByPhone('测试号🐔', '14000000015', 'password');
-        UserHelper::createByPhone('测试号🦆', '14000000016', 'password');
-        UserHelper::createByPhone('测试号🐥', '14000000017', 'password');
-        UserHelper::createByPhone('测试号🦉', '14000000018', 'password');
-        UserHelper::createByPhone('测试号🐌', '14000000019', 'password');
-        UserHelper::createByPhone('测试号🐞', '14000000020', 'password');
+        foreach ($this->nicknames as $i => $emoji) {
+            UserHelper::createByPhone('测试号'.$emoji, '14000000'.str_pad((string) $i, 3, '0', STR_PAD_LEFT), 'password');
+        }
     }
 
     /**
@@ -43,10 +34,9 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        $users = User::query()->with(['extra', 'profile'])->whereIn('phone', [
-            '14000000000', '14000000001', '14000000002', '14000000003', '14000000004', '14000000005', '14000000006', '14000000007', '14000000008', '14000000009', '14000000010',
-            '14000000011', '14000000012', '14000000013', '14000000014', '14000000015', '14000000016', '14000000017', '14000000018', '14000000019', '14000000020',
-        ])->get();
+        $phones = array_map(fn (int $i): string => '14000000'.str_pad((string) $i, 3, '0', STR_PAD_LEFT), array_keys($this->nicknames));
+
+        $users = User::query()->with(['extra', 'profile'])->whereIn('phone', $phones)->get();
         $users->each(function (User $user) {
             $user->delete();
         });
