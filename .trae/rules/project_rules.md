@@ -33,6 +33,23 @@
   - 这两个参数默认处于**禁用**状态，仅在需要分页的接口中启用
   - 设计分页接口时，必须先启用这两个全局参数，禁止重复创建新的分页参数
   - 分页接口使用 Laravel 标准分页（`paginate()` + `Resource::collection()`），响应体为 Laravel 默认分页结构，包含以下字段：`data`（当前页数据数组）、`current_page`（当前页码）、`last_page`（最后一页页码）、`per_page`（每页条数）、`total`（总条数）、`from`（当前页起始条目序号）、`to`（当前页结束条目序号）、`first_page_url`、`last_page_url`、`next_page_url`、`prev_page_url`、`path`、`links`（分页导航链接数组）
+  - Apifox 中分页响应禁止单独创建分页模型，必须使用 `allOf` 组合 `EloquentPaginate`（集合分页，ID: 304922372）与具体数据模型，格式如下：
+    ```json
+    {
+      "allOf": [
+        {"$ref": "#/definitions/304922372"},
+        {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/具体数据模型ID"}
+            }
+          }
+        }
+      ]
+    }
+    ```
 - 创建新功能或接口后的自动化流程：
   1. 将新接口同步发布到 Apifox（遵循上述"发布到apifox"流程）
   2. 更新 README.md 中相关功能说明（接口列表、使用方式等）
