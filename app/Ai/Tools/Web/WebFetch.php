@@ -42,6 +42,11 @@ class WebFetch implements Tool
     protected const array ALLOWED_SCHEMES = ['http', 'https'];
 
     /**
+     * 最大重定向跟随次数，防止无限重定向。
+     */
+    protected const int MAX_REDIRECTS = 5;
+
+    /**
      * 工具描述。
      */
     public function description(): Stringable|string
@@ -82,7 +87,16 @@ class WebFetch implements Tool
 
         try {
             $response = Http::timeout(self::TIMEOUT)
-                ->withOptions(['allow_redirects' => true])
+                ->withOptions([
+                    'allow_redirects' => [
+                        'max' => self::MAX_REDIRECTS,
+                        'strict' => true,
+                        'referer' => true,
+                        'on_redirect' => function (\Psr\Http\Message\RequestInterface $request): void {
+                            $this->assertSafeUrl((string) $request->getUri());
+                        },
+                    ],
+                ])
                 ->withHeaders([
                     'User-Agent' => 'Mozilla/5.0 (compatible; AiAssistant/1.0; +https://www.larva.com.cn/bot)',
                     'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -91,6 +105,8 @@ class WebFetch implements Tool
                 ->get($url);
         } catch (ConnectionException $e) {
             return "抓取失败：无法连接到目标网站（{$e->getMessage()}）。";
+        } catch (\InvalidArgumentException $e) {
+            return "抓取失败：{$e->getMessage()}";
         }
 
         if (! $response->successful()) {
@@ -265,16 +281,172 @@ class WebFetch implements Tool
             return false;
         }
 
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+            return false;
+        }
+
         $parts = parse_url($url);
         if (! is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
             return false;
         }
 
+        // 仅允许 http/https
         if (! in_array(strtolower($parts['scheme']), self::ALLOWED_SCHEMES, true)) {
             return false;
         }
 
-        return filter_var($url, FILTER_VALIDATE_URL) !== false;
+        // 禁止在 URL 中携带用户凭据（user:pass@host）
+        if (isset($parts['user']) || isset($parts['pass'])) {
+            return false;
+        }
+
+        $host = strtolower($parts['host']);
+
+        // 阻断本地/内网/元数据主机名（包括 IPv6 本地地址）
+        if ($this->isBlockedHost($host)) {
+            return false;
+        }
+
+        // DNS 解析后检查 IP 是否属于内网/保留段
+        if (! $this->isPubliclyRoutable($host)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 在重定向回调中校验目标 URL，不合法时抛出异常中止请求。
+     */
+    protected function assertSafeUrl(string $url): void
+    {
+        if (! $this->isValidUrl($url)) {
+            throw new \InvalidArgumentException('重定向目标为内网或非法地址，已被 SSRF 防护策略拦截。');
+        }
+    }
+
+    /**
+     * 判断主机名是否属于需要直接阻断的本地/保留主机名。
+     */
+    protected function isBlockedHost(string $host): bool
+    {
+        // 去除 IPv6 方括号
+        $host = trim($host, '[]');
+
+        $blockedHosts = [
+            'localhost',
+            'ip6-localhost',
+            'ip6-loopback',
+            'ip6-localnet',
+            'ip6-mcastprefix',
+            'ip6-allnodes',
+            'ip6-allrouters',
+        ];
+
+        if (in_array($host, $blockedHosts, true)) {
+            return true;
+        }
+
+        // 本地环回 .local / .internal 等 mDNS / 内部域名后缀
+        foreach (['.local', '.internal', '.localhost'] as $suffix) {
+            if (str_ends_with($host, $suffix)) {
+                return true;
+            }
+        }
+
+        // 云元数据服务常见主机名
+        if ($host === 'metadata' || $host === 'metadata.google.internal' || $host === 'metadata.tencentyun.com') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 判断主机名解析后的所有 IP 是否为公网可路由地址。
+     *
+     * 任意一个 IP 落入保留/内网/环回/链路本地/元数据段都视为不安全。
+     */
+    protected function isPubliclyRoutable(string $host): bool
+    {
+        // 如果已经是 IP 字面量（支持 IPv4 / IPv6），直接校验
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return ! $this->isPrivateOrReservedIp($host);
+        }
+
+        // DNS 解析：同时获取 IPv4 和 IPv6
+        $ips = [];
+        $records4 = @dns_get_record($host, DNS_A);
+        if (is_array($records4)) {
+            foreach ($records4 as $record) {
+                if (isset($record['ip'])) {
+                    $ips[] = $record['ip'];
+                }
+            }
+        }
+        $records6 = @dns_get_record($host, DNS_AAAA);
+        if (is_array($records6)) {
+            foreach ($records6 as $record) {
+                if (isset($record['ipv6'])) {
+                    $ips[] = $record['ipv6'];
+                }
+            }
+        }
+
+        // 解析失败则拒绝，避免绕过
+        if ($ips === []) {
+            return false;
+        }
+
+        foreach ($ips as $ip) {
+            if ($this->isPrivateOrReservedIp($ip)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 判断单个 IP 是否属于私有 / 环回 / 链路本地 / 保留 / 云元数据段。
+     */
+    protected function isPrivateOrReservedIp(string $ip): bool
+    {
+        // FILTER 内置标志覆盖：私有网段（10/8、172.16/12、192.168/16）与保留段（127/8、169.254/16 等）
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return true;
+        }
+
+        // FILTER_FLAG 未覆盖的额外 CIDR：
+        //   - 100.64.0.0/10   Carrier-Grade NAT (RFC 6598)
+        //   - 0.0.0.0/8       "本网络" 源地址
+        //   - 240.0.0.0/4     保留段（已被 NO_RES_RANGE 覆盖，此处留作冗余）
+        //   - 各云厂商元数据特殊 IP（精确 /32 或小范围）
+        $extraRanges = [
+            // CGNAT
+            ['100.64.0.0', '255.192.0.0'],
+            // "this" network (RFC 1122)
+            ['0.0.0.0', '255.0.0.0'],
+            // 阿里云元数据
+            ['100.100.100.200', '255.255.255.255'],
+            // 腾讯云元数据
+            ['169.254.0.23', '255.255.255.255'],
+            // 火山引擎元数据
+            ['100.96.0.96', '255.255.255.255'],
+        ];
+
+        $ipLong = @ip2long($ip);
+        if ($ipLong !== false) {
+            foreach ($extraRanges as [$start, $mask]) {
+                $startLong = ip2long($start);
+                $maskLong = ip2long($mask);
+                if ($startLong !== false && $maskLong !== false && ($ipLong & $maskLong) === ($startLong & $maskLong)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
