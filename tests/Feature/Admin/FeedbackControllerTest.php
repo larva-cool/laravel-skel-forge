@@ -88,7 +88,7 @@ class FeedbackControllerTest extends TestCase
         $response = $this->actingAsAdmin()->getJson("/admin/feedbacks/{$feedback->id}");
 
         $response->assertOk()
-            ->assertJsonPath('data.images', $images);
+            ->assertJsonPath('images', $images);
     }
 
     #[Test]
@@ -98,7 +98,7 @@ class FeedbackControllerTest extends TestCase
         FeedbackFactory::new()->create(['title' => '菜单管理体验问题']);
         FeedbackFactory::new()->create(['title' => '其他标题']);
 
-        $response = $this->actingAsAdmin()->getJson('/admin/feedbacks?keyword=菜单');
+        $response = $this->actingAsAdmin()->getJson('/admin/feedbacks?keyword='.rawurlencode('菜单'));
 
         $response->assertOk()->assertJsonPath('meta.total', 1);
     }
@@ -151,8 +151,8 @@ class FeedbackControllerTest extends TestCase
         $response = $this->actingAsAdmin()->getJson("/admin/feedbacks/{$feedback->id}");
 
         $response->assertOk()
-            ->assertJsonPath('data.id', $feedback->id)
-            ->assertJsonPath('data.content', '详细描述内容');
+            ->assertJsonPath('id', $feedback->id)
+            ->assertJsonPath('content', '详细描述内容');
     }
 
     #[Test]
@@ -233,7 +233,7 @@ class FeedbackControllerTest extends TestCase
         $response = $this->actingAsAdmin()->getJson('/admin/dicts/by-code/feedback_type/items');
 
         $response->assertOk();
-        // 默认应包含 4 个反馈类型
-        $this->assertGreaterThanOrEqual(4, count($response->json('data')));
+        // 默认应包含 4 个反馈类型（单资源列表无 data 包装，直接返回数组）
+        $this->assertGreaterThanOrEqual(4, count($response->json()));
     }
 }

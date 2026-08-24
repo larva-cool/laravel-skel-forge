@@ -78,7 +78,8 @@ class FeedbackResource extends JsonResource
      */
     public static function getTypeMap(): array
     {
-        $cacheKey = CacheKey::key(CacheKey::DICT_TYPE, 'feedback_type');
+        // 使用独立缓存键，避免与 DictController::itemsByCode 缓存的完整字典项数组冲突
+        $cacheKey = CacheKey::key(CacheKey::DICT_TYPE, 'feedback_type').':map';
 
         /** @var array<string, array{label: string, label_type: string}>|null $cached */
         $cached = Cache::get($cacheKey);
@@ -110,6 +111,6 @@ class FeedbackResource extends JsonResource
      */
     public static function flushTypeMapCache(): void
     {
-        Cache::forget(CacheKey::key(CacheKey::DICT_TYPE, 'feedback_type'));
+        Cache::forget(CacheKey::key(CacheKey::DICT_TYPE, 'feedback_type').':map');
     }
 }
