@@ -7,21 +7,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\CacheKey;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Common\MailCaptchaRequest;
 use App\Http\Requests\Api\V1\Common\SmsCaptchaRequest;
 use App\Http\Resources\Api\V1\PublicDictItemResource;
 use App\Models\System\Area;
 use App\Models\System\Dict;
-use App\Models\System\DictItem;
 use App\Services\MailCaptchaService;
 use App\Services\SmsCaptchaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * 公共接口
@@ -38,6 +34,7 @@ class CommonController extends Controller
         // 注册限速
         $this->middleware('throttle:5,1')->only(['fpm']);
     }
+
     /**
      * 重载 Fpm
      */
@@ -99,35 +96,9 @@ class CommonController extends Controller
     public function dictItems(string $code): AnonymousResourceCollection
     {
         // 白名单：仅允许公开访问的字典编码
-        $allowedCodes = ['feedback_type'];
+        abort_unless(in_array($code, ['feedback_type'], true), 404);
 
-        abort_unless(in_array($code, $allowedCodes, true), 404);
-
-        $cacheKey = CacheKey::key(CacheKey::DICT_TYPE, $code);
-
-        // 缓存纯数组而非 Eloquent Collection，避免 Octane/反序列化场景下
-        // 出现 "incomplete object" 错误；读取时再 hydrate 为模型集合。
-        /** @var array<int, array<string, mixed>> $itemsArray */
-        $itemsArray = Cache::remember($cacheKey, Carbon::now()->addHours(2), function () use ($code) {
-            $dict = Dict::query()
-                ->where('code', $code)
-                ->where('status', 1)
-                ->first();
-
-            if (! $dict) {
-                return [];
-            }
-
-            return $dict->dictItems()
-                ->where('status', 1)
-                ->orderBy('sort')
-                ->orderBy('id')
-                ->get()
-                ->toArray();
-        });
-
-        /** @var \Illuminate\Database\Eloquent\Collection<int, DictItem> $items */
-        $items = DictItem::hydrate($itemsArray);
+        $items = Dict::getActiveItemsByCode($code);
 
         return PublicDictItemResource::collection($items);
     }

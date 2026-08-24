@@ -12,11 +12,9 @@ use App\Http\Requests\Admin\Dict\DictSaveRequest;
 use App\Http\Resources\Admin\DictItemResource;
 use App\Http\Resources\Admin\DictResource;
 use App\Models\System\Dict;
-use App\Models\System\DictItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -111,31 +109,7 @@ class DictController extends Controller
      */
     public function itemsByCode(string $code): AnonymousResourceCollection
     {
-        $cacheKey = CacheKey::key(CacheKey::DICT_TYPE, $code);
-
-        // 缓存纯数组而非 Eloquent Collection，避免 Octane/反序列化场景下
-        // 出现 "incomplete object" 错误；读取时再 hydrate 为模型集合。
-        /** @var array<int, array<string, mixed>> $itemsArray */
-        $itemsArray = Cache::remember($cacheKey, Carbon::now()->addHours(2), function () use ($code) {
-            $dict = Dict::query()
-                ->where('code', $code)
-                ->where('status', 1)
-                ->first();
-
-            if (! $dict) {
-                return [];
-            }
-
-            return $dict->dictItems()
-                ->where('status', 1)
-                ->orderBy('sort')
-                ->orderBy('id')
-                ->get()
-                ->toArray();
-        });
-
-        /** @var \Illuminate\Database\Eloquent\Collection<int, DictItem> $items */
-        $items = DictItem::hydrate($itemsArray);
+        $items = Dict::getActiveItemsByCode($code);
 
         return DictItemResource::collection($items);
     }

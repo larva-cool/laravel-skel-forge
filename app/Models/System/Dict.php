@@ -93,4 +93,36 @@ class Dict extends Model
             ->orderBy('sort')
             ->orderBy('id');
     }
+
+    /**
+     * 根据字典编码获取启用的字典项（带缓存）
+     *
+     * 缓存纯数组而非 Eloquent Collection，避免 Octane/反序列化场景下
+     * 出现 "incomplete object" 错误；读取时再 hydrate 为模型集合。
+     *
+     * @return Collection<int, DictItem>
+     */
+    public static function getActiveItemsByCode(string $code): Collection
+    {
+        $cacheKey = CacheKey::key(CacheKey::DICT_TYPE, $code);
+
+        /** @var array<int, array<string, mixed>> $itemsArray */
+        $itemsArray = Cache::remember($cacheKey, Carbon::now()->addHours(2), function () use ($code) {
+            $dict = static::query()
+                ->where('code', $code)
+                ->where('status', 1)
+                ->first();
+
+            if (! $dict) {
+                return [];
+            }
+
+            return $dict->dictItems()
+                ->where('status', 1)
+                ->get()
+                ->toArray();
+        });
+
+        return DictItem::hydrate($itemsArray);
+    }
 }
