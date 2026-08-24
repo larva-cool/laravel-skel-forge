@@ -9,6 +9,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Feedback\FeedbackStoreRequest;
+use App\Http\Resources\Api\V1\FeedbackResource;
 use App\Models\System\Feedback;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,6 +65,6 @@ class FeedbackController extends Controller
             ->orderByDesc('id')
             ->paginate($perPage);
 
-        return response()->json($items);
+        return FeedbackResource::collection($items)->response();
     }
 }
