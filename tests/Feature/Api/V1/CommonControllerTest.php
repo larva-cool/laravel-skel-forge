@@ -9,6 +9,8 @@ namespace Tests\Feature\Api\V1;
 
 use App\Http\Controllers\Api\V1\CommonController;
 use App\Models\System\Area;
+use App\Models\System\Dict;
+use App\Models\System\DictItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -56,5 +58,73 @@ class CommonControllerTest extends TestCase
             ->assertJsonCount(1)
             ->assertJsonPath('0.id', $city->id)
             ->assertJsonPath('0.name', $city->name);
+    }
+
+    #[Test]
+    #[TestDox('白名单内的反馈类型字典可公开访问，且仅返回 label/value/label_type 字段')]
+    public function dict_items_returns_feedback_type_items_for_whitelisted_code(): void
+    {
+        $dict = Dict::query()->create([
+            'name' => '反馈类型',
+            'code' => 'feedback_type',
+            'status' => 1,
+            'sort' => 0,
+        ]);
+        DictItem::query()->create([
+            'dict_id' => $dict->id, 'label' => 'Bug反馈', 'value' => 'bug',
+            'label_type' => 'danger', 'status' => 1, 'sort' => 2,
+        ]);
+        DictItem::query()->create([
+            'dict_id' => $dict->id, 'label' => '功能建议', 'value' => 'feature',
+            'label_type' => 'primary', 'status' => 1, 'sort' => 0,
+        ]);
+        // 禁用的字典项不应返回
+        DictItem::query()->create([
+            'dict_id' => $dict->id, 'label' => '已禁用', 'value' => 'disabled',
+            'label_type' => 'info', 'status' => 0, 'sort' => 9,
+        ]);
+
+        $response = $this->getJson(route('api.v1.common.dict_items', ['code' => 'feedback_type']));
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.value', 'feature')
+            ->assertJsonPath('data.0.label', '功能建议')
+            ->assertJsonPath('data.0.label_type', 'primary')
+            ->assertJsonPath('data.1.value', 'bug')
+            ->assertJsonMissing(['value' => 'disabled']);
+    }
+
+    #[Test]
+    #[TestDox('不在白名单中的字典编码返回 404')]
+    public function dict_items_returns_404_for_non_whitelisted_code(): void
+    {
+        $dict = Dict::query()->create([
+            'name' => '内部字典',
+            'code' => 'internal_secret',
+            'status' => 1,
+        ]);
+        DictItem::query()->create([
+            'dict_id' => $dict->id, 'label' => '项', 'value' => 'v',
+            'label_type' => 'default', 'status' => 1,
+        ]);
+
+        $this->getJson(route('api.v1.common.dict_items', ['code' => 'internal_secret']))
+            ->assertNotFound();
+    }
+
+    #[Test]
+    #[TestDox('字典不存在或被禁用时返回空列表')]
+    public function dict_items_returns_empty_when_dict_not_found_or_disabled(): void
+    {
+        Dict::query()->create([
+            'name' => '反馈类型',
+            'code' => 'feedback_type',
+            'status' => 0, // 已禁用
+        ]);
+
+        $response = $this->getJson(route('api.v1.common.dict_items', ['code' => 'feedback_type']));
+
+        $response->assertOk()->assertJsonCount(0, 'data');
     }
 }

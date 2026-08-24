@@ -7,14 +7,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CacheKey;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Common\MailCaptchaRequest;
 use App\Http\Requests\Api\V1\Common\SmsCaptchaRequest;
+use App\Http\Resources\Api\V1\PublicDictItemResource;
 use App\Models\System\Area;
+use App\Models\System\Dict;
 use App\Services\MailCaptchaService;
 use App\Services\SmsCaptchaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * 公共接口
@@ -73,5 +79,41 @@ class CommonController extends Controller
             ->get();
 
         return response()->json($items);
+    }
+
+    /**
+     * 公开字典项接口（白名单控制）
+     *
+     * 获取前端可公开访问的字典项列表，如反馈类型等。仅返回白名单内的字典编码对应的数据，
+     * 使用 Redis 缓存 2 小时，并附加 HTTP 缓存头。
+     */
+    public function dictItems(string $code): AnonymousResourceCollection
+    {
+        // 白名单：仅允许公开访问的字典编码
+        $allowedCodes = ['feedback_type'];
+
+        abort_unless(in_array($code, $allowedCodes, true), 404);
+
+        $cacheKey = CacheKey::key(CacheKey::DICT_TYPE, $code);
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\System\DictItem> $items */
+        $items = Cache::remember($cacheKey, Carbon::now()->addHours(2), function () use ($code) {
+            $dict = Dict::query()
+                ->where('code', $code)
+                ->where('status', 1)
+                ->first();
+
+            if (! $dict) {
+                return collect();
+            }
+
+            return $dict->dictItems()
+                ->where('status', 1)
+                ->orderBy('sort')
+                ->orderBy('id')
+                ->get();
+        });
+
+        return PublicDictItemResource::collection($items);
     }
 }

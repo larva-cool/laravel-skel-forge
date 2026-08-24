@@ -25,6 +25,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         // 增加缓存Header
         $registrar->group(['middleware' => 'cache.headers:public;max_age=2628000;etag'], function (Registrar $registrar) {
             $registrar->get('area', [\App\Http\Controllers\Api\V1\CommonController::class, 'area'])->name('area'); // 地区列表
+            $registrar->get('dict-items/{code}', [\App\Http\Controllers\Api\V1\CommonController::class, 'dictItems'])->name('dict_items'); // 公开字典项（白名单）
         });
     });
 
