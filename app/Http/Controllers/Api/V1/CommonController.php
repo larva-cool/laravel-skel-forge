@@ -31,6 +31,14 @@ use Illuminate\Support\Facades\Cache;
 class CommonController extends Controller
 {
     /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        // 注册限速
+        $this->middleware('throttle:5,1')->only(['fpm']);
+    }
+    /**
      * 重载 Fpm
      */
     public function fpm(): JsonResponse
