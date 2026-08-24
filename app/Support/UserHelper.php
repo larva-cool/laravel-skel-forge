@@ -20,13 +20,29 @@ use Illuminate\Support\Facades\Event;
 class UserHelper
 {
     /**
+     * 通过手机创建用户
+     *
+     * @param  string  $name  昵称
+     * @param  int|string  $phone  手机号
+     * @param  string|null  $password  密码
+     */
+    public static function createByPhone(string $name, int|string $phone, ?string $password = null): User
+    {
+        return User::create([
+            'name' => $name,
+            'phone' => $phone,
+            'password' => $password,
+        ]);
+    }
+
+    /**
      * 查找手机用户，如果没有则根据系统规则创建
      */
     public static function findOrCreatePhone(int|string $phone): ?User
     {
         /** @var User $user */
         $user = User::withTrashed()->where('phone', $phone)->first();
-        if (! $user) {
+        if (!$user) {
             $user = User::create([
                 'name' => self::generateUsername(mobile_replace($phone)),
                 'phone' => $phone,
