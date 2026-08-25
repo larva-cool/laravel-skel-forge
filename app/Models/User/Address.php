@@ -3,12 +3,12 @@
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
-
 declare(strict_types=1);
 
 namespace App\Models\User;
 
 use App\Models\Model;
+use App\Models\Traits\HasUser;
 use App\Policies\AddressPolicy;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -38,7 +38,7 @@ use Illuminate\Support\Carbon;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-#[Table('addresses', 'user_id')]
+#[Table('addresses')]
 #[Fillable([
     'user_id', 'name', 'country', 'province', 'city', 'district', 'address', 'zipcode', 'phone',
     'is_default',
@@ -47,6 +47,8 @@ use Illuminate\Support\Carbon;
 #[UsePolicy(AddressPolicy::class)]
 class Address extends Model
 {
+    use HasUser;
+
     /**
      * The model's attributes.
      *
@@ -71,7 +73,7 @@ class Address extends Model
             'city' => 'string',
             'district' => 'string',
             'address' => 'string',
-            'zipcode' => 'integer',
+            'zipcode' => 'string',
             'phone' => 'string',
             'is_default' => 'bool',
             'created_at' => 'datetime',

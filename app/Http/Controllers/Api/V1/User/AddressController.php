@@ -3,12 +3,14 @@
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
-
 declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\User\Address\StoreAddressRequest;
+use App\Http\Requests\Api\V1\User\Address\UpdateAddressRequest;
+use App\Http\Resources\Api\V1\AddressResource;
 use App\Models\User\Address;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -49,6 +51,10 @@ class AddressController extends Controller
     {
         $address = Address::create($request->validated());
 
+        if ($address->is_default) {
+            $address->markDefault();
+        }
+
         return new AddressResource($address);
     }
 
@@ -67,6 +73,10 @@ class AddressController extends Controller
     {
         $address->update($request->validated());
 
+        if ($request->has('is_default') && $address->is_default) {
+            $address->markDefault();
+        }
+
         return new AddressResource($address);
     }
 
@@ -75,6 +85,8 @@ class AddressController extends Controller
      */
     public function setDefault(Address $address): AddressResource
     {
+        $this->authorize('update', $address);
+
         $address->markDefault();
 
         return new AddressResource($address);
