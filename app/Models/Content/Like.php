@@ -34,6 +34,8 @@ use Illuminate\Support\Carbon;
  */
 #[Table('likes')]
 #[Fillable(['user_id', 'source_id', 'source_type', 'extra'])]
+#[Hidden(['user_id'])]
+#[UsePolicy(LikePolicy::class)]
 class Like extends Model
 {
     /** @use HasFactory<LikeFactory> */

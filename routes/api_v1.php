@@ -67,6 +67,11 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     Route::get('feedbacks/my', [\App\Http\Controllers\Api\V1\FeedbackController::class, 'my'])->name('feedbacks.my'); // 我的反馈列表（需登录）
 
     /**
+     * 评论
+     */
+    Route::apiResource('comments', \App\Http\Controllers\Api\V1\Content\CommentController::class)->only(['index', 'store', 'destroy']); // 评论列表 / 发布评论 / 删除评论
+
+    /**
      * 用户接口
      */
     Route::group(['prefix' => 'user', 'as' => 'user.'], function (Registrar $registrar) {
@@ -92,6 +97,12 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
          */
         $registrar->apiResource('collections', \App\Http\Controllers\Api\V1\User\CollectionController::class)
             ->only(['index', 'store', 'destroy']); // 收藏列表 / 添加收藏 / 取消收藏
+
+        /**
+         * 点赞
+         */
+        $registrar->apiResource('likes', \App\Http\Controllers\Api\V1\User\LikeController::class)
+            ->only(['index', 'store', 'destroy']); // 点赞列表 / 添加点赞 / 取消点赞
 
         $registrar->get('', [\App\Http\Controllers\Api\V1\UserController::class, 'baseProfile'])->name('profile'); // 获取基本信息
         $registrar->post('profile', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyProfile'])->name('modify_profile'); // 修改个人资料
