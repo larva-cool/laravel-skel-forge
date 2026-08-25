@@ -51,7 +51,8 @@ class AuthController extends Controller
     {
         $this->authorize('passwordLogin', User::class);
         $user = $request->authenticate();
-        $token = $user->createToken('user-token', ['user']);
+        $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
+        $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Login('sanctum', $user, false));
         Event::dispatch(new LoginSucceeded($user, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
 
@@ -69,7 +70,8 @@ class AuthController extends Controller
     {
         $this->authorize('phoneLogin', User::class);
         $user = $request->authenticate();
-        $token = $user->createToken('user-token', ['user']);
+        $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
+        $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Login('sanctum', $user, false));
         Event::dispatch(new LoginSucceeded($user, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
 
@@ -87,7 +89,8 @@ class AuthController extends Controller
     {
         $this->authorize('wechatLogin', User::class);
         $user = $request->authenticate();
-        $token = $user->createToken('user-token', ['user']);
+        $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
+        $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Login('sanctum', $user, false));
         Event::dispatch(new LoginSucceeded($user, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
 
@@ -105,7 +108,8 @@ class AuthController extends Controller
     {
         $this->authorize('appleLogin', User::class);
         $user = $request->authenticate();
-        $token = $user->createToken('user-token', ['user']);
+        $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
+        $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Login('sanctum', $user, false));
         Event::dispatch(new LoginSucceeded($user, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
 
@@ -140,7 +144,8 @@ class AuthController extends Controller
             $request->user()->tokens()->delete();
             validation_exception('account', __('auth.blocked'));
         }
-        $token = $request->user()->createToken($tokenModel->name, $tokenModel->abilities);
+        $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
+        $token = $request->user()->createToken($tokenModel->name, $tokenModel->abilities, Carbon::now()->addMinutes($minutes));
         // 一分钟后删除当前这个Token
         DeleteAccessTokenJob::dispatch($tokenModel->token)->delay(now()->addMinutes(1));
 
