@@ -152,17 +152,23 @@ class CommentControllerTest extends TestCase
     public static function guestForbiddenRouteProvider(): array
     {
         return [
-            '评论列表' => ['getJson', '/api/v1/comments'],
             '发布评论' => ['postJson', '/api/v1/comments'],
             '删除评论' => ['deleteJson', '/api/v1/comments/1'],
         ];
     }
 
     #[Test]
-    #[TestDox('未认证访问评论接口返回 401')]
+    #[TestDox('未认证访问评论写接口返回 401')]
     #[DataProvider('guestForbiddenRouteProvider')]
     public function guest_cannot_access_comment_endpoints(string $method, string $uri): void
     {
         $this->{$method}($uri)->assertUnauthorized();
+    }
+
+    #[Test]
+    #[TestDox('游客可查看评论列表')]
+    public function guest_can_access_comment_index(): void
+    {
+        $this->getJson('/api/v1/comments')->assertOk();
     }
 }
