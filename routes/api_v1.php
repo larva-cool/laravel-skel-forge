@@ -87,6 +87,12 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->put('address/{address}/default', [\App\Http\Controllers\Api\V1\User\AddressController::class, 'setDefault']); // 设为默认地址
         $registrar->apiResource('address', \App\Http\Controllers\Api\V1\User\AddressController::class); // 收货地址
 
+        /**
+         * 收藏
+         */
+        $registrar->apiResource('collections', \App\Http\Controllers\Api\V1\User\CollectionController::class)
+            ->only(['index', 'store', 'destroy']); // 收藏列表 / 添加收藏 / 取消收藏
+
         $registrar->get('', [\App\Http\Controllers\Api\V1\UserController::class, 'baseProfile'])->name('profile'); // 获取基本信息
         $registrar->post('profile', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyProfile'])->name('modify_profile'); // 修改个人资料
         $registrar->post('username', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyUsername'])->name('modify_username'); // 修改账号

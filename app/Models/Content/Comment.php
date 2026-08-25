@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace App\Models\Content;
 
 use App\Models\Model;
+use App\Models\Traits\HasLikeable;
 use App\Models\Traits\HasUser;
 use App\Models\User;
 use Database\Factories\Content\CommentFactory;
@@ -45,7 +46,7 @@ use Illuminate\Support\Carbon;
 class Comment extends Model
 {
     /** @use HasFactory<CommentFactory> */
-    use HasFactory, HasUser;
+    use HasFactory, HasLikeable, HasUser;
 
     // 时间定义
     public const UPDATED_AT = null;

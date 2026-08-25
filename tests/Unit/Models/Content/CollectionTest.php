@@ -200,7 +200,7 @@ class CollectionTest extends TestCase
     {
         $source = $this->createSource();
 
-        $this->assertSame(0, $source->collection_count);
+        $this->assertSame(0, $source->fresh()->collection_count);
 
         Collection::factory()->forSource($source)->create([
             'user_id' => User::factory()->create()->id,
