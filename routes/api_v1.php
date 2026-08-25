@@ -84,7 +84,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         /**
          * 收货地址
          */
-        $registrar->put('address/{address}/default', [\App\Http\Controllers\Api\V1\User\AddressController::class, 'set_default']); // 设为默认地址
+        $registrar->put('address/{address}/default', [\App\Http\Controllers\Api\V1\User\AddressController::class, 'setDefault']); // 设为默认地址
         $registrar->apiResource('address', \App\Http\Controllers\Api\V1\User\AddressController::class); // 收货地址
 
         $registrar->get('', [\App\Http\Controllers\Api\V1\UserController::class, 'baseProfile'])->name('profile'); // 获取基本信息
