@@ -306,7 +306,7 @@ return new class extends Migration
             [
                 'name' => '用户token有效期',
                 'key' => 'user.token_expiration',
-                'value' => 525600,
+                'value' => 43200,
                 'cast_type' => SettingType::CAST_TYPE_INT,
                 'input_type' => SettingType::CAST_TYPE_INT,
                 'remark' => '令牌有效期，单位为分钟。',
