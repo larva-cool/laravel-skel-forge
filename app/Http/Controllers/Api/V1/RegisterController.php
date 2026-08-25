@@ -18,6 +18,7 @@ use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 
 /**
@@ -70,7 +71,8 @@ class RegisterController extends Controller
         }
         $user = User::create($data);
         // 创建 Token
-        $token = $user->createToken('user-token', ['user']);
+        $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
+        $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Registered($user));
         if ($request->invite_code) {
             Event::dispatch(new InviteRegistered($user, $request->invite_code));
@@ -80,6 +82,7 @@ class RegisterController extends Controller
 
         return response()->json([
             'access_token' => $token->plainTextToken,
+            'expires_in' => (int) $token->accessToken->expires_at?->diffInSeconds(Carbon::now()),
             'user' => new UserInfoResource($user),
         ]);
     }
@@ -96,7 +99,8 @@ class RegisterController extends Controller
             'password' => $request->password,
         ]);
         // 创建 Token
-        $token = $user->createToken('user-token', ['user']);
+        $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
+        $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Registered($user));
         if ($request->invite_code) {
             Event::dispatch(new InviteRegistered($user, $request->invite_code));
@@ -106,6 +110,7 @@ class RegisterController extends Controller
 
         return response()->json([
             'access_token' => $token->plainTextToken,
+            'expires_in' => (int) $token->accessToken->expires_at?->diffInSeconds(Carbon::now()),
             'user' => new UserInfoResource($user),
         ]);
     }

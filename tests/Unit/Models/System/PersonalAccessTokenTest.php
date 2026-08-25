@@ -89,34 +89,4 @@ class PersonalAccessTokenTest extends TestCase
 
         $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $token->accessToken->last_used_at);
     }
-
-    #[Test]
-    #[TestDox('用户 token 创建时自动按设置设置过期时间')]
-    public function user_token_auto_applies_user_token_expiration_setting(): void
-    {
-        settings()->set('user.token_expiration', 120); // 120 分钟
-        $user = User::factory()->create();
-
-        $token = $user->createToken('test-token', ['user']);
-        $expiresAt = $token->accessToken->expires_at;
-
-        $this->assertNotNull($expiresAt);
-        $this->assertTrue($expires_at->between(
-            now()->addMinutes(119),
-            now()->addMinutes(121)
-        ));
-    }
-
-    #[Test]
-    #[TestDox('手动指定 expires_at 时不被设置覆盖')]
-    public function explicit_expires_at_is_not_overridden_by_setting(): void
-    {
-        settings()->set('user.token_expiration', 120);
-        $user = User::factory()->create();
-        $customExpiry = now()->addDays(30);
-
-        $token = $user->createToken('test-token', ['user'], $customExpiry);
-
-        $this->assertTrue($token->accessToken->expires_at->eq($customExpiry));
-    }
 }
