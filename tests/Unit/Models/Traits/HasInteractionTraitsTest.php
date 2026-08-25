@@ -93,31 +93,31 @@ class HasInteractionTraitsTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('liked 传入用户实例可判断是否已点赞')]
-    public function liked_accepts_user_instance(): void
+    #[TestDox('isLikedBy 传入用户实例可判断是否已点赞')]
+    public function is_liked_by_accepts_user_instance(): void
     {
         $source = $this->createSource();
         $user = User::factory()->create();
 
-        $this->assertFalse($source->liked($user));
+        $this->assertFalse($source->isLikedBy($user));
 
         Like::factory()->forSource($source)->create(['user_id' => $user->id]);
 
-        $this->assertTrue($source->liked($user));
+        $this->assertTrue($source->isLikedBy($user));
     }
 
     #[Test]
-    #[TestDox('liked 传入用户ID可判断是否已点赞')]
-    public function liked_accepts_user_id(): void
+    #[TestDox('isLikedBy 传入用户ID可判断是否已点赞')]
+    public function is_liked_by_accepts_user_id(): void
     {
         $source = $this->createSource();
         $user = User::factory()->create();
 
         Like::factory()->forSource($source)->create(['user_id' => $user->id]);
 
-        $this->assertTrue($source->liked($user->id));
-        $this->assertTrue($source->liked((string) $user->id));
-        $this->assertFalse($source->liked(999999));
+        $this->assertTrue($source->isLikedBy($user->id));
+        $this->assertTrue($source->isLikedBy((string) $user->id));
+        $this->assertFalse($source->isLikedBy(999999));
     }
 
     #[Test]

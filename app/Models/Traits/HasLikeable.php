@@ -15,16 +15,14 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 /**
  * 点赞
  *
- * @property Model $this
- *
  * @mixin Model
  *
- * @author Tongle Xu <xutongle@gmail.com>
+ * @author Tongle Xu <xutongle@msn.com>
  */
 trait HasLikeable
 {
     /**
-     * support Relation
+     * 点赞列表
      */
     public function likes(): MorphMany
     {
@@ -32,14 +30,12 @@ trait HasLikeable
     }
 
     /**
-     * 是否赞过
+     * 是否被指定用户点赞
      */
-    public function liked(User|int|string $user): bool
+    public function isLikedBy(User|int|string $user): bool
     {
-        if ($user instanceof User) {
-            return $this->likes()->where('user_id', $user->id)->exists();
-        }
+        $userId = $user instanceof User ? $user->id : (int) $user;
 
-        return $this->likes()->where('user_id', (int) $user)->exists();
+        return $this->likes()->where('user_id', $userId)->exists();
     }
 }

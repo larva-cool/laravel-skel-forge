@@ -9,9 +9,11 @@ namespace Tests\Feature\Api\V1;
 
 use App\Http\Controllers\Api\V1\User\CollectionController;
 use App\Models\Content\Collection;
-use App\Models\Content\Comment;
+use App\Models\Model;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -19,6 +21,21 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Tests\TestCase;
+
+/**
+ * 收藏接口的测试目标模型
+ *
+ * @property int $id
+ * @property int $collection_count
+ */
+class ApiCollectableStub extends Model
+{
+    use \App\Models\Traits\HasCollectionable;
+
+    protected $table = 'api_collectable_stubs';
+
+    protected $guarded = [];
+}
 
 /**
  * 收藏接口功能测试
@@ -36,7 +53,21 @@ class CollectionControllerTest extends TestCase
     {
         parent::setUp();
 
+        Relation::morphMap(['api_collectable_stub' => ApiCollectableStub::class]);
+
+        Schema::create('api_collectable_stubs', function ($table) {
+            $table->id();
+            $table->unsignedInteger('collection_count')->default(0);
+            $table->timestamps();
+        });
+
         $this->user = User::factory()->create();
+    }
+
+    protected function tearDown(): void
+    {
+        Schema::dropIfExists('api_collectable_stubs');
+        parent::tearDown();
     }
 
     /**
@@ -48,13 +79,11 @@ class CollectionControllerTest extends TestCase
     }
 
     /**
-     * 创建可被收藏的评论
+     * 创建可被收藏的目标
      */
-    private function createSource(): Comment
+    private function createSource(): ApiCollectableStub
     {
-        $user = User::factory()->create();
-
-        return Comment::factory()->forSource($user)->create(['user_id' => $user->id]);
+        return ApiCollectableStub::create([]);
     }
 
     #[Test]
@@ -70,15 +99,16 @@ class CollectionControllerTest extends TestCase
             'extra' => ['from' => 'app'],
         ])
             ->assertCreated()
-            ->assertJsonPath('source_type', 'comment')
+            ->assertJsonPath('source_type', 'api_collectable_stub')
             ->assertJsonPath('source_id', $source->id)
             ->assertJsonPath('extra.from', 'app');
 
         $this->assertDatabaseHas('collections', [
             'user_id' => $this->user->id,
-            'source_type' => 'comment',
+            'source_type' => 'api_collectable_stub',
             'source_id' => $source->id,
         ]);
+        $this->assertSame(1, $source->fresh()->collection_count);
     }
 
     #[Test]
@@ -148,12 +178,12 @@ class CollectionControllerTest extends TestCase
         $this->actingAsUser();
 
         Collection::factory()->forSource($this->createSource())->create(['user_id' => $this->user->id]);
-        Collection::factory()->forSource($this->user)->create(['user_id' => $this->user->id]);
+        Collection::factory()->forSource($this->createSource())->create(['user_id' => $this->user->id]);
 
-        $this->getJson('/api/v1/user/collections?source_type=comment')
+        $this->getJson('/api/v1/user/collections?source_type=api_collectable_stub')
             ->assertOk()
-            ->assertJsonPath('meta.total', 1)
-            ->assertJsonPath('data.0.source_type', 'comment');
+            ->assertJsonPath('meta.total', 2)
+            ->assertJsonPath('data.0.source_type', 'api_collectable_stub');
     }
 
     #[Test]
@@ -174,14 +204,16 @@ class CollectionControllerTest extends TestCase
     public function authenticated_user_can_delete_own_collection(): void
     {
         $this->actingAsUser();
+        $source = $this->createSource();
 
-        $collection = Collection::factory()->forSource($this->createSource())->create([
+        $collection = Collection::factory()->forSource($source)->create([
             'user_id' => $this->user->id,
         ]);
 
         $this->deleteJson('/api/v1/user/collections/'.$collection->id)->assertNoContent();
 
         $this->assertDatabaseMissing('collections', ['id' => $collection->id]);
+        $this->assertSame(0, $source->fresh()->collection_count);
     }
 
     #[Test]

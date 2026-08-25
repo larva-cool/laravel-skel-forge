@@ -30,9 +30,9 @@ trait HasCollectionable
     }
 
     /**
-     * 是否收藏过
+     * 是否被指定用户收藏目标
      */
-    public function isCollected(User|string|int $user): bool
+    public function isCollectedBy(User|string|int $user): bool
     {
         if ($user instanceof User) {
             return $this->collections()->where('user_id', $user->id)->exists();
