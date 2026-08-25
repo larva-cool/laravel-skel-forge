@@ -24,6 +24,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // 本地开发演示数据，测试环境不导入，避免污染测试数据库
+        if (app()->environment('testing')) {
+            return;
+        }
+
         foreach ($this->nicknames as $i => $emoji) {
             UserHelper::createByPhone('测试号'.$emoji, '14000000'.str_pad((string) $i, 3, '0', STR_PAD_LEFT), 'password');
         }
