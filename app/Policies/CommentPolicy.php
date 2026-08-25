@@ -17,7 +17,7 @@ use App\Models\User;
  */
 class CommentPolicy
 {
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }
