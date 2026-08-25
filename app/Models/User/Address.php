@@ -9,9 +9,11 @@ declare(strict_types=1);
 namespace App\Models\User;
 
 use App\Models\Model;
+use App\Policies\AddressPolicy;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Carbon;
 
@@ -42,6 +44,7 @@ use Illuminate\Support\Carbon;
     'is_default',
 ])]
 #[Hidden(['user_id'])]
+#[UsePolicy(AddressPolicy::class)]
 class Address extends Model
 {
     /**
