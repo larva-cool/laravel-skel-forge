@@ -7,31 +7,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Content;
 
+use App\Models\Content\Comment;
 use App\Models\Content\Like;
-use App\Models\Model;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Tests\TestCase;
-
-/**
- * 可点赞的测试目标模型
- *
- * @property int $id
- * @property int $like_count
- */
-class LikeableStub extends Model
-{
-    protected $table = 'likeable_stubs';
-
-    protected $guarded = [];
-}
 
 /**
  * Like 模型单元测试
@@ -43,31 +28,14 @@ class LikeTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Relation::morphMap(['likeable_stub' => LikeableStub::class]);
-
-        Schema::create('likeable_stubs', function ($table) {
-            $table->id();
-            $table->unsignedInteger('like_count')->default(0);
-            $table->timestamps();
-        });
-    }
-
-    protected function tearDown(): void
-    {
-        Schema::dropIfExists('likeable_stubs');
-        parent::tearDown();
-    }
-
     /**
-     * 创建可被点赞的目标
+     * 创建可被点赞的评论
      */
-    private function createSource(): LikeableStub
+    private function createSource(): Comment
     {
-        return LikeableStub::create([]);
+        $user = User::factory()->create();
+
+        return Comment::factory()->forSource($user)->create(['user_id' => $user->id]);
     }
 
     #[Test]
@@ -100,12 +68,11 @@ class LikeTest extends TestCase
     #[TestDox('source_type 使用 morph 别名存储')]
     public function source_type_is_stored_as_morph_alias(): void
     {
-        $source = $this->createSource();
-        $like = Like::factory()->forSource($source)->create([
+        $like = Like::factory()->forSource($this->createSource())->create([
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->assertSame('likeable_stub', $like->source_type);
+        $this->assertSame('comment', $like->source_type);
     }
 
     #[Test]
@@ -179,7 +146,7 @@ class LikeTest extends TestCase
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->assertInstanceOf(LikeableStub::class, $like->source);
+        $this->assertInstanceOf(Comment::class, $like->source);
         $this->assertSame($source->id, $like->source->id);
     }
 

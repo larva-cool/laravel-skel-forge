@@ -3,7 +3,6 @@
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
-
 declare(strict_types=1);
 
 namespace App\Models\Content;
@@ -11,9 +10,13 @@ namespace App\Models\Content;
 use App\Models\Model;
 use App\Models\Traits\HasUser;
 use App\Models\User;
+use App\Policies\CollectionPolicy;
+use Database\Factories\Content\CollectionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
@@ -25,7 +28,7 @@ use Illuminate\Support\Carbon;
  * @property int $source_id 资源ID
  * @property string $source_type 资源类型
  * @property Model $source 资源
- * @property array $extra 扩展信息
+ * @property array<string, mixed>|null $extra 扩展信息
  * @property Carbon $created_at 创建时间
  * @property Carbon $updated_at 更新时间
  * @property User $user 用户
@@ -34,10 +37,13 @@ use Illuminate\Support\Carbon;
  */
 #[Table('collections')]
 #[Fillable(['user_id', 'source_id', 'source_type', 'extra'])]
+#[Hidden(['user_id'])]
+#[UsePolicy(CollectionPolicy::class)]
 class Collection extends Model
 {
-    use HasUser;
-    
+    /** @use HasFactory<CollectionFactory> */
+    use HasFactory, HasUser;
+
     /**
      * Get the attributes that should be cast.
      *
@@ -68,14 +74,6 @@ class Collection extends Model
         static::deleted(function (Collection $model): void {
             $model->source()->decrement('collection_count');
         });
-    }
-
-    /**
-     * Get the user relation.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     /**

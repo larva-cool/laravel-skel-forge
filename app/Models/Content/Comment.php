@@ -1,12 +1,19 @@
 <?php
 
+/**
+ * This is NOT a freeware, use is subject to license terms.
+ */
+declare(strict_types=1);
+
 namespace App\Models\Content;
 
 use App\Models\Model;
 use App\Models\Traits\HasUser;
 use App\Models\User;
+use Database\Factories\Content\CommentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
@@ -28,7 +35,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $created_at 评论时间
  * @property Model $source 源模型
  * @property User $user 用户模型
- * @property Comment[] $replies 回复模型
+ * @property Comment[] $comments 回复模型
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
@@ -37,7 +44,11 @@ use Illuminate\Support\Carbon;
     'ip_address', 'mentioned_users'])]
 class Comment extends Model
 {
-    use HasUser;
+    /** @use HasFactory<CommentFactory> */
+    use HasFactory, HasUser;
+
+    // 时间定义
+    public const UPDATED_AT = null;
 
     /**
      * Get the attributes that should be cast.
@@ -63,26 +74,12 @@ class Comment extends Model
     }
 
     /**
-     * Perform any actions required after the model boots.
-     */
-    protected static function booted(): void
-    {
-        parent::booted();
-        static::deleted(function (Comment $model): void {
-//            if ($model->status->isApproved()) {
-//                $model->source()->decrement('comment_count');
-//            }
-        });
-    }
-
-    /**
      * 评论回复
      */
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'source');
     }
-
 
     /**
      * 多态关联
@@ -91,5 +88,4 @@ class Comment extends Model
     {
         return $this->morphTo();
     }
-
 }

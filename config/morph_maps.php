@@ -9,4 +9,5 @@ return [
     'user' => \App\Models\User::class,
     'admin' => \App\Models\Admin\Admin::class,
     'point' => \App\Models\Point\PointRecord::class,
+    'comment' => \App\Models\Content\Comment::class,
 ];
