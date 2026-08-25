@@ -59,7 +59,7 @@ class AuthController extends Controller
     public function login(PasswordLoginRequest $request): JsonResponse
     {
         $admin = $request->authenticate();
-        $token = $admin->createToken('admin-token', ['admin']);
+        $token = $admin->createToken('admin-token', ['admin'], Carbon::now()->addMinutes(1440));
         Event::dispatch(new Login(AdminMenu::GUARD_NAME, $admin, false));
         Event::dispatch(new LoginSucceeded($admin, $request->ip(), (string) $request->server('REMOTE_PORT'), $request->userAgent()));
 
@@ -75,7 +75,7 @@ class AuthController extends Controller
     public function wxLogin(WechatMpLoginRequest $request): JsonResponse
     {
         $admin = $request->authenticate();
-        $token = $admin->createToken('admin-token', ['admin']);
+        $token = $admin->createToken('admin-token', ['admin'], Carbon::now()->addMinutes(1440));
         Event::dispatch(new Login('sanctum', $admin, false));
         Event::dispatch(new LoginSucceeded($admin, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
 
@@ -91,7 +91,7 @@ class AuthController extends Controller
     public function appleLogin(AppleLoginRequest $request): JsonResponse
     {
         $admin = $request->authenticate();
-        $token = $admin->createToken('admin-token', ['admin']);
+        $token = $admin->createToken('admin-token', ['admin'], Carbon::now()->addMinutes(1440));
         Event::dispatch(new Login('sanctum', $admin, false));
         Event::dispatch(new LoginSucceeded($admin, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
 
@@ -111,7 +111,7 @@ class AuthController extends Controller
             $request->user()->tokens()->delete();
             validation_exception('account', __('auth.blocked'));
         }
-        $token = $request->user()->createToken($tokenModel->name, $tokenModel->abilities);
+        $token = $request->user()->createToken($tokenModel->name, $tokenModel->abilities, Carbon::now()->addMinutes(1440));
         // 一分钟后删除当前这个Token
         DeleteAccessTokenJob::dispatch($tokenModel->token)->delay(now()->addMinutes(1));
 
