@@ -28,6 +28,17 @@
   2. 根据具体场景调用对应的 apifox skill（如 `apifox-import-export`、`apifox-branch`、`apifox-workflow-api-lifecycle` 等）
   3. 使用 Apifox CLI 执行实际的发布操作（如导入/导出 OpenAPI 文档、同步接口到 Apifox 项目等）
   4. 执行完成后，使用 `apifox-cli-checkup` skill 验证操作结果是否生效
+- Apifox 接口模块归属与模型隔离规范：
+  - 接口归属必须严格按路由前缀划分：
+    - `/admin` 前缀的接口 → 发布到 Apifox 的 `Admin` 模块（对应管理后台相关目录，如"管理员管理"、"用户管理"等）
+    - `/api` 前缀的接口 → 发布到 Apifox 的 `Api` 模块（对应 API v1 相关目录，如"用户接口"、"认证授权"、"用户注册"等）
+    - 其他非 `/admin` 且非 `/api` 前缀的接口（如 `/wechat`、`/horizon` 等）按业务语义归入对应业务模块或者`Web` 模块
+  - **禁止跨模块引用数据模型与响应**：
+    - Admin 模块下的接口只能引用 Admin 模块下定义的 Schema（数据模型、响应组件、分页模型中的 `data` 字段等）
+    - Api 模块下的接口只能引用 Api 模块下定义的 Schema
+    - 同一 Schema 不得同时被 Admin 和 Api 两个模块下的接口引用
+    - 业务模型（如 User、Admin 等）的展示形态在两个模块下必须各自定义独立的 Resource/Response Schema，禁止 `$ref` 跨模块共享
+  - 如需在两个模块下展示同一业务实体，应分别创建 `<实体名>AdminResource` 与 `<实体名>ApiResource`（或对应 Schema），保持模块边界清晰
 - Apifox 分页接口设计规范：
   - 向 Apifox 发布接口时要创建合适的 `tag`（如 `分页接口`）
   - Apifox 项目中已预定义两个全局查询参数：`page`（分页页码，默认值 1）和 `per_page`（每页条数，默认值 15）
