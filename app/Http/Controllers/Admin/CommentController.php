@@ -11,6 +11,7 @@ use App\Enums\ReviewStatus;
 use App\Http\Requests\Admin\Comment\CommentReviewRequest;
 use App\Http\Resources\Admin\CommentResource;
 use App\Models\Content\Comment;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -28,7 +29,7 @@ class CommentController extends Controller
     public function __construct()
     {
         $this->middleware('auth:admin');
-        $this->middleware('permission:comments.index')->only(['index', 'show']);
+        $this->middleware('permission:comments.index')->only(['index', 'show', 'replies']);
         $this->middleware('permission:comments.edit')->only(['review']);
         $this->middleware('permission:comments.delete')->only(['destroy']);
     }
@@ -68,13 +69,39 @@ class CommentController extends Controller
     }
 
     /**
-     * 评论详情
+     * 评论详情（含上级评论摘要）
      */
     public function show(int $id): CommentResource
     {
+        /** @var Comment $comment */
         $comment = Comment::query()->with('user')->findOrFail($id);
 
+        // 若本条是对评论的回复，预加载上级评论及其作者
+        if ($comment->isReply()) {
+            $comment->load(['source' => fn (MorphTo $morphTo) => $morphTo->morphWith([
+                Comment::class => ['user'],
+            ])]);
+        }
+
         return new CommentResource($comment);
+    }
+
+    /**
+     * 回复列表（指定评论下的所有直接回复）
+     */
+    public function replies(Request $request, int $id): AnonymousResourceCollection
+    {
+        // 确认父评论存在
+        Comment::query()->findOrFail($id);
+
+        $items = Comment::query()
+            ->with('user')
+            ->where('source_type', 'comment')
+            ->where('source_id', $id)
+            ->orderBy('id')
+            ->paginate(per_page($request));
+
+        return CommentResource::collection($items);
     }
 
     /**

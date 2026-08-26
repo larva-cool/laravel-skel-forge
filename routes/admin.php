@@ -205,6 +205,7 @@ Route::post('chat/approve', [\App\Http\Controllers\Admin\ChatController::class, 
 Route::delete('chat/conversations/{conversationId}', [\App\Http\Controllers\Admin\ChatController::class, 'destroy'])->name('chat.destroy');
 
 // 评论管理（运营管理）
+Route::get('comments/{comment}/replies', [\App\Http\Controllers\Admin\CommentController::class, 'replies'])->name('comments.replies');
 Route::post('comments/{comment}/review', [\App\Http\Controllers\Admin\CommentController::class, 'review'])->name('comments.review');
 Route::apiResource('comments', \App\Http\Controllers\Admin\CommentController::class)->except(['store', 'update']);
 
