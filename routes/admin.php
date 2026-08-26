@@ -201,6 +201,10 @@ Route::post('chat', [\App\Http\Controllers\Admin\ChatController::class, 'stream'
 Route::post('chat/approve', [\App\Http\Controllers\Admin\ChatController::class, 'approve'])->name('chat.approve');
 Route::delete('chat/conversations/{conversationId}', [\App\Http\Controllers\Admin\ChatController::class, 'destroy'])->name('chat.destroy');
 
+// 评论管理（运营管理）
+Route::post('comments/{comment}/review', [\App\Http\Controllers\Admin\CommentController::class, 'review'])->name('comments.review');
+Route::apiResource('comments', \App\Http\Controllers\Admin\CommentController::class)->except(['store', 'update']);
+
 // 用户反馈
 Route::get('feedbacks/stats', [\App\Http\Controllers\Admin\FeedbackController::class, 'stats'])->name('feedbacks.stats');
 Route::apiResource('feedbacks', \App\Http\Controllers\Admin\FeedbackController::class)->except(['store']);

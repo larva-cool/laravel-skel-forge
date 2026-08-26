@@ -233,6 +233,22 @@ return new class extends Migration
                 'sort' => 20,
                 'children' => [
                     [
+                        'key' => 'operation.comment',
+                        'path' => 'comment',
+                        'name' => 'Comment',
+                        'component' => '/operation/comment',
+                        'title' => '评论管理',
+                        'icon' => 'ri:chat-3-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 1,
+                        'keep_alive' => true,
+                        'permission' => 'comments.index',
+                        'buttons' => [
+                            ['title' => '审核评论', 'permission' => 'comments.edit'],
+                            ['title' => '删除评论', 'permission' => 'comments.delete'],
+                        ],
+                    ],
+                    [
                         'key' => 'operation.feedback',
                         'path' => 'feedback',
                         'name' => 'Feedback',
@@ -240,7 +256,7 @@ return new class extends Migration
                         'title' => '反馈管理',
                         'icon' => 'ri:feedback-line',
                         'type' => MenuType::MENU,
-                        'sort' => 1,
+                        'sort' => 2,
                         'keep_alive' => true,
                         'permission' => 'feedbacks.index',
                         'buttons' => [
