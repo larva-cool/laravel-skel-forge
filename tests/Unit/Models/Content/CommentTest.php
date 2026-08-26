@@ -155,6 +155,12 @@ class CommentTest extends TestCase
         $pending = Comment::factory()->forSource($user)->pending()->create(['user_id' => $user->id]);
         $this->assertTrue($pending->status->isPending());
 
+        $review = Comment::factory()->forSource($user)->create([
+            'user_id' => $user->id,
+            'status' => ReviewStatus::REVIEW,
+        ]);
+        $this->assertTrue($review->status->isReview());
+
         $rejected = Comment::factory()->forSource($user)->create([
             'user_id' => $user->id,
             'status' => ReviewStatus::REJECTED,
