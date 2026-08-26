@@ -6,7 +6,12 @@
 *.md diff=markdown
 *.php diff=php
 
+/.apifox export-ignore
+/.vscode export-ignore
 /.github export-ignore
+/.trae export-ignore
+/.workbuddy export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
-/.trae export-ignore
+composer.lock export-ignore
+package-lock.json export-ignore
