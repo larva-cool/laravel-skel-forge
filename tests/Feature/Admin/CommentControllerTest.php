@@ -58,6 +58,16 @@ class CommentControllerTest extends TestCase
         ], $attributes));
     }
 
+    /**
+     * 创建一条针对指定评论的回复
+     */
+    private function createReply(Comment $parent, array $attributes = []): Comment
+    {
+        return Comment::factory()->forSource($parent)->create(array_merge([
+            'user_id' => $this->user->id,
+        ], $attributes));
+    }
+
     #[Test]
     #[TestDox('未登录访问评论列表返回 401')]
     public function guest_cannot_list_comments(): void
@@ -211,5 +221,92 @@ class CommentControllerTest extends TestCase
             ->assertNoContent();
 
         $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
+    }
+
+    #[Test]
+    #[TestDox('普通评论详情中 is_reply 为 false 且不含上级评论')]
+    public function comment_detail_marks_non_reply_correctly(): void
+    {
+        $comment = $this->createComment();
+
+        $response = $this->actingAsAdmin()->getJson("/admin/comments/{$comment->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('is_reply', false)
+            ->assertJsonMissingPath('parent_comment');
+    }
+
+    #[Test]
+    #[TestDox('回复评论详情返回上级评论摘要')]
+    public function reply_detail_returns_parent_comment_summary(): void
+    {
+        $parent = $this->createComment(['content' => '这是父级评论']);
+        $reply = $this->createReply($parent, ['content' => '这是回复内容']);
+
+        $response = $this->actingAsAdmin()->getJson("/admin/comments/{$reply->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('is_reply', true)
+            ->assertJsonPath('parent_comment.id', $parent->id)
+            ->assertJsonPath('parent_comment.content', '这是父级评论')
+            ->assertJsonStructure([
+                'parent_comment' => [
+                    'id', 'user_id', 'username', 'content',
+                    'status', 'status_label', 'status_label_type', 'created_at',
+                ],
+            ]);
+    }
+
+    #[Test]
+    #[TestDox('未登录访问回复列表返回 401')]
+    public function guest_cannot_list_replies(): void
+    {
+        $comment = $this->createComment();
+
+        $this->getJson("/admin/comments/{$comment->id}/replies")->assertUnauthorized();
+    }
+
+    #[Test]
+    #[TestDox('管理员可获取指定评论的回复列表')]
+    public function admin_can_list_comment_replies(): void
+    {
+        $parent = $this->createComment();
+        $this->createReply($parent);
+        $this->createReply($parent);
+
+        // 干扰数据：另一条评论下的回复不应出现
+        $other = $this->createComment();
+        $this->createReply($other);
+
+        $response = $this->actingAsAdmin()->getJson("/admin/comments/{$parent->id}/replies");
+
+        $response->assertOk()
+            ->assertJsonStructure(['data', 'links', 'meta'])
+            ->assertJsonPath('meta.total', 2);
+
+        foreach ($response->json('data') as $item) {
+            $this->assertSame('comment', $item['source_type']);
+            $this->assertSame($parent->id, $item['source_id']);
+        }
+    }
+
+    #[Test]
+    #[TestDox('评论无回复时回复列表返回空数组')]
+    public function replies_list_is_empty_when_no_replies(): void
+    {
+        $comment = $this->createComment();
+
+        $this->actingAsAdmin()->getJson("/admin/comments/{$comment->id}/replies")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 0)
+            ->assertJsonCount(0, 'data');
+    }
+
+    #[Test]
+    #[TestDox('获取不存在评论的回复列表返回 404')]
+    public function replies_list_returns_404_for_missing_comment(): void
+    {
+        $this->actingAsAdmin()->getJson('/admin/comments/999999/replies')
+            ->assertNotFound();
     }
 }

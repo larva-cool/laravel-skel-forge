@@ -77,7 +77,7 @@ class CommentController extends Controller
         $comment = Comment::query()->with('user')->findOrFail($id);
 
         // 若本条是对评论的回复，预加载上级评论及其作者
-        if ($comment->isReply()) {
+        if ($comment->source_type === 'comment') {
             $comment->load(['source' => fn (MorphTo $morphTo) => $morphTo->morphWith([
                 Comment::class => ['user'],
             ])]);

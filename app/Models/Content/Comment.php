@@ -89,14 +89,6 @@ class Comment extends Model
     }
 
     /**
-     * 是否为对评论的回复
-     */
-    public function isReply(): bool
-    {
-        return $this->source_type === 'comment';
-    }
-
-    /**
      * 多态关联
      */
     public function source(): MorphTo

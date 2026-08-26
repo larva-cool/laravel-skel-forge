@@ -27,6 +27,9 @@ class CommentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $isReply = $this->source_type === 'comment';
+        $parent = $isReply && $this->relationLoaded('source') ? $this->source : null;
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
@@ -41,19 +44,19 @@ class CommentResource extends JsonResource
             'like_count' => $this->like_count,
             'comment_count' => $this->comment_count,
             'mentioned_users' => $this->mentioned_users ?? [],
-            'is_reply' => $this->isReply(),
+            'is_reply' => $isReply,
             'parent_comment' => $this->when(
-                $this->isReply() && $this->relationLoaded('source'),
-                fn () => $this->source instanceof Comment ? [
-                    'id' => $this->source->id,
-                    'user_id' => $this->source->user_id,
-                    'username' => $this->source->user?->username,
-                    'content' => $this->source->content,
-                    'status' => $this->source->status?->value,
-                    'status_label' => $this->source->status?->label(),
-                    'status_label_type' => $this->source->status?->labelType() ?? 'default',
-                    'created_at' => $this->source->created_at?->toDateTimeString(),
-                ] : null
+                $parent instanceof Comment,
+                fn () => [
+                    'id' => $parent->id,
+                    'user_id' => $parent->user_id,
+                    'username' => $parent->user?->username,
+                    'content' => $parent->content,
+                    'status' => $parent->status?->value,
+                    'status_label' => $parent->status?->label(),
+                    'status_label_type' => $parent->status?->labelType() ?? 'default',
+                    'created_at' => $parent->created_at?->toDateTimeString(),
+                ]
             ),
             'ip_address' => $this->when($request->routeIs('admin.comments.show'), $this->ip_address),
             'created_at' => $this->created_at?->toDateTimeString(),
