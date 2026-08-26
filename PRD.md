@@ -111,12 +111,19 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 #### 3.3.2 运营管理
 | 功能 | 说明 |
 |------|------|
+| 评论管理 | 评论列表（支持按审核状态/源类型/关键词/用户过滤）、评论详情（含 IP、上级评论摘要）、回复链查看（分页展示指定评论下的直接回复，支持链内下钻）、审核（通过/驳回/设为审核中，可填审核备注）、删除 |
+| 反馈管理 | 用户反馈列表与统计、反馈详情（含附件图片、客户端信息）、处理（调整状态/优先级、填写处理备注）、删除 |
 | 短信验证码记录 | 查看短信验证码发送记录（只读） |
 | 邮件验证码记录 | 查看邮件验证码发送记录（只读） |
 | 上传服务 | 文件/图片/视频/APK 上传接口，生成直传 Token（兼容 S3 协议云存储） |
 | 通知管理 | 站内通知列表、未读数、标记已读、批量已读、清理已读 |
 
-#### 3.3.3 附件管理（上传文件管理器）
+#### 3.3.3 公共选项接口
+| 功能 | 说明 |
+|------|------|
+| 源类型选项 | 基于 `config/morph_maps.php` 的 morph map 输出多态源类型选项（label/value），供前端筛选下拉使用。此类与业务模块无关的通用选项统一挂在 `CommonController` 下（路由前缀 `/admin/common`） |
+
+#### 3.3.4 附件管理（上传文件管理器）
 | 功能 | 说明 |
 |------|------|
 | 附件列表 | 分页查询，支持类型/磁盘/扩展名/上传者/关键词/时间范围筛选 |
@@ -130,7 +137,7 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 | 磁盘列表 | 查询可用的存储磁盘列表 |
 | 直传登记 | 客户端直传云存储后回调登记元数据 |
 
-#### 3.3.4 监控面板
+#### 3.3.5 监控面板
 | 功能 | 说明 |
 |------|------|
 | 服务器性能 | 读取 Laravel Pulse 数据（CPU、内存、请求量） |
@@ -141,14 +148,14 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 | 慢查询/慢请求/慢任务 | 数据库慢查询、慢 HTTP 请求、慢队列任务 |
 | 外部请求监控 | 慢外部 HTTP 请求 |
 
-#### 3.3.5 调试面板（Telescope，仅 local 环境）
+#### 3.3.6 调试面板（Telescope，仅 local 环境）
 | 功能 | 说明 |
 |------|------|
 | 标签管理 | 查询/监控/取消监控标签 |
 | 记录开关 | 开启/暂停 Telescope 记录 |
 | 条目查询 | 分页查询 Telescope 条目、查看详情、标记解决、删除条目 |
 
-#### 3.3.6 队列管理（Horizon）
+#### 3.3.7 队列管理（Horizon）
 | 功能 | 说明 |
 |------|------|
 | 队列状态 | 队列统计、负载、Master/Supervisor 进程状态 |
@@ -157,7 +164,7 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 | 批处理 | 批处理列表、详情、重试失败批次 |
 | 任务列表 | 待处理/已完成/失败/静默任务列表和详情，重试失败任务 |
 
-#### 3.3.7 数据概览
+#### 3.3.8 数据概览
 | 功能 | 说明 |
 |------|------|
 | 仪表盘统计 | 今日/总数统计（用户数、管理员数等核心指标） |
@@ -645,6 +652,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 
 - `source_type` 仅接受 `config/morph_maps.php` 中注册的多态别名
 - 计数列由模型事件自动维护，接入前须确认目标表已有对应字段
+- **评论楼层回复约定**：当 `source_type = 'comment'` 时表示本条为对另一条评论的回复，`source_id` 即父评论 ID；顶级评论的 `source_type` 指向业务实体（如 `user`、`post`）。后台判定回复关系与查询回复链均基于此约定，无需额外 `parent_id` 字段
 
 #### 5.1.18 其他核心表
 | 表名 | 说明 |
@@ -855,7 +863,34 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | PUT | `/admin/notifications/mark-all-read` | 全部标记已读 | 是 |
 | DELETE | `/admin/notifications/clear-read` | 清理已读通知 | 是 |
 
-#### 6.3.12 验证码管理
+#### 6.3.12 评论管理（/admin/comments）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/comments` | 评论列表（分页，支持 `status`/`source_type`/`keyword`/`user_id` 过滤） | comments.index |
+| GET | `/admin/comments/{comment}` | 评论详情（含 `ip_address`、`is_reply`、`parent_comment` 上级评论摘要） | comments.index |
+| GET | `/admin/comments/{comment}/replies` | 回复列表（分页，返回该评论下的直接回复） | comments.index |
+| POST | `/admin/comments/{comment}/review` | 审核评论（`status` 取 `approved`/`rejected`/`review`，可选 `remark`） | comments.edit |
+| DELETE | `/admin/comments/{comment}` | 删除评论 | comments.delete |
+
+> 评论父子关系通过多态自关联实现：回复的 `source_type='comment'`、`source_id` 指向父评论 ID。列表接口不返回 `ip_address`，仅详情接口返回。
+
+#### 6.3.13 反馈管理（/admin/feedbacks）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/feedbacks` | 反馈列表（分页，支持 `keyword`/`type`/`status`/`priority` 过滤） | feedbacks.index |
+| GET | `/admin/feedbacks/stats` | 反馈统计（总量、待推进、今日新增、已闭环） | feedbacks.index |
+| GET | `/admin/feedbacks/{feedback}` | 反馈详情（含附件图片、客户端信息） | feedbacks.index |
+| PUT | `/admin/feedbacks/{feedback}` | 处理反馈（调整 `status`/`priority`、填写 `admin_remark`） | feedbacks.edit |
+| DELETE | `/admin/feedbacks/{feedback}` | 删除反馈 | feedbacks.delete |
+
+#### 6.3.14 公共选项（/admin/common）
+| 方法 | 路径 | 说明 | 认证 |
+|------|------|------|------|
+| GET | `/admin/common/source-types` | 多态源类型选项列表（基于 `config/morph_maps.php`，返回 `[{label, value}]`） | 是 |
+
+> 与业务模块无关的通用选项、枚举、字典类接口统一由 `CommonController` 承载，仅需登录态，不绑定业务权限。
+
+#### 6.3.15 验证码管理
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/phone-codes` | 短信验证码列表 | phone-codes.index |
@@ -863,7 +898,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/mail-codes` | 邮件验证码列表 | mail-codes.index |
 | GET | `/admin/mail-codes/{id}` | 邮件验证码详情 | mail-codes.index |
 
-#### 6.3.13 上传管理（/admin/uploader）
+#### 6.3.16 上传管理（/admin/uploader）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | POST | `/admin/uploader/file` | 上传通用文件 | 是 |
@@ -874,7 +909,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 
 上传成功后返回字段包含附件 `id`，前端可直接用于附件管理。
 
-#### 6.3.14 附件管理（/admin/attachments）
+#### 6.3.17 附件管理（/admin/attachments）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/attachments/disks` | 获取可用存储磁盘列表 | attachments.index |
@@ -908,7 +943,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | uploader | object\|null | 上传者摘要（id + name） |
 | created_at | string | 创建时间 |
 
-#### 6.3.15 应用管理（/admin/apps）
+#### 6.3.18 应用管理（/admin/apps）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/apps` | 应用列表（分页，支持关键字/状态/日期筛选，预加载各平台最新版本） | apps.index |
@@ -919,7 +954,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 
 应用资源字段包含 `latest_versions`（各平台最多 3 条已发布版本，按 build 倒序）。
 
-#### 6.3.16 应用版本管理（/admin/apps/{app}/versions）
+#### 6.3.19 应用版本管理（/admin/apps/{app}/versions）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/apps/{app}/versions` | 版本列表（分页，支持平台/状态/版本号/强制更新/日期筛选） | app-versions.index |
@@ -933,24 +968,24 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 
 版本状态流转：`draft` → `published`（publish）→ `withdrawn`（withdraw）/ `obsolete`（obsolete 或被新版本自动替换）。
 
-#### 6.3.17 审计日志（/admin/audit-logs）
+#### 6.3.20 审计日志（/admin/audit-logs）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/audit-logs` | 审计日志列表（分页，支持时间范围/管理员/方法筛选） | audit-logs.index |
 | GET | `/admin/audit-logs/{id}` | 审计日志详情（含请求体、响应） | audit-logs.index |
 
-#### 6.3.18 调度任务日志（/admin/schedule-logs）
+#### 6.3.21 调度任务日志（/admin/schedule-logs）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | `/admin/schedule-logs` | 调度日志列表（分页，支持任务名/状态/时间范围筛选） | schedule-logs.index |
 | GET | `/admin/schedule-logs/{id}` | 调度日志详情 | schedule-logs.index |
 
-#### 6.3.19 数据概览（/admin/dashboard）
+#### 6.3.22 数据概览（/admin/dashboard）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | GET | `/admin/dashboard/stats` | 仪表盘统计数据 | 是 |
 
-#### 6.3.20 监控接口（/admin/monitor，读取 Pulse 数据）
+#### 6.3.23 监控接口（/admin/monitor，读取 Pulse 数据）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/monitor/servers` | 服务器性能指标 |
@@ -965,7 +1000,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/monitor/slow-outgoing-requests` | 慢外部请求 |
 | GET | `/admin/monitor/usage` | 使用情况 |
 
-#### 6.3.21 调试接口（/admin/debug，仅 local 环境，读取 Telescope）
+#### 6.3.24 调试接口（/admin/debug，仅 local 环境，读取 Telescope）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/debug/tags` | 获取标签列表 |
@@ -977,7 +1012,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | PUT | `/admin/debug/entries/{id}/resolve` | 标记已解决 |
 | DELETE | `/admin/debug/entries` | 删除条目 |
 
-#### 6.3.22 队列管理（/admin/queue，代理 Horizon 数据）
+#### 6.3.25 队列管理（/admin/queue，代理 Horizon 数据）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/queue/stats` | 队列总体统计 |
@@ -1002,7 +1037,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | POST | `/admin/queue/jobs/failed/{id}/retry` | 重试失败任务 |
 | GET | `/admin/queue/jobs/{id}` | 任务详情 |
 
-#### 6.3.23 AI 聊天（/admin/chat，SSE 流式）
+#### 6.3.26 AI 聊天（/admin/chat，SSE 流式）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | GET | `/admin/chat/conversations` | 会话列表 | 是 |
@@ -1516,7 +1551,6 @@ php artisan storage:link
 | 需求 | 说明 |
 |------|------|
 | 批量操作 | 各列表页目前仅支持单条操作，需补批量审核、批量删除、批量打标签 |
-| ~~评论回复链展示~~ | ✅ 已完成：详情抽屉展示上级评论引用块与回复列表，支持链内跳转与分页 |
 | 暗黑模式完整度 | 框架已支持，但抽屉、详情弹窗、图表等场景需逐页检查暗色适配 |
 | 前端错误边界 | 已有路由级 403/404/500，缺组件级错误捕获与降级渲染 |
 | 大列表性能 | 审计日志、Telescope 条目等大数据量列表需虚拟滚动 / 图片懒加载 |
@@ -1524,7 +1558,17 @@ php artisan storage:link
 | API 文档同步 | 新增接口同步发布至 Apifox，保持文档与代码一致 |
 | 性能基准测试 | 建立关键接口的基准测试与压测报告，为容量规划提供依据 |
 
-### 13.5 建议实施顺序
+### 13.5 已完成事项
+
+记录已从待办清单中交付的能力，便于追踪进展。
+
+| 完成时间 | 事项 | 交付内容 |
+|----------|------|----------|
+| 2026-08-26 | 评论管理（运营） | 后端 `CommentController`（列表/详情/审核/删除）+ `CommentResource` + `CommentReviewRequest`；支持按审核状态、源类型、关键词、用户过滤；权限点 `comments.index/edit/delete`；菜单挂在「运营管理」下。前端 `views/operation/comment/`（列表页 + 搜索栏 + 详情抽屉 + 审核弹窗） |
+| 2026-08-26 | 公共选项接口 | 新增 `CommonController`（路由前缀 `/admin/common`），提供 `GET /admin/common/source-types` 基于 morph map 输出源类型选项；前端源类型下拉改为接口动态加载，替代硬编码映射 |
+| 2026-08-26 | 评论回复链展示 | 后端详情接口返回 `is_reply` 与 `parent_comment` 上级评论摘要（`morphWith` 嵌套预加载避免 N+1），新增 `GET /admin/comments/{comment}/replies` 分页回复列表；前端详情抽屉新增上级评论引用块与回复列表卡片，支持链内无限层级下钻与分页 |
+
+### 13.6 建议实施顺序
 
 **第一阶段（上线必备最小集）**
 1. Banner / 轮播图管理（13.1.1）
@@ -1551,7 +1595,7 @@ php artisan storage:link
 16. P2 业务扩展模块按实际产品形态选做
 17. P3 体验与性能优化持续迭代
 
-### 13.6 技术演进方向（长期）
+### 13.7 技术演进方向（长期）
 
 - [ ] 更多认证方式（OAuth2 Server、Socialite 多平台社交登录）
 - [ ] GraphQL 支持（与现有 RESTful 并行）
@@ -1575,6 +1619,6 @@ php artisan storage:link
 
 ---
 
-**文档版本**：v2.2  
+**文档版本**：v2.3  
 **最后更新**：2026-08-26  
 **维护人员**：Tongle Xu
