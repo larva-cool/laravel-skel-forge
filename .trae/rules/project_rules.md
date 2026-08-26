@@ -45,13 +45,17 @@
   - 这两个参数默认处于**禁用**状态，仅在需要分页的接口中启用
   - 设计分页接口时，必须先启用这两个全局参数，禁止重复创建新的分页参数
   - 分页接口使用 Laravel 标准分页（`paginate()` + `Resource::collection()`），响应体为 Laravel 默认分页结构，包含以下字段：`data`（当前页数据数组）、`current_page`（当前页码）、`last_page`（最后一页页码）、`per_page`（每页条数）、`total`（总条数）、`from`（当前页起始条目序号）、`to`（当前页结束条目序号）、`first_page_url`、`last_page_url`、`next_page_url`、`prev_page_url`、`path`、`links`（分页导航链接数组）
-  - Apifox 中分页响应禁止单独创建分页模型，必须使用 `x-apifox-refs` 引用 `EloquentPaginate`（集合分页）并覆写 `data` 字段为具体数据模型，格式如下：
+  - Apifox 中分页响应禁止单独创建分页模型，必须使用 `x-apifox-refs` 引用 `EloquentPaginate`（集合分页）并覆写 `data` 字段为具体数据模型
+  - `EloquentPaginate` 在 Admin 与 Api 两个模块下各有一份独立定义，必须按接口所属模块引用对应 ID，禁止跨模块引用：
+    - Admin 模块（`/admin` 前缀接口）→ `#/definitions/304922372`
+    - Api 模块（`/api` 前缀接口）→ `#/definitions/307396242`
+  - 格式如下（以 Api 模块为例）：
     ```json
     {
       "type": "object",
       "x-apifox-refs": {
         "<随机ID>": {
-          "$ref": "#/definitions/304922372",
+          "$ref": "#/definitions/307396242",
           "x-apifox-overrides": {}
         }
       },
