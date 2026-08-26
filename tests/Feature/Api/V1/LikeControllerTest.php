@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
-use App\Http\Controllers\Api\V1\User\LikeController;
+use App\Http\Controllers\Api\V1\LikeController;
 use App\Models\Content\Like;
 use App\Models\Model;
 use App\Models\User;

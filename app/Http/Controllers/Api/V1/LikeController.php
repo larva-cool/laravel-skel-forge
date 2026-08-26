@@ -5,10 +5,10 @@
  */
 declare(strict_types=1);
 
-namespace App\Http\Controllers\Api\V1\User;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\User\Like\StoreLikeRequest;
+use App\Http\Requests\Api\V1\Like\StoreLikeRequest;
 use App\Http\Resources\Api\V1\LikeResource;
 use App\Models\Content\Like;
 use Illuminate\Http\Request;

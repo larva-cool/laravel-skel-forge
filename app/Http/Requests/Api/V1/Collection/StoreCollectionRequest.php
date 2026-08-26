@@ -5,20 +5,20 @@
  */
 declare(strict_types=1);
 
-namespace App\Http\Requests\Api\V1\User\Like;
+namespace App\Http\Requests\Api\V1\Collection;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * 添加点赞
+ * 添加收藏
  *
  * @property-read int $user_id 用户ID
  * @property-read string $source_type 资源类型
  * @property-read int $source_id 资源ID
  * @property-read array<string, mixed>|null $extra 扩展信息
  */
-class StoreLikeRequest extends FormRequest
+class StoreCollectionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -48,7 +48,7 @@ class StoreLikeRequest extends FormRequest
                 'required',
                 'integer',
                 'min:1',
-                Rule::unique('likes')->where(fn ($query) => $query
+                Rule::unique('collections')->where(fn ($query) => $query
                     ->where('user_id', $this->user()->id)
                     ->where('source_type', $this->post('source_type'))
                 ),
@@ -58,12 +58,14 @@ class StoreLikeRequest extends FormRequest
     }
 
     /**
+     * Get the custom validation messages.
+     *
      * @return array<string, string>
      */
     public function messages(): array
     {
         return [
-            'source_id.unique' => '已经点赞过该资源',
+            'source_id.unique' => '已经收藏过该资源',
         ];
     }
 }

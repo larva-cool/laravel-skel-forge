@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
-use App\Http\Controllers\Api\V1\User\CollectionController;
+use App\Http\Controllers\Api\V1\CollectionController;
 use App\Models\Content\Collection;
 use App\Models\Model;
 use App\Models\User;

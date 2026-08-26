@@ -5,10 +5,10 @@
  */
 declare(strict_types=1);
 
-namespace App\Http\Controllers\Api\V1\User;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\User\Collection\StoreCollectionRequest;
+use App\Http\Requests\Api\V1\Collection\StoreCollectionRequest;
 use App\Http\Resources\Api\V1\CollectionResource;
 use App\Models\Content\Collection;
 use Illuminate\Http\Request;
