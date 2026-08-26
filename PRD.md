@@ -590,7 +590,63 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 
 发布版本时会自动将同应用同平台下其他已发布版本置为 `obsolete`；已发布状态的版本不可删除，需先撤回或废弃。
 
-#### 5.1.17 其他核心表
+#### 5.1.17 内容互动表 (likes / collections / comments)
+
+**点赞表 (likes)**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | bigint | 主键 |
+| user_id | bigint | 点赞用户 |
+| source_type / source_id | string / bigint | 多态目标（morphs） |
+| extra | json | 扩展信息 |
+| created_at / updated_at | timestamp | 时间戳 |
+
+- 唯一约束 `uniq_user_like`：`user_id + source_type + source_id`，同一用户对同一资源只能点赞一次
+- 模型事件：`created` 时对目标 `like_count` 自增，`deleted` 时自减
+
+**收藏表 (collections)**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | bigint | 主键 |
+| user_id | bigint | 收藏用户 |
+| source_type / source_id | string / bigint | 多态目标（morphs） |
+| extra | json | 扩展信息 |
+| created_at / updated_at | timestamp | 时间戳 |
+
+- 唯一约束 `uniq_user_collection`：`user_id + source_type + source_id`
+- 模型事件：`created` 时对目标 `collection_count` 自增，`deleted` 时自减
+
+**评论表 (comments)**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | bigint | 主键 |
+| user_id | bigint | 评论用户 |
+| source_type / source_id | string / bigint | 多态目标（自关联可实现楼层回复） |
+| is_top | boolean | 是否置顶 |
+| status | string | 审核状态 |
+| like_count / comment_count | int | 点赞数 / 回复数 |
+| content | string(1000) | 评论内容 |
+| mentioned_users | json | 艾特用户 ID 列表 |
+| ip_address | ip | 评论 IP |
+| created_at | timestamp | 评论时间（无 `updated_at`） |
+
+**互动能力 Trait**
+
+被互动的业务模型通过 trait 接入，目标表需自备对应计数列：
+
+| Trait | 提供方法 | 依赖计数列 |
+|-------|---------|-----------|
+| `HasLikeable` | `likes()`、`isLikedBy($user)` | `like_count` |
+| `HasCollectionable` | `collections()`、`isCollectedBy($user)` | `collection_count` |
+| `HasCommentable` | `comments()` | `comment_count` |
+
+- `source_type` 仅接受 `config/morph_maps.php` 中注册的多态别名
+- 计数列由模型事件自动维护，接入前须确认目标表已有对应字段
+
+#### 5.1.18 其他核心表
 | 表名 | 说明 |
 |------|------|
 | personal_access_tokens | Sanctum 个人访问令牌 |
@@ -602,6 +658,9 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | point_trades | 积分流水记录 |
 | dicts | 数据字典类型 |
 | dict_items | 字典数据项 |
+| likes | 点赞记录（多态） |
+| collections | 收藏记录（多态） |
+| comments | 评论记录（多态） |
 | app_releases | 应用发布 |
 | app_versions | 应用版本 |
 | sessions | 会话存储 |
@@ -970,6 +1029,41 @@ SSE 流式响应通过 `text/event-stream` 逐行推送以下事件类型：
 | GET | `/api/v1/common/*` | 公共接口（短信/邮件验证码、地区等） |
 | POST | `/api/v1/apps/check-update` | App 版本检查更新（传 slug/platform/build，返回是否有更新、是否强制、最新版本信息） |
 | GET | `/api/v1/user/*` | 用户个人中心（资料、密码、通知、积分、金币、登录历史等） |
+
+#### 6.4.1 内容互动接口
+
+**点赞（/api/v1/likes）**
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/likes` | 我的点赞列表（分页，可按 `source_type` 过滤） |
+| POST | `/api/v1/likes` | 添加点赞 |
+| DELETE | `/api/v1/likes/{like}` | 取消点赞 |
+
+**收藏（/api/v1/collections）**
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/collections` | 我的收藏列表（分页，可按 `source_type` 过滤） |
+| POST | `/api/v1/collections` | 添加收藏 |
+| DELETE | `/api/v1/collections/{collection}` | 取消收藏 |
+
+**评论（/api/v1/comments）**
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/comments` | 评论列表（分页，可按 `source_type` + `source_id` 过滤；公开接口） |
+| POST | `/api/v1/comments` | 发布评论（支持 `parent_id` 回复、`mentioned_users` 艾特） |
+| DELETE | `/api/v1/comments/{comment}` | 删除评论（仅本人） |
+
+**约定说明**
+
+- 点赞、收藏全部接口需 Sanctum 认证；评论仅 `POST`/`DELETE` 需认证，列表公开
+- 写入参数：`source_type`（必填，须为 `config/morph_maps.php` 已注册别名）、`source_id`（必填）、`extra`（可选，JSON）
+- 点赞/收藏对同一资源重复提交返回 `422`，由 `Rule::unique` 拦截
+- 越权删除他人记录返回 `403`，由 `LikePolicy` / `CollectionPolicy` / `CommentPolicy` 校验
+- 响应中的 `user_id` 通过模型 `#[Hidden]` 隐藏
+- 列表接口使用 Laravel 标准分页，支持 `page` / `per_page`（1-100，默认 15）
 
 ## 7. 附件管理技术方案
 
