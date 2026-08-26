@@ -42,6 +42,9 @@ Route::post('apps/{app}/versions/{version}/obsolete', [\App\Http\Controllers\Adm
 // 前端路由配置
 Route::get('routes', [\App\Http\Controllers\Admin\MainController::class, 'routes'])->name('routes');
 
+// 公共选项接口
+Route::get('common/source-types', [\App\Http\Controllers\Admin\CommonController::class, 'sourceTypes'])->name('common.source-types');
+
 // 清理应用缓存
 Route::post('cache/clear', [\App\Http\Controllers\Admin\MainController::class, 'clearCache'])->name('cache.clear');
 
