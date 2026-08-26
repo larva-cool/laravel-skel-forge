@@ -78,6 +78,8 @@
     - 同一 Schema 不得同时被 Admin 和 Api 两个模块下的接口引用
     - 业务模型（如 User、Admin 等）的展示形态在两个模块下必须各自定义独立的 Resource/Response Schema，禁止 `$ref` 跨模块共享
   - 如需在两个模块下展示同一业务实体，应分别创建 `<实体名>AdminResource` 与 `<实体名>ApiResource`（或对应 Schema），保持模块边界清晰
+  - **重要：Admin 模块和 Api 模块的所有请求（Request）定义都不要引用任何数据模型，直接使用内联的 JSON Schema 定义，避免冗余模型引用**
+  - 清理所有冗余的请求模型（Request Schema），确保 Apifox 项目中不存在未被任何接口使用的冗余请求模型定义
 
 #### Apifox 分页接口设计规范：
   - 向 Apifox 发布接口时要创建合适的 `tag`（如 `分页接口`）
