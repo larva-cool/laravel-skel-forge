@@ -19,7 +19,7 @@ enum ReviewStatus: string implements \JsonSerializable
     use HasLabel;
 
     case PENDING = 'pending'; // 待审核
-    case REVIEW = 'review'; // 审核中
+    case REVIEW = 'review'; // 需复审
     case APPROVED = 'approved'; // 已通过
     case REJECTED = 'rejected'; // 已驳回
 
@@ -30,7 +30,7 @@ enum ReviewStatus: string implements \JsonSerializable
     {
         return match ($this) {
             self::PENDING => '待审核',
-            self::REVIEW => '审核中',
+            self::REVIEW => '需复审',
             self::APPROVED => '已通过',
             self::REJECTED => '已驳回',
         };
