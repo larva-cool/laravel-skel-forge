@@ -85,7 +85,7 @@ app/
 │   └── Resources/   # Eloquent API Resources
 ├── Jobs/            # 队列任务
 ├── Mail/            # 邮件
-├── Models/          # Admin/、App/、Coin/、Point/、System/、User/
+├── Models/          # Admin/、App/、Coin/、Content/、Point/、System/、User/
 ├── Policies/        # 授权策略
 ├── Providers/       # 服务提供者
 ├── Services/        # 业务服务
