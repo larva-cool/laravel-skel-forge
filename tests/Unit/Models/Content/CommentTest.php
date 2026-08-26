@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Content;
 
+use App\Enums\ReviewStatus;
 use App\Models\Content\Comment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,7 +38,7 @@ class CommentTest extends TestCase
             'source_type' => $user->getMorphClass(),
             'source_id' => $user->id,
             'is_top' => true,
-            'status' => 'approved',
+            'status' => ReviewStatus::APPROVED,
             'content' => '这是一条评论',
             'ip_address' => '127.0.0.1',
             'mentioned_users' => [1, 2],
@@ -139,6 +140,26 @@ class CommentTest extends TestCase
         $comment = Comment::factory()->forSource($user)->create(['user_id' => $user->id]);
 
         $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $comment->created_at);
+    }
+
+    #[Test]
+    #[TestDox('status 正确 cast 为 ReviewStatus 枚举')]
+    public function status_is_cast_to_review_status_enum(): void
+    {
+        $user = User::factory()->create();
+
+        $approved = Comment::factory()->forSource($user)->create(['user_id' => $user->id]);
+        $this->assertInstanceOf(ReviewStatus::class, $approved->status);
+        $this->assertTrue($approved->status->isApproved());
+
+        $pending = Comment::factory()->forSource($user)->pending()->create(['user_id' => $user->id]);
+        $this->assertTrue($pending->status->isPending());
+
+        $rejected = Comment::factory()->forSource($user)->create([
+            'user_id' => $user->id,
+            'status' => ReviewStatus::REJECTED,
+        ]);
+        $this->assertTrue($rejected->status->isRejected());
     }
 
     #[Test]

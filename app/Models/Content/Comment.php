@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Content;
 
+use App\Enums\ReviewStatus;
 use App\Models\Model;
 use App\Models\Traits\HasLikeable;
 use App\Models\Traits\HasUser;
@@ -32,7 +33,7 @@ use Illuminate\Support\Carbon;
  * @property bool $is_top 是否置顶
  * @property int $like_count 点赞次数
  * @property int $comment_count 评论回复次数
- * @property string $status 评论状态
+ * @property ReviewStatus $status 评论状态
  * @property array $mentioned_users 艾特 / 提及
  * @property string $content 评论内容
  * @property string $ip_address 评论IP
@@ -71,7 +72,7 @@ class Comment extends Model
             'is_top' => 'boolean',
             'like_count' => 'integer',
             'comment_count' => 'integer',
-            'status' => 'string',
+            'status' => ReviewStatus::class,
             'content' => 'string',
             'mentioned_users' => 'array',
             'ip_address' => 'string',

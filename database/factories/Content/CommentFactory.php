@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Content;
 
+use App\Enums\ReviewStatus;
 use App\Models\Content\Comment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
@@ -41,7 +42,7 @@ class CommentFactory extends Factory
             'is_top' => false,
             'like_count' => 0,
             'comment_count' => 0,
-            'status' => 'approved',
+            'status' => ReviewStatus::APPROVED,
             'content' => fake()->sentence(),
             'mentioned_users' => null,
             'ip_address' => fake()->ipv4(),
@@ -72,7 +73,7 @@ class CommentFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(fn () => ['status' => 'pending']);
+        return $this->state(fn () => ['status' => ReviewStatus::PENDING]);
     }
 
     /**
