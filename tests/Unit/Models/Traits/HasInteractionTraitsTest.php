@@ -135,31 +135,31 @@ class HasInteractionTraitsTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('isCollected 传入用户实例可判断是否已收藏')]
-    public function is_collected_accepts_user_instance(): void
+    #[TestDox('isCollectedBy 传入用户实例可判断是否已收藏')]
+    public function is_collected_by_accepts_user_instance(): void
     {
         $source = $this->createSource();
         $user = User::factory()->create();
 
-        $this->assertFalse($source->isCollected($user));
+        $this->assertFalse($source->isCollectedBy($user));
 
         Collection::factory()->forSource($source)->create(['user_id' => $user->id]);
 
-        $this->assertTrue($source->isCollected($user));
+        $this->assertTrue($source->isCollectedBy($user));
     }
 
     #[Test]
-    #[TestDox('isCollected 传入用户ID可判断是否已收藏')]
-    public function is_collected_accepts_user_id(): void
+    #[TestDox('isCollectedBy 传入用户ID可判断是否已收藏')]
+    public function is_collected_by_accepts_user_id(): void
     {
         $source = $this->createSource();
         $user = User::factory()->create();
 
         Collection::factory()->forSource($source)->create(['user_id' => $user->id]);
 
-        $this->assertTrue($source->isCollected($user->id));
-        $this->assertTrue($source->isCollected((string) $user->id));
-        $this->assertFalse($source->isCollected(999999));
+        $this->assertTrue($source->isCollectedBy($user->id));
+        $this->assertTrue($source->isCollectedBy((string) $user->id));
+        $this->assertFalse($source->isCollectedBy(999999));
     }
 
     #[Test]

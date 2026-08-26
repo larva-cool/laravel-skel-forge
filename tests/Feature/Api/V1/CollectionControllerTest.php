@@ -93,7 +93,7 @@ class CollectionControllerTest extends TestCase
         $this->actingAsUser();
         $source = $this->createSource();
 
-        $this->postJson('/api/v1/user/collections', [
+        $this->postJson('/api/v1/collections', [
             'source_type' => $source->getMorphClass(),
             'source_id' => $source->id,
             'extra' => ['from' => 'app'],
@@ -117,7 +117,7 @@ class CollectionControllerTest extends TestCase
     {
         $this->actingAsUser();
 
-        $this->postJson('/api/v1/user/collections', [])
+        $this->postJson('/api/v1/collections', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['source_type', 'source_id']);
     }
@@ -128,7 +128,7 @@ class CollectionControllerTest extends TestCase
     {
         $this->actingAsUser();
 
-        $this->postJson('/api/v1/user/collections', [
+        $this->postJson('/api/v1/collections', [
             'source_type' => 'unknown_type',
             'source_id' => 1,
         ])
@@ -145,7 +145,7 @@ class CollectionControllerTest extends TestCase
 
         Collection::factory()->forSource($source)->create(['user_id' => $this->user->id]);
 
-        $this->postJson('/api/v1/user/collections', [
+        $this->postJson('/api/v1/collections', [
             'source_type' => $source->getMorphClass(),
             'source_id' => $source->id,
         ])
@@ -165,7 +165,7 @@ class CollectionControllerTest extends TestCase
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->getJson('/api/v1/user/collections')
+        $this->getJson('/api/v1/collections')
             ->assertOk()
             ->assertJsonPath('meta.total', 2)
             ->assertJsonStructure(['data', 'links', 'meta']);
@@ -180,7 +180,7 @@ class CollectionControllerTest extends TestCase
         Collection::factory()->forSource($this->createSource())->create(['user_id' => $this->user->id]);
         Collection::factory()->forSource($this->createSource())->create(['user_id' => $this->user->id]);
 
-        $this->getJson('/api/v1/user/collections?source_type=api_collectable_stub')
+        $this->getJson('/api/v1/collections?source_type=api_collectable_stub')
             ->assertOk()
             ->assertJsonPath('meta.total', 2)
             ->assertJsonPath('data.0.source_type', 'api_collectable_stub');
@@ -194,7 +194,7 @@ class CollectionControllerTest extends TestCase
 
         Collection::factory()->forSource($this->createSource())->create(['user_id' => $this->user->id]);
 
-        $response = $this->getJson('/api/v1/user/collections')->assertOk();
+        $response = $this->getJson('/api/v1/collections')->assertOk();
 
         $this->assertArrayNotHasKey('user_id', $response->json('data.0'));
     }
@@ -210,7 +210,7 @@ class CollectionControllerTest extends TestCase
             'user_id' => $this->user->id,
         ]);
 
-        $this->deleteJson('/api/v1/user/collections/'.$collection->id)->assertNoContent();
+        $this->deleteJson('/api/v1/collections/'.$collection->id)->assertNoContent();
 
         $this->assertDatabaseMissing('collections', ['id' => $collection->id]);
         $this->assertSame(0, $source->fresh()->collection_count);
@@ -226,7 +226,7 @@ class CollectionControllerTest extends TestCase
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->deleteJson('/api/v1/user/collections/'.$collection->id)->assertForbidden();
+        $this->deleteJson('/api/v1/collections/'.$collection->id)->assertForbidden();
 
         $this->assertDatabaseHas('collections', ['id' => $collection->id]);
     }
@@ -239,9 +239,9 @@ class CollectionControllerTest extends TestCase
     public static function guestForbiddenRouteProvider(): array
     {
         return [
-            '收藏列表' => ['getJson', '/api/v1/user/collections'],
-            '添加收藏' => ['postJson', '/api/v1/user/collections'],
-            '取消收藏' => ['deleteJson', '/api/v1/user/collections/1'],
+            '收藏列表' => ['getJson', '/api/v1/collections'],
+            '添加收藏' => ['postJson', '/api/v1/collections'],
+            '取消收藏' => ['deleteJson', '/api/v1/collections/1'],
         ];
     }
 

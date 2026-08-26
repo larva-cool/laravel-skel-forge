@@ -87,7 +87,7 @@ class LikeControllerTest extends TestCase
         $this->actingAsUser();
         $source = $this->createSource();
 
-        $this->postJson('/api/v1/user/likes', [
+        $this->postJson('/api/v1/likes', [
             'source_type' => $source->getMorphClass(),
             'source_id' => $source->id,
             'extra' => ['from' => 'app'],
@@ -111,7 +111,7 @@ class LikeControllerTest extends TestCase
     {
         $this->actingAsUser();
 
-        $this->postJson('/api/v1/user/likes', [])
+        $this->postJson('/api/v1/likes', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['source_type', 'source_id']);
     }
@@ -125,7 +125,7 @@ class LikeControllerTest extends TestCase
 
         Like::factory()->forSource($source)->create(['user_id' => $this->user->id]);
 
-        $this->postJson('/api/v1/user/likes', [
+        $this->postJson('/api/v1/likes', [
             'source_type' => $source->getMorphClass(),
             'source_id' => $source->id,
         ])
@@ -145,7 +145,7 @@ class LikeControllerTest extends TestCase
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->getJson('/api/v1/user/likes')
+        $this->getJson('/api/v1/likes')
             ->assertOk()
             ->assertJsonPath('meta.total', 2)
             ->assertJsonStructure(['data', 'links', 'meta']);
@@ -160,7 +160,7 @@ class LikeControllerTest extends TestCase
 
         $like = Like::factory()->forSource($source)->create(['user_id' => $this->user->id]);
 
-        $this->deleteJson('/api/v1/user/likes/'.$like->id)->assertNoContent();
+        $this->deleteJson('/api/v1/likes/'.$like->id)->assertNoContent();
 
         $this->assertDatabaseMissing('likes', ['id' => $like->id]);
         $this->assertSame(0, $source->fresh()->like_count);
@@ -176,7 +176,7 @@ class LikeControllerTest extends TestCase
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->deleteJson('/api/v1/user/likes/'.$like->id)->assertForbidden();
+        $this->deleteJson('/api/v1/likes/'.$like->id)->assertForbidden();
         $this->assertDatabaseHas('likes', ['id' => $like->id]);
     }
 
@@ -186,9 +186,9 @@ class LikeControllerTest extends TestCase
     public static function guestForbiddenRouteProvider(): array
     {
         return [
-            '点赞列表' => ['getJson', '/api/v1/user/likes'],
-            '添加点赞' => ['postJson', '/api/v1/user/likes'],
-            '取消点赞' => ['deleteJson', '/api/v1/user/likes/1'],
+            '点赞列表' => ['getJson', '/api/v1/likes'],
+            '添加点赞' => ['postJson', '/api/v1/likes'],
+            '取消点赞' => ['deleteJson', '/api/v1/likes/1'],
         ];
     }
 
