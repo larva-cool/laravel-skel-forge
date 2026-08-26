@@ -129,6 +129,44 @@ php artisan test --compact --filter=name  # 按名称过滤
 | Telescope（调试，仅 local） | `/telescope` |
 | Horizon（队列） | `/horizon` |
 
+## 主要功能模块
+
+### 后台管理（`/admin`）
+
+| 模块 | 路由前缀 | 说明 |
+|------|----------|------|
+| 认证授权 | `/admin/auth` | 管理员登录、登出、当前用户信息、刷新 Token |
+| 管理员 | `/admin/admins` | 管理员 CRUD、状态切换、密码重置、角色分配、登录历史 |
+| 角色权限 | `/admin/roles`、`/admin/permissions` | RBAC 角色与权限管理 |
+| 菜单 | `/admin/menus` | 树形菜单管理（目录/菜单/按钮） |
+| 配置 | `/admin/settings`、`/admin/config` | 系统配置项与按分组查看 |
+| 地区 | `/admin/areas` | 省市区地区数据（树形） |
+| 字典 | `/admin/dicts`、`/admin/dict-items` | 字典类型与字典项管理 |
+| 附件 | `/admin/attachments`、`/admin/uploader` | 附件列表、上传（中转/直传）、重命名、移动、删除 |
+| 验证码 | `/admin/phone-codes`、`/admin/mail-codes` | 短信/邮件验证码发送记录（只读） |
+| 通知 | `/admin/notifications` | 站内通知列表、未读数、标记已读、批量已读、清理已读 |
+| 应用版本 | `/admin/apps`、`/admin/apps/{app}/versions` | 客户端应用与版本发布/撤回/废弃 |
+| 前台用户 | `/admin/users` | 前台用户 CRUD、状态、积分/金币调整、VIP 延期、登录历史、社交账号、流水、回收站 |
+| 反馈管理 | `/admin/feedbacks` | 用户反馈列表、统计、详情、处理、删除 |
+| 评论管理 | `/admin/comments` | 评论列表（按审核状态/源类型/关键词/用户过滤）、详情（含 IP 与上级评论摘要）、回复链分页查询、审核（通过/驳回/审核中）、删除 |
+| 公共接口 | `/admin/common` | 与业务无关的通用选项（如 `source-types` 多态源类型下拉） |
+| 监控 | `/admin/monitor`、`/admin/queue`、`/admin/debug` | Pulse 性能、Horizon 队列、Telescope 调试（仅 local） |
+| 审计 | `/admin/audit-logs`、`/admin/schedule-logs` | 操作审计与调度日志 |
+| 仪表盘 | `/admin/dashboard` | 核心指标统计与趋势图 |
+| AI 聊天 | `/admin/chat` | SSE 流式对话、工具调用审批、会话管理 |
+
+### 前台 API（`/api/v1`）
+
+| 模块 | 路由前缀 | 说明 |
+|------|----------|------|
+| 认证 | `/api/v1/auth` | 用户注册（手机/邮箱）、登录、登出、当前用户、Token 刷新 |
+| 用户中心 | `/api/v1/user` | 资料、联系方式、密码、VIP、积分/金币流水、社交账号、登录历史 |
+| 内容互动 | `/api/v1/likes`、`/api/v1/collections`、`/api/v1/comments` | 多态点赞/收藏/评论（支持 `parent_id` 回复、`mentioned_users` 艾特） |
+| 通知 | `/api/v1/notifications` | 客户端通知列表、未读数、已读 |
+| 地址 | `/api/v1/addresses` | 收货地址管理 |
+| 反馈 | `/api/v1/feedbacks` | 用户提交反馈 |
+| 微信 | `/api/v1/wechat` | 微信公众号与小程序绑定 |
+
 ## 队列与定时任务
 
 - 默认队列驱动 `database`，生产推荐切换 Redis
