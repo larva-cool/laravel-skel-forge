@@ -54,6 +54,11 @@ return [
     */
 
     'providers' => [
+        'qwen' => [
+            'driver' => 'openai-compatible',
+            'url' => env('QWEN_URL2', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+            'key' => env('QWEN_API_KEY', ''),
+        ],
         'volc' => [
             'driver' => 'openai-compatible',
             'url' => env('VOLC_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
