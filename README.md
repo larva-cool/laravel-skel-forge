@@ -179,4 +179,12 @@ php artisan test --compact --filter=name  # 按名称过滤
 
 ## License
 
-MIT
+本项目采用 [GNU Affero General Public License v3.0 或更高版本](LICENSE)（AGPL-3.0-or-later）。
+
+这意味着：
+- 你可以自由使用、修改、分发本软件
+- 如果你修改本软件并通过网络向用户提供服务（例如部署为 Web 服务、SaaS 产品），**必须**向该服务的用户提供对应版本的完整源代码
+- 任何基于本软件的衍生作品也必须保持相同的 AGPL-3.0-or-later 协议发布
+- 源码分发时必须保留原版权声明与许可声明
+
+详见 [LICENSE](LICENSE) 文件或 <https://www.gnu.org/licenses/agpl-3.0.html>。
