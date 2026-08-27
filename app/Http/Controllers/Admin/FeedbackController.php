@@ -22,13 +22,15 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class FeedbackController extends Controller
 {
+    use \App\Exports\HandlesExports;
+
     /**
      * Constructor.
      */
     public function __construct()
     {
         $this->middleware('auth:admin');
-        $this->middleware('permission:feedbacks.index')->only(['index', 'show', 'stats']);
+        $this->middleware('permission:feedbacks.index')->only(['index', 'show', 'stats', 'export']);
         $this->middleware('permission:feedbacks.edit')->only(['update']);
         $this->middleware('permission:feedbacks.delete')->only(['destroy']);
     }
@@ -117,5 +119,19 @@ class FeedbackController extends Controller
         $feedback->delete();
 
         return response()->json(status: 204);
+    }
+
+    /**
+     * 导出反馈列表
+     */
+    public function export(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
+    {
+        return $this->exportDispatch(
+            $request,
+            $this->feedbackExportClass(),
+            [$this->feedbackListFilters($request)],
+            $this->exportFileName('feedbacks'),
+            \App\Exports\Admin\FeedbackListExport::SYNC_THRESHOLD,
+        );
     }
 }

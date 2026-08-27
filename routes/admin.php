@@ -80,11 +80,14 @@ Route::get('users/{user}/login-histories', [\App\Http\Controllers\Admin\UserCont
 Route::get('users/{user}/socials', [\App\Http\Controllers\Admin\UserController::class, 'socials'])->name('users.socials');
 Route::get('users/{user}/point-trades', [\App\Http\Controllers\Admin\UserController::class, 'pointTrades'])->name('users.point-trades');
 Route::get('users/{user}/coin-trades', [\App\Http\Controllers\Admin\UserController::class, 'coinTrades'])->name('users.coin-trades');
+Route::get('users/{user}/point-trades/export', [\App\Http\Controllers\Admin\UserController::class, 'exportPointTrades'])->name('users.point-trades.export');
+Route::get('users/{user}/coin-trades/export', [\App\Http\Controllers\Admin\UserController::class, 'exportCoinTrades'])->name('users.coin-trades.export');
 Route::put('users/{user}/toggle-status', [\App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])->name('users.toggle-status');
 Route::put('users/{user}/reset-password', [\App\Http\Controllers\Admin\UserController::class, 'resetPassword'])->name('users.reset-password');
 Route::put('users/{user}/reset-contact', [\App\Http\Controllers\Admin\UserController::class, 'resetContact'])->name('users.reset-contact');
 Route::put('users/{user}/adjust-balance', [\App\Http\Controllers\Admin\UserController::class, 'adjustBalance'])->name('users.adjust-balance');
 Route::put('users/{user}/extend-vip', [\App\Http\Controllers\Admin\UserController::class, 'extendVip'])->name('users.extend-vip');
+Route::get('users/export', [\App\Http\Controllers\Admin\UserController::class, 'export'])->name('users.export');
 Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->except(['store']);
 
 // 配置管理
@@ -156,6 +159,7 @@ Route::get('schedule-logs/{id}', [\App\Http\Controllers\Admin\ScheduleLogControl
 
 // 操作审计日志（仅列表、详情，只读）
 Route::get('audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
+Route::get('audit-logs/export', [\App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
 Route::get('audit-logs/{id}', [\App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('audit-logs.show');
 
 // 全局登录历史（跨管理员与前台用户，只读）
@@ -209,8 +213,10 @@ Route::delete('chat/conversations/{conversationId}', [\App\Http\Controllers\Admi
 // 评论管理（运营管理）
 Route::get('comments/{comment}/replies', [\App\Http\Controllers\Admin\CommentController::class, 'replies'])->name('comments.replies');
 Route::post('comments/{comment}/review', [\App\Http\Controllers\Admin\CommentController::class, 'review'])->name('comments.review');
+Route::get('comments/export', [\App\Http\Controllers\Admin\CommentController::class, 'export'])->name('comments.export');
 Route::apiResource('comments', \App\Http\Controllers\Admin\CommentController::class)->except(['store', 'update']);
 
 // 用户反馈
 Route::get('feedbacks/stats', [\App\Http\Controllers\Admin\FeedbackController::class, 'stats'])->name('feedbacks.stats');
+Route::get('feedbacks/export', [\App\Http\Controllers\Admin\FeedbackController::class, 'export'])->name('feedbacks.export');
 Route::apiResource('feedbacks', \App\Http\Controllers\Admin\FeedbackController::class)->except(['store']);

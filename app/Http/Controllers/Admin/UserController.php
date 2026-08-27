@@ -37,13 +37,15 @@ use Illuminate\Validation\Rules\Password;
  */
 class UserController extends Controller
 {
+    use \App\Exports\HandlesExports;
+
     /**
      * Constructor.
      */
     public function __construct()
     {
         $this->middleware('auth:admin');
-        $this->middleware('permission:users.index')->only(['index', 'show', 'loginHistories', 'socials', 'pointTrades', 'coinTrades', 'trash']);
+        $this->middleware('permission:users.index')->only(['index', 'show', 'loginHistories', 'socials', 'pointTrades', 'coinTrades', 'trash', 'export', 'exportPointTrades', 'exportCoinTrades']);
         $this->middleware('permission:users.edit')->only(['update', 'toggleStatus', 'resetPassword', 'resetContact', 'adjustBalance', 'extendVip', 'restore']);
         $this->middleware('permission:users.delete')->only(['destroy', 'forceDelete']);
     }
@@ -382,5 +384,47 @@ class UserController extends Controller
         }
 
         return CoinTradeResource::collection($query->paginate($perPage));
+    }
+
+    /**
+     * 导出用户列表
+     */
+    public function export(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
+    {
+        return $this->exportDispatch(
+            $request,
+            $this->userExportClass(),
+            [$this->userListFilters($request)],
+            $this->exportFileName('users'),
+            \App\Exports\Admin\UserListExport::SYNC_THRESHOLD,
+        );
+    }
+
+    /**
+     * 导出指定用户的积分流水
+     */
+    public function exportPointTrades(Request $request, User $user): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
+    {
+        return $this->exportDispatch(
+            $request,
+            $this->pointTradeExportClass(),
+            [$user, $this->tradeListFilters($request)],
+            $this->exportFileName("user_{$user->id}_points"),
+            \App\Exports\Admin\PointTradeExport::SYNC_THRESHOLD,
+        );
+    }
+
+    /**
+     * 导出指定用户的金币流水
+     */
+    public function exportCoinTrades(Request $request, User $user): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
+    {
+        return $this->exportDispatch(
+            $request,
+            $this->coinTradeExportClass(),
+            [$user, $this->tradeListFilters($request)],
+            $this->exportFileName("user_{$user->id}_coins"),
+            \App\Exports\Admin\CoinTradeExport::SYNC_THRESHOLD,
+        );
     }
 }

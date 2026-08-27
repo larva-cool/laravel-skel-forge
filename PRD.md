@@ -1433,10 +1433,10 @@ php artisan storage:link
 #### 13.1.5 列表数据导出
 | 项目 | 说明 |
 |------|------|
-| 业务价值 | 运营/财务对账的刚性需求；前端已有 `ArtExcelExport` 组件但接口层未实现 |
+| 业务价值 | 运营/财务对账的刚性需求；前端已有 `ArtExcelExport` 组件，后端接口层已补齐 |
+| 现状 | **已完成**（见 13.5 变更记录 2026-08-27）。`maatwebsite/excel` 4.0.2 已集成，发布 `config/excel.php`；新增 `App\Support\Export\AbstractExport` 基类（实现 `FromQuery`/`WithHeadings`/`WithMapping`/`WithTitle`/`WithColumnFormatting`，自动追加主键避免 chunk 漏行）与 `HandlesExports` 共享 trait；5 个 Export 类（用户/评论/反馈/审计日志/用户积分/金币流水），所有 .xlsx 导出；同步/异步双通道：≤ `SYNC_THRESHOLD`（用户/评论/反馈/审计日志 1000 行、流水 2000 行）走 `BinaryFileResponse` 直接下载，超阈值走 `PerformExportJob` 队列生成文件并通过 `ExportCompletedNotification` 推送站内信下载链接，失败推 `ExportFailedNotification`；控制器与路由：用户 `users/export`、`users/{user}/point-trades/export` 与 `coin-trades/export`、评论 `comments/export`、反馈 `feedbacks/export`、审计日志 `audit-logs/export`；权限点：`users.export`/`comments.export`/`feedbacks.export`/`audit-logs.export`，菜单导出按钮已就位 |
 | 实现要点 | 统一导出基类，接收当前列表筛选条件；大数据量走队列异步生成后推送下载链接（结合通知） |
 | 覆盖模块 | 用户列表、评论管理、反馈管理、积分/金币流水、审计日志 |
-| 后台接口 | `POST /admin/{module}/export` 返回任务 ID 或直接返回文件流（小数据量） |
 | 验收标准 | 导出结果与当前筛选条件一致；超过阈值走异步并通过站内信推送下载链接 |
 
 #### 13.1.6 安全基线加固
@@ -1577,7 +1577,7 @@ php artisan storage:link
 2. ~~管理员登录日志（13.1.2）~~ ✅ 2026-08-27
 3. 系统公告 / 站内信群发（13.1.3）
 4. 敏感词过滤（13.1.4）
-5. 列表数据导出（13.1.5）
+5. ~~列表数据导出（13.1.5）~~ ✅ 2026-08-27
 6. 安全基线加固（13.1.6）— 登录限流已完成；验证码与密码重置限流、CORS 白名单、安全响应头仍待补齐
 
 **第二阶段（业务闭环）**

@@ -23,6 +23,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class CommentController extends Controller
 {
+    use \App\Exports\HandlesExports;
+
     /**
      * Constructor.
      */
@@ -66,6 +68,20 @@ class CommentController extends Controller
         $items = $query->orderByDesc('id')->paginate($perPage);
 
         return CommentResource::collection($items);
+    }
+
+    /**
+     * 导出评论列表
+     */
+    public function export(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
+    {
+        return $this->exportDispatch(
+            $request,
+            $this->commentExportClass(),
+            [$this->commentListFilters($request)],
+            $this->exportFileName('comments'),
+            \App\Exports\Admin\CommentListExport::SYNC_THRESHOLD,
+        );
     }
 
     /**

@@ -19,13 +19,15 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class AuditLogController extends Controller
 {
+    use \App\Exports\HandlesExports;
+
     /**
      * Constructor.
      */
     public function __construct()
     {
         $this->middleware('auth:admin');
-        $this->middleware('permission:audit-logs.index')->only(['index', 'show']);
+        $this->middleware('permission:audit-logs.index')->only(['index', 'show', 'export']);
     }
 
     /**
@@ -48,5 +50,19 @@ class AuditLogController extends Controller
     public function show(int $id): AuditLogResource
     {
         return new AuditLogResource(AuditLog::query()->findOrFail($id));
+    }
+
+    /**
+     * 导出审计日志
+     */
+    public function export(AuditLogIndexRequest $request): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
+    {
+        return $this->exportDispatch(
+            $request,
+            $this->auditLogExportClass(),
+            [$this->auditLogFilters($request)],
+            $this->exportFileName('audit_logs'),
+            \App\Exports\Admin\AuditLogListExport::SYNC_THRESHOLD,
+        );
     }
 }

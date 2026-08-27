@@ -187,6 +187,7 @@ return new class extends Migration
                             ['title' => '重置联系方式', 'permission' => 'users.edit'],
                             ['title' => '调整余额', 'permission' => 'users.edit'],
                             ['title' => '延长VIP', 'permission' => 'users.edit'],
+                            ['title' => '导出用户', 'permission' => 'users.export'],
                         ],
                     ],
                     [
@@ -262,6 +263,7 @@ return new class extends Migration
                         'buttons' => [
                             ['title' => '处理反馈', 'permission' => 'feedbacks.edit'],
                             ['title' => '删除反馈', 'permission' => 'feedbacks.delete'],
+                            ['title' => '导出反馈', 'permission' => 'feedbacks.export'],
                         ],
                     ],
                 ],
