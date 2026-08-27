@@ -29,6 +29,7 @@ class LoginHistoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'result' => $this->result,
             'ip' => $this->ip,
             'port' => $this->port,
             'platform' => $this->platform,

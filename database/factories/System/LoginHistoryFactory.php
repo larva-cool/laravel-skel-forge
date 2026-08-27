@@ -30,6 +30,7 @@ class LoginHistoryFactory extends Factory
         return [
             'user_id' => User::factory(),
             'user_type' => (new User)->getMorphClass(),
+            'result' => true,
             'ip' => fake()->ipv4(),
             'port' => fake()->numberBetween(1024, 65535),
             'platform' => fake()->randomElement(['Windows', 'macOS', 'Linux', 'iOS', 'Android']),
@@ -39,5 +40,15 @@ class LoginHistoryFactory extends Factory
             'address' => fake()->city(),
             'login_at' => now(),
         ];
+    }
+
+    /**
+     * 标记为登录失败的记录。
+     */
+    public function failed(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'result' => false,
+        ]);
     }
 }

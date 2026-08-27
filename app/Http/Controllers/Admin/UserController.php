@@ -303,6 +303,10 @@ class UserController extends Controller
             $query->whereDate('login_at', '<=', $endDate);
         }
 
+        if ($request->filled('result')) {
+            $query->where('result', $request->boolean('result'));
+        }
+
         $items = $query->orderByDesc('login_at')->paginate($perPage);
 
         return LoginHistoryResource::collection($items);

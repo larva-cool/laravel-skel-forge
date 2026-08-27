@@ -36,7 +36,10 @@ class AuthController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:admin')->except(['login', 'wxLogin', 'appleLogin']);
+        $this->middleware('auth:admin')->except(['login', 'wxLogin']);
+        // 登录限速
+        $throttle = 'throttle:'.settings('admin.login_throttle', '10,3');
+        $this->middleware($throttle)->only(['login', 'wxLogin']);
     }
 
     /**

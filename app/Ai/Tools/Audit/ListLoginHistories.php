@@ -47,6 +47,8 @@ class ListLoginHistories implements Tool
             'keyword' => $schema->string()
                 ->max(100)
                 ->description('模糊匹配登录地址、设备、平台或浏览器'),
+            'result' => $schema->boolean()
+                ->description('登录结果筛选：true=仅成功，false=仅失败。不传则查询全部'),
             'login_after' => $schema->string()
                 ->format('date')
                 ->description('登录起始日期（YYYY-MM-DD），含当天'),
@@ -92,6 +94,10 @@ class ListLoginHistories implements Tool
             });
         }
 
+        if ($request->has('result')) {
+            $query->where('result', $request->boolean('result'));
+        }
+
         if ($after = $request->string('login_after')->toString()) {
             $query->whereDate('login_at', '>=', $after);
         }
@@ -109,6 +115,7 @@ class ListLoginHistories implements Tool
             'id' => $history->id,
             'guard' => $history->user_type === Admin::class ? 'admin' : 'user',
             'user_id' => $history->user_id,
+            'result' => $history->result,
             'ip' => is_string($history->ip) ? $history->ip : inet_ntop($history->ip),
             'address' => $history->address,
             'platform' => $history->platform,

@@ -304,6 +304,14 @@ return new class extends Migration
                 'remark' => '1分钟5次，则输入5,1',
             ],
             [
+                'name' => '管理员登录节流',
+                'key' => 'admin.login_throttle',
+                'value' => '10,3',
+                'cast_type' => SettingType::CAST_TYPE_STRING,
+                'input_type' => 'string',
+                'remark' => '1分钟5次，则输入5,1',
+            ],
+            [
                 'name' => '用户token有效期',
                 'key' => 'user.token_expiration',
                 'value' => 43200,

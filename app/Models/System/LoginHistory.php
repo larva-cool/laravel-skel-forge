@@ -60,6 +60,7 @@ class LoginHistory extends Model
             'id' => 'integer',
             'user_id' => 'integer',
             'user_type' => 'string',
+            'result' => 'boolean',
             'ip' => 'string',
             'port' => 'integer',
             'platform' => 'string',
@@ -91,6 +92,9 @@ class LoginHistory extends Model
             //            }
         });
         static::created(function (LoginHistory $model) {
+            if (! $model->result) { // 登录失败的记录不参与用户登录统计
+                return;
+            }
             // 更新用户登录信息
             $model->user?->increment('login_count', 1, [
                 'last_login_ip' => $model->ip,
@@ -112,12 +116,13 @@ class LoginHistory extends Model
     }
 
     /**
-     * 当天是否登录过
+     * 当天是否登录过（仅统计登录成功的记录）
      */
     public static function isTodayLogged(int|string $userId, string $type): bool
     {
         return static::query()->where('user_id', $userId)
             ->where('user_type', $type)
+            ->where('result', true)
             ->where('login_at', '>=', Carbon::now()->startOfDay()->toDateTimeString())
             ->where('login_at', '<=', Carbon::now()->endOfDay()->toDateTimeString())
             ->exists();

@@ -7,8 +7,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Auth;
 
+use App\Events\Admin\LoginFailed;
 use App\Models\Admin\Admin;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -42,14 +44,32 @@ class PasswordLoginRequest extends FormRequest
     {
         $account = $this->string('account');
         $admin = Admin::findForAccount($account->toString());
-        if (! $admin || ! Hash::check($this->string('password')->toString(), $admin->password)) {
+        if (! $admin) {
+            validation_exception('password', trans('auth.failed'));
+        }
+        if (! Hash::check($this->string('password')->toString(), $admin->password)) {
+            $this->recordFailure($admin);
             validation_exception('password', trans('auth.failed'));
         }
         if ($admin->status->isDisabled()) { // 禁止掉的用户不允许登录
             $admin->tokens()->delete();
+            $this->recordFailure($admin);
             validation_exception('account', trans('admin.blocked'));
         }
 
         return $admin;
+    }
+
+    /**
+     * 记录一次失败的登录尝试。
+     */
+    protected function recordFailure(Admin $admin): void
+    {
+        Event::dispatch(new LoginFailed(
+            $admin,
+            (string) $this->ip(),
+            (string) $this->server('REMOTE_PORT'),
+            $this->userAgent(),
+        ));
     }
 }

@@ -69,8 +69,8 @@ class DashboardController extends Controller
         $totalAdmins = Admin::query()->count();
         $activeAdmins = Admin::query()->where('status', AdminStatus::ACTIVE)->count();
 
-        $totalLogins = LoginHistory::query()->where('login_at', '>=', $since)->count();
-        $todayLogins = LoginHistory::query()->whereDate('login_at', Carbon::today())->count();
+        $totalLogins = LoginHistory::query()->where('result', true)->where('login_at', '>=', $since)->count();
+        $todayLogins = LoginHistory::query()->where('result', true)->whereDate('login_at', Carbon::today())->count();
 
         return [
             'total_users' => $totalUsers,
@@ -119,6 +119,7 @@ class DashboardController extends Controller
     {
         return LoginHistory::query()
             ->selectRaw('DATE(login_at) as date, COUNT(*) as count')
+            ->where('result', true)
             ->where('login_at', '>=', $since)
             ->groupBy('date')
             ->orderBy('date')
@@ -155,6 +156,7 @@ class DashboardController extends Controller
     protected function recentLogins(): array
     {
         return LoginHistory::query()
+            ->where('result', true)
             ->latest('login_at')
             ->limit(8)
             ->get(['user_type', 'user_id', 'ip', 'address', 'platform', 'device', 'login_at'])

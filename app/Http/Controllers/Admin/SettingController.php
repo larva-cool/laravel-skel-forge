@@ -223,6 +223,7 @@ class SettingController extends Controller
     {
         return [
             'system' => '基本信息',
+            'admin' => '后台设置',
             'sms_captcha' => '短信设置',
             'email_captcha' => '邮件设置',
             'user' => '会员设置',

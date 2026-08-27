@@ -162,4 +162,103 @@ class AuthControllerTest extends TestCase
         $response->assertUnprocessable()
             ->assertJsonPath('errors.account.0', trans('admin.blocked'));
     }
+
+    #[Test]
+    #[TestDox('密码错误的登录尝试写入 result 为 false 的登录历史')]
+    public function failed_login_is_recorded_in_login_histories(): void
+    {
+        $admin = Admin::query()->where('username', 'admin')->first();
+
+        $this->postJson('/admin/auth/login', [
+            'account' => 'admin',
+            'password' => 'wrong_password',
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $admin->id,
+            'user_type' => $admin->getMorphClass(),
+            'result' => false,
+        ]);
+
+        // 登录失败不应影响登录统计
+        $admin->refresh();
+        $this->assertSame(0, $admin->login_count);
+        $this->assertNull($admin->last_login_at);
+    }
+
+    #[Test]
+    #[TestDox('被禁用管理员的登录尝试写入 result 为 false 的登录历史')]
+    public function disabled_admin_login_is_recorded_in_login_histories(): void
+    {
+        $admin = Admin::query()->create([
+            'username' => 'disabled_user',
+            'name' => 'Disabled User',
+            'password' => bcrypt($this->adminPassword),
+            'status' => 0,
+        ]);
+
+        $this->postJson('/admin/auth/login', [
+            'account' => 'disabled_user',
+            'password' => $this->adminPassword,
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $admin->id,
+            'user_type' => $admin->getMorphClass(),
+            'result' => false,
+        ]);
+    }
+
+    #[Test]
+    #[TestDox('不存在的账号登录尝试不写入登录历史')]
+    public function login_with_unknown_account_is_not_recorded(): void
+    {
+        $this->postJson('/admin/auth/login', [
+            'account' => 'not_exists_account',
+            'password' => $this->adminPassword,
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseCount('login_histories', 0);
+    }
+
+    #[Test]
+    #[TestDox('登录成功写入 result 为 true 的登录历史并更新登录统计')]
+    public function successful_login_is_recorded_in_login_histories(): void
+    {
+        $admin = Admin::query()->where('username', 'admin')->first();
+
+        $this->postJson('/admin/auth/login', [
+            'account' => 'admin',
+            'password' => $this->adminPassword,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $admin->id,
+            'user_type' => $admin->getMorphClass(),
+            'result' => true,
+        ]);
+
+        $admin->refresh();
+        $this->assertSame(1, $admin->login_count);
+        $this->assertNotNull($admin->last_login_at);
+    }
+
+    #[Test]
+    #[TestDox('登录尝试超过节流上限返回 429')]
+    public function login_is_throttled_after_too_many_attempts(): void
+    {
+        $limit = (int) explode(',', (string) settings('admin.login_throttle', '10,3'))[0];
+
+        for ($i = 0; $i < $limit; $i++) {
+            $this->postJson('/admin/auth/login', [
+                'account' => 'admin',
+                'password' => 'wrong_password',
+            ])->assertUnprocessable();
+        }
+
+        $this->postJson('/admin/auth/login', [
+            'account' => 'admin',
+            'password' => 'wrong_password',
+        ])->assertStatus(429);
+    }
 }

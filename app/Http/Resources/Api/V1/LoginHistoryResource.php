@@ -3,7 +3,6 @@
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
-
 declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
@@ -30,6 +29,7 @@ class LoginHistoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'result' => $this->result,
             'ip' => $this->ip,
             'user_agent' => $this->user_agent,
             'address' => $this->address,

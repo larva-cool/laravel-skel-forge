@@ -252,4 +252,65 @@ class LoginHistoryTest extends TestCase
         $user->refresh();
         $this->assertSame(3, $user->login_count);
     }
+
+    /**
+     * 测试失败记录不递增 login_count 也不更新最后登录信息
+     */
+    #[Test]
+    #[TestDox('创建失败的登录记录不更新用户的登录统计信息')]
+    public function failed_login_does_not_update_user_login_stats(): void
+    {
+        $user = User::factory()->create([
+            'login_count' => 5,
+            'last_login_ip' => null,
+            'last_login_at' => null,
+        ]);
+
+        LoginHistory::factory()->failed()->create([
+            'user_id' => $user->id,
+            'user_type' => $user->getMorphClass(),
+            'ip' => '10.0.0.2',
+        ]);
+
+        $user->refresh();
+        $this->assertSame(5, $user->login_count);
+        $this->assertNull($user->last_login_ip);
+        $this->assertNull($user->last_login_at);
+    }
+
+    /**
+     * 测试 isTodayLogged 忽略失败的登录记录
+     */
+    #[Test]
+    #[TestDox('isTodayLogged 忽略当天失败的登录记录')]
+    public function is_today_logged_ignores_failed_records(): void
+    {
+        Carbon::setTestNow(Carbon::create(2025, 6, 15, 14, 0, 0));
+
+        $user = User::factory()->create();
+
+        LoginHistory::factory()->failed()->create([
+            'user_id' => $user->id,
+            'user_type' => $user->getMorphClass(),
+            'login_at' => Carbon::create(2025, 6, 15, 10, 0, 0),
+        ]);
+
+        $this->assertFalse(LoginHistory::isTodayLogged($user->id, $user->getMorphClass()));
+
+        Carbon::setTestNow();
+    }
+
+    /**
+     * 测试 result 字段被转换为布尔类型
+     */
+    #[Test]
+    #[TestDox('result 字段转换为布尔类型')]
+    public function result_is_cast_to_boolean(): void
+    {
+        $success = LoginHistory::factory()->create();
+        $failed = LoginHistory::factory()->failed()->create();
+
+        $this->assertTrue($success->fresh()->result);
+        $this->assertFalse($failed->fresh()->result);
+    }
 }
