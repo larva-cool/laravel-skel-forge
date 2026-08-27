@@ -1401,11 +1401,8 @@ php artisan storage:link
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 启动页、首页轮播是 App/H5 的标准运营位，是最高频的运营配置需求 |
-| 数据表 | `banners`：id、position（广告位）、title、image、link_type、link_value、sort、status、start_at、end_at、created_at |
-| 后台接口 | `GET/POST/PUT/DELETE /admin/banners`、上下架切换、拖拽排序 |
-| 前台接口 | `GET /api/v1/banners?position=home` 返回当前生效的广告位数据 |
-| 前端页面 | `views/operation/banner/index.vue`，支持图片上传、按广告位分组、拖拽排序、生效时间配置 |
-| 验收标准 | 广告位可配置；过期/未开始的 Banner 前台不可见；排序可拖拽保存 |
+| 现状 | **已完成**（见 13.5 变更记录 2026-08-27）。后端 7 个管理端点 + 1 个前台公开端点全部交付：CRUD、启用/禁用切换、拖拽排序（同广告位内上移/下移）、按广告位/关键词/状态筛选、生效时间区间控制；前台公开接口自动过滤禁用/未开始/已过期 Banner。前端 `views/operation/banner/` 完整页面（列表+搜索+编辑弹窗），Apifox 8 个接口全部按 Admin/Api 模块规范发布并通过 PHPUnit 38 个用例验证 |
+| 验收标准 | ✅ 广告位可配置（基于字典 banner_positions，无需改代码即可扩展）；✅ 过期/未开始的 Banner 前台不可见；✅ 排序可移动并保存（上移/下移方式）；✅ 字段安全：前台接口仅返回 6 个公开字段；✅ 跨平台字段安全：Admin 端用 EloquentPaginate `x-apifox-refs` 引用 #/definitions/304922372，Api 端独立 PublicBanner Schema #/definitions/308708084，零跨模块引用 |
 
 #### 13.1.2 管理员登录日志
 | 项目 | 说明 |
@@ -1580,6 +1577,7 @@ php artisan storage:link
 | 2026-08-27 | 列表数据导出接口发布至 Apifox | 6 个导出端点（用户、用户积分流水、用户金币流水、评论、反馈、审计日志）按 Apifox 规范全部发布到 Admin 模块（Apifox 端点 ID 分别为 507519423/507524413/507524424/507524428/507527307/507527357）；分页响应统一使用 `x-apifox-refs` 引用 Admin 模块 `EloquentPaginate`（#/definitions/304922372）并覆写 `data` 字段，接口模块归属严格按 `/admin` 前缀归入 Admin 模块，未跨模块引用 Schema |
 | 2026-08-27 | 前端导出能力接入（laravel-skel-admin） | HTTP 层 `request()` 新增 `returnRawResponse` 选项（保留完整 AxiosResponse 与 headers）；新增 `src/utils/file/download.ts`（`parseFilenameFromDisposition` RFC 5987 文件名解析 + `downloadBlob` Blob 下载工具）；新增 `src/hooks/core/useExport.ts` 通用导出 Hook（全屏 loading + 200/xlsx 同步下载 + 202/JSON 异步入队提示双通道自动分流）；`src/api/` 下 4 个 API 文件新增 6 个 `fetchExport*` 方法（`responseType: 'blob'` + `returnRawResponse: true`）；`Api.Common.ExportTaskResponse` 类型入库；用户/评论/反馈/审计日志 4 个列表页在 `ArtTableHeader` #left 挂载「导出」按钮（v-auth 权限控制 + isExporting loading + 自动携带当前 searchParams 筛选条件），用户详情弹窗积分/金币两个 Tab 各加一个独立 loading 的导出按钮；ESLint / vue-tsc / vite 生产构建零错误 |
 | 2026-08-27 | 登录日志操作列 UI 统一 | `views/monitor/login-history/index.vue` 操作列由原 `ElLink` 文字「查看」改为与附件管理一致的 `ArtButtonTable` 圆形图标按钮（`type: 'view'`，眼睛图标），列宽由 100 收窄到 80，保持全后台操作列视觉风格统一 |
+| 2026-08-27 | Banner / 轮播图管理 | 后端：`App\Enums\LinkType`（链接类型枚举 none/url/page/goods/webview）；`App\Models\Operation\Banner` + `BannerFactory`（带 disabled/noLink/withDuration 状态）；迁移 `2026_03_27_120000_create_banners_table.php` 创建表（id 从 10000000 起，含 position/title/image/link_type/link_value/sort/status/start_at/end_at 字段）并预置 `banner_positions` 字典（home_top/home_banner/launch/user_center/discover 5 个广告位）；`App\Http\Controllers\Admin\BannerController`（index/store/show/update/destroy + toggleStatus + sort 共 7 个端点，index 接口按广告位/关键词/状态筛选，sort 接口按 ids 数组顺序回写 sort 字段，仅修改传入的 ID 不影响其他 Banner），3 个 FormRequest（BannerIndexRequest/BannerSaveRequest/BannerSortRequest），`BannerResource`（含 position_label/link_type_label）按 `banner_positions` 字典缓存映射；菜单与权限点 `banners.index/create/edit/delete` 合并至 `2026_07_31_111934_seed_initial_admin_data.php` 运营管理目录下（评论、反馈之后排序 3）；前台 `App\Http\Controllers\Api\V1\BannerController::index` 公开接口（`GET /api/v1/banners?position=home_top`），自动过滤 status=false、start_at 未到、end_at 已过的 Banner，按 sort 升序 + id 倒序返回，`BannerPublicResource` 仅返回 6 个公开字段（id/title/image/link_type/link_value/sort）保护后台字段；7 个 Admin 接口 + 1 个 Api 接口全部按 Apifox 规范发布（Admin 模块用 `EloquentPaginate` #/definitions/304922372 + 覆写 data 字段，Api 模块独立定义 `PublicBanner` Schema #/definitions/308708084，跨模块零共享 Schema）；前端 `src/views/operation/banner/`（index.vue + modules/banner-search.vue + modules/banner-edit-dialog.vue），用 `useTable` 模式 + `ArtTableHeader` + `ArtTable` + 状态列 `ElSwitch` 直接切换 + 操作列「上移/下移」按钮（同广告位内交换 sort 后批量回写，替代第三方拖拽库）、新增/编辑弹窗含图片预览、链接类型联动显示「链接值」输入框、生效时间区间选择器；`src/api/operation-manage.ts` 7 个 fetch 方法 + `src/types/api/api.d.ts` 新增 `Api.OperationManage` 命名空间（BannerList/BannerListItem/BannerSearchParams/BannerSaveParams/BannerSortParams/BannerPositionOption 6 个类型）；ESLint / vue-tsc / vite 生产构建零错误；PHPUnit 测试 38 个用例全通过（Admin 24 + Api 14，共 115 个断言，1.017s），覆盖 CRUD、筛选、状态切换、拖拽排序、字段安全、生效时间过滤等场景 |
 
 ### 13.6 建议实施顺序
 
@@ -1632,6 +1630,6 @@ php artisan storage:link
 
 ---
 
-**文档版本**：v2.4  
-**最后更新**：2026-08-27  
+**文档版本**：v2.5
+**最后更新**：2026-08-27
 **维护人员**：Tongle Xu
