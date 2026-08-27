@@ -36,6 +36,7 @@ class LoginSucceededListener
             'port' => $event->port,
             'user_agent' => $event->userAgent,
             'login_at' => Carbon::now(),
+            'result' => true,
         ]);
     }
 }

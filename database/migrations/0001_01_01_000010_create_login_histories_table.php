@@ -21,6 +21,7 @@ return new class extends Migration
             $table->id()->from(10000000);
             $table->string('user_type')->comment('用户类型');
             $table->unsignedBigInteger('user_id')->comment('用户ID');
+            $table->boolean('result')->default(true)->comment('登录结果（1成功，0失败）');
             $table->ipAddress('ip')->comment('登录IP');
             $table->unsignedInteger('port')->nullable()->comment('登录端口');
             $table->string('platform', 50)->nullable()->default('Unknown')->comment('系统平台');

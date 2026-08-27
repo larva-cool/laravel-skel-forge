@@ -25,6 +25,7 @@ use Larva\Agent\Agent;
  * @property int $id 记录ID
  * @property int $user_id 用户ID
  * @property string $user_type 用户类型
+ * @property bool $result 登录结果（1成功，0失败）
  * @property string $ip 登录IP
  * @property int|null $port 端口
  * @property string $platform 操作系统平台
@@ -37,7 +38,7 @@ use Larva\Agent\Agent;
  * @author Tongle Xu <xutongle@msn.com>
  */
 #[Table('login_histories')]
-#[Fillable(['user_id', 'user_type', 'ip', 'port', 'platform', 'device', 'browser', 'user_agent', 'address', 'login_at'])]
+#[Fillable(['user_id', 'user_type', 'ip', 'port', 'platform', 'device', 'browser', 'user_agent', 'address', 'login_at', 'result'])]
 #[Hidden(['user_id', 'user_type'])]
 class LoginHistory extends Model
 {
