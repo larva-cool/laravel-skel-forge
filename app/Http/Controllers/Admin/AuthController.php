@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Events\Admin\LoginSucceeded;
-use App\Http\Requests\Admin\Auth\AppleLoginRequest;
 use App\Http\Requests\Admin\Auth\PasswordLoginRequest;
 use App\Http\Requests\Admin\Auth\WechatMpLoginRequest;
 use App\Http\Resources\Admin\AdminInfoResource;
@@ -73,22 +72,6 @@ class AuthController extends Controller
      * 微信公众号登录
      */
     public function wxLogin(WechatMpLoginRequest $request): JsonResponse
-    {
-        $admin = $request->authenticate();
-        $token = $admin->createToken('admin-token', ['admin'], Carbon::now()->addMinutes(1440));
-        Event::dispatch(new Login('sanctum', $admin, false));
-        Event::dispatch(new LoginSucceeded($admin, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
-
-        return response()->json([
-            'access_token' => $token->plainTextToken,
-            'user' => new AdminInfoResource($admin),
-        ]);
-    }
-
-    /**
-     * 苹果账号登录
-     */
-    public function appleLogin(AppleLoginRequest $request): JsonResponse
     {
         $admin = $request->authenticate();
         $token = $admin->createToken('admin-token', ['admin'], Carbon::now()->addMinutes(1440));

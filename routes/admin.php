@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => 'auth'], function (Registrar $registrar) {
     $registrar->post('login', [\App\Http\Controllers\Admin\AuthController::class, 'login'])->name('login');
     $registrar->post('wx-login', [\App\Http\Controllers\Admin\AuthController::class, 'wxLogin'])->name('wx_login'); // 微信公众号授权登录
-    $registrar->post('apple-login', [\App\Http\Controllers\Admin\AuthController::class, 'appleLogin'])->name('apple_login'); // Apple 登录授权
     $registrar->post('refresh-token', [\App\Http\Controllers\Admin\AuthController::class, 'refreshToken'])->name('refresh_token'); // 重新签发个人访问令牌
     $registrar->get('tokens', [\App\Http\Controllers\Admin\AuthController::class, 'tokens'])->name('tokens'); // 查询已经签发的所有令牌
     $registrar->delete('tokens/{tokenId}', [\App\Http\Controllers\Admin\AuthController::class, 'destroyToken'])->name('destroy_token'); // 销毁指定的 Token
