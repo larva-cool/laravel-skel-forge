@@ -1404,10 +1404,10 @@ php artisan storage:link
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 安全合规必备。已有用户侧登录历史，管理员侧缺失审计能力 |
-| 现状 | `AdminLoginLog` 模型/表已存在，缺后台查询接口与页面 |
-| 后台接口 | `GET /admin/admin-login-logs`（支持按管理员、IP、结果、时间范围过滤） |
-| 前端页面 | `views/monitor/admin-login-log/index.vue`，展示登录时间、IP、归属地、设备、浏览器、结果（成功/失败） |
-| 验收标准 | 登录成功与失败均落库；可按管理员和时间范围检索；超级管理员可见全部 |
+| 现状 | **失败落库已完成**（见 13.5 变更记录 2026-08-27）。管理员与前台用户复用多态表 `login_histories`（不存在独立的 `AdminLoginLog`），`result` 字段区分成功/失败；`GET /admin/admins/{id}/login-histories` 与 `GET /admin/users/{user}/login-histories` 已支持 `result` 过滤。仍缺**全局**登录日志列表接口与独立页面 |
+| 待补后台接口 | `GET /admin/login-histories`（跨管理员/用户的全局列表，支持按 guard、管理员、IP、结果、时间范围过滤）。AI 审计工具 `ListLoginHistories` 已具备同等查询能力，可作为字段设计参考 |
+| 前端页面 | `views/monitor/login-history/index.vue`，展示登录时间、归属主体、IP、归属地、设备、浏览器、结果（成功/失败） |
+| 验收标准 | ~~登录成功与失败均落库~~（已完成）；~~可按管理员和时间范围检索~~（已完成）；全局列表可跨主体检索，超级管理员可见全部 |
 
 #### 13.1.3 系统公告 / 站内信群发
 | 项目 | 说明 |
@@ -1444,7 +1444,7 @@ php artisan storage:link
 | 项目 | 说明 |
 |------|------|
 | CORS 配置 | 确认 `config/cors.php` 生产环境白名单收敛（不使用 `*`） |
-| 接口限流 | 登录、注册、验证码发送、密码重置等敏感接口配置独立 `throttle` 规则 |
+| 接口限流 | ~~登录~~（已完成：`/api/v1` 侧 `user.login_throttle`、`/admin` 侧 `admin.login_throttle`）、注册、验证码发送、密码重置等敏感接口配置独立 `throttle` 规则 |
 | 安全响应头 | 补充 `X-Frame-Options`、`X-Content-Type-Options`、`Referrer-Policy`、CSP |
 | 验收标准 | 生产环境安全扫描无高危项；敏感接口具备防爆破限流 |
 
@@ -1567,6 +1567,7 @@ php artisan storage:link
 | 2026-08-26 | 评论管理（运营） | 后端 `CommentController`（列表/详情/审核/删除）+ `CommentResource` + `CommentReviewRequest`；支持按审核状态、源类型、关键词、用户过滤；权限点 `comments.index/edit/delete`；菜单挂在「运营管理」下。前端 `views/operation/comment/`（列表页 + 搜索栏 + 详情抽屉 + 审核弹窗） |
 | 2026-08-26 | 公共选项接口 | 新增 `CommonController`（路由前缀 `/admin/common`），提供 `GET /admin/common/source-types` 基于 morph map 输出源类型选项；前端源类型下拉改为接口动态加载，替代硬编码映射 |
 | 2026-08-26 | 评论回复链展示 | 后端详情接口返回 `is_reply` 与 `parent_comment` 上级评论摘要（`morphWith` 嵌套预加载避免 N+1），新增 `GET /admin/comments/{comment}/replies` 分页回复列表；前端详情抽屉新增上级评论引用块与回复列表卡片，支持链内无限层级下钻与分页 |
+| 2026-08-27 | 后台登录失败记录与限流 | 新增 `App\Events\Admin\LoginFailed` 事件与 `LoginFailedListener`，在 `PasswordLoginRequest::authenticate()` 的「密码错误」「账号被禁用」两条失败路径派发，写入 `login_histories` 且 `result=false`（账号不存在的尝试无法归因到 user_id，不落库）；修复 `LoginHistory` 模型 `created` 钩子——失败记录不再累加 `login_count`/`last_login_at`，也不再误触发 `TodayFirstLogged`，`isTodayLogged()` 仅统计成功记录；`result` 补 boolean cast 并在两个 `LoginHistoryResource` 中输出；`GET /admin/admins/{id}/login-histories` 与 `GET /admin/users/{user}/login-histories` 新增 `result` 查询参数，AI 审计工具 `ListLoginHistories` 同步支持；仪表盘 4 处登录统计（`range_logins`、`today_logins`、`login_trend`、`recent_logins`）补 `result=true` 过滤避免被失败记录污染；新增配置项 `admin.login_throttle`（默认 `10,3`）与 `AuthController` 登录限流中间件，超限返回 429 |
 
 ### 13.6 建议实施顺序
 

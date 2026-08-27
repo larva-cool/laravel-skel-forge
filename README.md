@@ -135,8 +135,8 @@ php artisan test --compact --filter=name  # 按名称过滤
 
 | 模块 | 路由前缀 | 说明 |
 |------|----------|------|
-| 认证授权 | `/admin/auth` | 管理员登录、登出、当前用户信息、刷新 Token |
-| 管理员 | `/admin/admins` | 管理员 CRUD、状态切换、密码重置、角色分配、登录历史 |
+| 认证授权 | `/admin/auth` | 管理员登录（带节流限速，失败尝试记入登录历史）、登出、当前用户信息、刷新 Token |
+| 管理员 | `/admin/admins` | 管理员 CRUD、状态切换、密码重置、角色分配、登录历史（含成功/失败记录，可按 `result` 过滤） |
 | 角色权限 | `/admin/roles`、`/admin/permissions` | RBAC 角色与权限管理 |
 | 菜单 | `/admin/menus` | 树形菜单管理（目录/菜单/按钮） |
 | 配置 | `/admin/settings`、`/admin/config` | 系统配置项与按分组查看 |
@@ -146,7 +146,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 验证码 | `/admin/phone-codes`、`/admin/mail-codes` | 短信/邮件验证码发送记录（只读） |
 | 通知 | `/admin/notifications` | 站内通知列表、未读数、标记已读、批量已读、清理已读 |
 | 应用版本 | `/admin/apps`、`/admin/apps/{app}/versions` | 客户端应用与版本发布/撤回/废弃 |
-| 前台用户 | `/admin/users` | 前台用户 CRUD、状态、积分/金币调整、VIP 延期、登录历史、社交账号、流水、回收站 |
+| 前台用户 | `/admin/users` | 前台用户 CRUD、状态、积分/金币调整、VIP 延期、登录历史（可按 `result` 过滤）、社交账号、流水、回收站 |
 | 反馈管理 | `/admin/feedbacks` | 用户反馈列表、统计、详情、处理、删除 |
 | 评论管理 | `/admin/comments` | 评论列表（按审核状态/源类型/关键词/用户过滤）、详情（含 IP 与上级评论摘要）、回复链分页查询、审核（通过/驳回/审核中）、删除 |
 | 公共接口 | `/admin/common` | 与业务无关的通用选项（如 `source-types` 多态源类型下拉） |
