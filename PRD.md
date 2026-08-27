@@ -726,8 +726,9 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 
 | 状态码 | 含义 |
 |--------|------|
-| 200 | 成功（查询/更新） |
+| 200 | 成功（查询/更新/同步二进制下载） |
 | 201 | 创建成功 |
+| 202 | 已接受（异步入队，如大批量导出任务，响应体携带任务入队提示消息） |
 | 204 | 删除/操作成功，无返回内容 |
 | 400 | 请求参数错误 |
 | 401 | 未认证或 Token 过期 |
@@ -787,6 +788,9 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/users/{id}/socials` | 用户第三方绑定 | users.index |
 | GET | `/admin/users/{id}/point-trades` | 用户积分流水 | users.index |
 | GET | `/admin/users/{id}/coin-trades` | 用户金币流水 | users.index |
+| GET | `/admin/users/export` | 导出用户列表（xlsx，支持同步下载/异步入队双模式） | users.export |
+| GET | `/admin/users/{id}/point-trades/export` | 导出用户积分流水（xlsx） | users.export |
+| GET | `/admin/users/{id}/coin-trades/export` | 导出用户金币流水（xlsx） | users.export |
 
 #### 6.3.4 角色管理（/admin/roles）
 | 方法 | 路径 | 说明 | 权限 |
@@ -871,6 +875,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/comments/{comment}/replies` | 回复列表（分页，返回该评论下的直接回复） | comments.index |
 | POST | `/admin/comments/{comment}/review` | 审核评论（`status` 取 `approved`/`rejected`/`review`，可选 `remark`） | comments.edit |
 | DELETE | `/admin/comments/{comment}` | 删除评论 | comments.delete |
+| GET | `/admin/comments/export` | 导出评论列表（xlsx，支持同步下载/异步入队双模式） | comments.export |
 
 > 评论父子关系通过多态自关联实现：回复的 `source_type='comment'`、`source_id` 指向父评论 ID。列表接口不返回 `ip_address`，仅详情接口返回。
 
@@ -882,6 +887,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/feedbacks/{feedback}` | 反馈详情（含附件图片、客户端信息） | feedbacks.index |
 | PUT | `/admin/feedbacks/{feedback}` | 处理反馈（调整 `status`/`priority`、填写 `admin_remark`） | feedbacks.edit |
 | DELETE | `/admin/feedbacks/{feedback}` | 删除反馈 | feedbacks.delete |
+| GET | `/admin/feedbacks/export` | 导出反馈列表（xlsx，支持同步下载/异步入队双模式） | feedbacks.export |
 
 #### 6.3.14 公共选项（/admin/common）
 | 方法 | 路径 | 说明 | 认证 |
@@ -973,6 +979,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 |------|------|------|------|
 | GET | `/admin/audit-logs` | 审计日志列表（分页，支持时间范围/管理员/方法筛选） | audit-logs.index |
 | GET | `/admin/audit-logs/{id}` | 审计日志详情（含请求体、响应） | audit-logs.index |
+| GET | `/admin/audit-logs/export` | 导出审计日志（xlsx，支持同步下载/异步入队双模式） | audit-logs.export |
 
 #### 6.3.21 调度任务日志（/admin/schedule-logs）
 | 方法 | 路径 | 说明 | 权限 |
@@ -1434,10 +1441,11 @@ php artisan storage:link
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 运营/财务对账的刚性需求；前端已有 `ArtExcelExport` 组件，后端接口层已补齐 |
-| 现状 | **已完成**（见 13.5 变更记录 2026-08-27）。`maatwebsite/excel` 4.0.2 已集成，发布 `config/excel.php`；新增 `App\Support\Export\AbstractExport` 基类（实现 `FromQuery`/`WithHeadings`/`WithMapping`/`WithTitle`/`WithColumnFormatting`，自动追加主键避免 chunk 漏行）与 `HandlesExports` 共享 trait；5 个 Export 类（用户/评论/反馈/审计日志/用户积分/金币流水），所有 .xlsx 导出；同步/异步双通道：≤ `SYNC_THRESHOLD`（用户/评论/反馈/审计日志 1000 行、流水 2000 行）走 `BinaryFileResponse` 直接下载，超阈值走 `PerformExportJob` 队列生成文件并通过 `ExportCompletedNotification` 推送站内信下载链接，失败推 `ExportFailedNotification`；控制器与路由：用户 `users/export`、`users/{user}/point-trades/export` 与 `coin-trades/export`、评论 `comments/export`、反馈 `feedbacks/export`、审计日志 `audit-logs/export`；权限点：`users.export`/`comments.export`/`feedbacks.export`/`audit-logs.export`，菜单导出按钮已就位 |
-| 实现要点 | 统一导出基类，接收当前列表筛选条件；大数据量走队列异步生成后推送下载链接（结合通知） |
-| 覆盖模块 | 用户列表、评论管理、反馈管理、积分/金币流水、审计日志 |
-| 验收标准 | 导出结果与当前筛选条件一致；超过阈值走异步并通过站内信推送下载链接 |
+| 现状 | **已完成**（后端 + 前端，见 13.5 变更记录 2026-08-27）。后端：`maatwebsite/excel` 4.0.2 已集成，发布 `config/excel.php`；新增 `App\Support\Export\AbstractExport` 基类（实现 `FromQuery`/`WithHeadings`/`WithMapping`/`WithTitle`/`WithColumnFormatting`，自动追加主键避免 chunk 漏行）与 `HandlesExports` 共享 trait；5 个 Export 类（用户/评论/反馈/审计日志/用户积分/金币流水），所有 .xlsx 导出；同步/异步双通道：≤ `SYNC_THRESHOLD`（用户/评论/反馈/审计日志 1000 行、流水 2000 行）走 `BinaryFileResponse` 直接下载（`Content-Disposition: attachment; filename*=UTF-8''...`），超阈值走 `PerformExportJob` 队列生成文件并通过 `ExportCompletedNotification` 推送站内信下载链接，失败推 `ExportFailedNotification`；控制器与路由：用户 `users/export`、`users/{user}/point-trades/export` 与 `coin-trades/export`、评论 `comments/export`、反馈 `feedbacks/export`、审计日志 `audit-logs/export`（共 6 个端点）；权限点：`users.export`/`comments.export`/`feedbacks.export`/`audit-logs.export`。前端（laravel-skel-admin）：HTTP 层 `request()` 新增 `returnRawResponse` 选项（返回完整 AxiosResponse，保留 `Content-Disposition` 响应头用于读文件名）；新增 `src/utils/file/download.ts` 提供 `parseFilenameFromDisposition()`（RFC 5987 UTF-8 文件名解析 + plain 回退）与 `downloadBlob()`（Blob → ObjectURL → `<a download>` 下载链路）；新增 `src/hooks/core/useExport.ts` 通用导出 Hook，封装「全屏 loading → blob 请求 → 按 status/contentType 分流处理」：200 + xlsx → 解析文件名并触发下载；202 + JSON → 读取 Blob 为 JSON 并 `ElMessage.success` 提示「导出任务已提交，完成后将通过站内信通知您」；200 + JSON → 警告提示；新增 6 个 `fetchExport*` API 函数（`responseType: 'blob'` + `returnRawResponse: true` + `showErrorMessage: true`）；`Api.Common.ExportTaskResponse` 类型入 `api.d.ts`；4 个列表页（用户/评论/反馈/审计日志）在 `ArtTableHeader` #left 插槽新增「导出」按钮（带 `v-auth` 权限指令、`isExporting` loading 状态），复用 `useTable.searchParams` 自动携带当前筛选条件（剔除 `page`/`per_page`）；用户详情弹窗（`user-detail-dialog.vue`）积分/金币两个 Tab 的筛选栏各加一个独立 loading 的「导出」按钮，复用各自的 `keyword` + `dateRange` 状态作为筛选参数；ESLint / vue-tsc / vite 生产构建均通过 |
+| 实现要点 | 统一导出基类，接收当前列表筛选条件；大数据量走队列异步生成后推送下载链接（结合通知）；前端统一走 `useExport()` Hook，同步下载/异步通知自动分流 |
+| 覆盖模块 | 用户列表、评论管理、反馈管理、审计日志、用户详情内积分流水/金币流水 |
+| 前端交互 | 导出按钮挂载在表格工具栏左侧；点击后全屏 loading 遮罩防止重复点击；同步场景自动触发浏览器下载，文件名形如 `users_20260827_153045.xlsx`；异步场景弹出成功提示，用户稍后在站内信中心下载；导出参数自动与当前表格搜索/筛选条件联动 |
+| 验收标准 | ✅ 导出结果与当前筛选条件一致；✅ 超过阈值走异步并通过站内信推送下载链接；✅ 中文文件名正确解析（RFC 5987）；✅ 导出按钮受权限指令控制；✅ ESLint / vue-tsc / 生产构建零错误 |
 
 #### 13.1.6 安全基线加固
 | 项目 | 说明 |
@@ -1569,6 +1577,9 @@ php artisan storage:link
 | 2026-08-27 | 后台登录失败记录与限流 | 新增 `App\Events\Admin\LoginFailed` 事件与 `LoginFailedListener`，在 `PasswordLoginRequest::authenticate()` 的「密码错误」「账号被禁用」两条失败路径派发，写入 `login_histories` 且 `result=false`（账号不存在的尝试无法归因到 user_id，不落库）；修复 `LoginHistory` 模型 `created` 钩子——失败记录不再累加 `login_count`/`last_login_at`，也不再误触发 `TodayFirstLogged`，`isTodayLogged()` 仅统计成功记录；`result` 补 boolean cast 并在两个 `LoginHistoryResource` 中输出；`GET /admin/admins/{id}/login-histories` 与 `GET /admin/users/{user}/login-histories` 新增 `result` 查询参数，AI 审计工具 `ListLoginHistories` 同步支持；仪表盘 4 处登录统计（`range_logins`、`today_logins`、`login_trend`、`recent_logins`）补 `result=true` 过滤避免被失败记录污染；新增配置项 `admin.login_throttle`（默认 `10,3`）与 `AuthController` 登录限流中间件，超限返回 429 |
 | 2026-08-27 | 全局登录历史接口 | 新增 `GET /admin/login-histories` 跨主体全局登录日志列表（权限 `login-histories.index`），复用 `LoginHistory` 多态表，支持按 guard（user/admin）、user_id、IP、结果、关键字、时间范围过滤，新增 `LoginHistory::scopeFilter` 统一筛选；响应新增 `GlobalLoginHistoryResource`（含 guard、user_id、user_name、result）；后台菜单「登录日志」合并至 `2026_07_31_111934_seed_initial_admin_data.php` |
 | 2026-08-27 | 全局登录历史前端 | 新增 `src/views/monitor/login-history/`（index.vue + login-history-search.vue + login-history-detail-dialog.vue），复用 useTable + ArtSearchBar 模式；`src/types/api/api.d.ts` 新增 `Api.Monitor.LoginHistoryItem/LoginHistoryList/LoginHistorySearchParams`；`src/api/monitor.ts` 新增 `fetchLoginHistoryList` |
+| 2026-08-27 | 列表数据导出接口发布至 Apifox | 6 个导出端点（用户、用户积分流水、用户金币流水、评论、反馈、审计日志）按 Apifox 规范全部发布到 Admin 模块（Apifox 端点 ID 分别为 507519423/507524413/507524424/507524428/507527307/507527357）；分页响应统一使用 `x-apifox-refs` 引用 Admin 模块 `EloquentPaginate`（#/definitions/304922372）并覆写 `data` 字段，接口模块归属严格按 `/admin` 前缀归入 Admin 模块，未跨模块引用 Schema |
+| 2026-08-27 | 前端导出能力接入（laravel-skel-admin） | HTTP 层 `request()` 新增 `returnRawResponse` 选项（保留完整 AxiosResponse 与 headers）；新增 `src/utils/file/download.ts`（`parseFilenameFromDisposition` RFC 5987 文件名解析 + `downloadBlob` Blob 下载工具）；新增 `src/hooks/core/useExport.ts` 通用导出 Hook（全屏 loading + 200/xlsx 同步下载 + 202/JSON 异步入队提示双通道自动分流）；`src/api/` 下 4 个 API 文件新增 6 个 `fetchExport*` 方法（`responseType: 'blob'` + `returnRawResponse: true`）；`Api.Common.ExportTaskResponse` 类型入库；用户/评论/反馈/审计日志 4 个列表页在 `ArtTableHeader` #left 挂载「导出」按钮（v-auth 权限控制 + isExporting loading + 自动携带当前 searchParams 筛选条件），用户详情弹窗积分/金币两个 Tab 各加一个独立 loading 的导出按钮；ESLint / vue-tsc / vite 生产构建零错误 |
+| 2026-08-27 | 登录日志操作列 UI 统一 | `views/monitor/login-history/index.vue` 操作列由原 `ElLink` 文字「查看」改为与附件管理一致的 `ArtButtonTable` 圆形图标按钮（`type: 'view'`，眼睛图标），列宽由 100 收窄到 80，保持全后台操作列视觉风格统一 |
 
 ### 13.6 建议实施顺序
 
@@ -1621,6 +1632,6 @@ php artisan storage:link
 
 ---
 
-**文档版本**：v2.3  
-**最后更新**：2026-08-26  
+**文档版本**：v2.4  
+**最后更新**：2026-08-27  
 **维护人员**：Tongle Xu
