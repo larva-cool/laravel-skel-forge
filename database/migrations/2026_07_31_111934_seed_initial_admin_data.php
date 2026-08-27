@@ -266,6 +266,23 @@ return new class extends Migration
                             ['title' => '导出反馈', 'permission' => 'feedbacks.export'],
                         ],
                     ],
+                    [
+                        'key' => 'operation.banner',
+                        'path' => 'banner',
+                        'name' => 'Banner',
+                        'component' => '/operation/banner',
+                        'title' => '轮播图管理',
+                        'icon' => 'ri:image-2-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 3,
+                        'keep_alive' => true,
+                        'permission' => 'banners.index',
+                        'buttons' => [
+                            ['title' => '新增轮播图', 'permission' => 'banners.create'],
+                            ['title' => '编辑轮播图', 'permission' => 'banners.edit'],
+                            ['title' => '删除轮播图', 'permission' => 'banners.delete'],
+                        ],
+                    ],
                 ],
             ],
 

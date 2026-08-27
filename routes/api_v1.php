@@ -80,6 +80,11 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
      * 点赞
      */
     Route::apiResource('likes', \App\Http\Controllers\Api\V1\LikeController::class)->only(['index', 'store', 'destroy']); // 点赞列表 / 添加点赞 / 取消点赞
+
+    /**
+     * Banner / 轮播图（公开，无需认证）
+     */
+    Route::get('banners', [\App\Http\Controllers\Api\V1\BannerController::class, 'index'])->name('banners.index');
     
     /**
      * 用户接口

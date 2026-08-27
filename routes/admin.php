@@ -220,3 +220,8 @@ Route::apiResource('comments', \App\Http\Controllers\Admin\CommentController::cl
 Route::get('feedbacks/stats', [\App\Http\Controllers\Admin\FeedbackController::class, 'stats'])->name('feedbacks.stats');
 Route::get('feedbacks/export', [\App\Http\Controllers\Admin\FeedbackController::class, 'export'])->name('feedbacks.export');
 Route::apiResource('feedbacks', \App\Http\Controllers\Admin\FeedbackController::class)->except(['store']);
+
+// Banner / 轮播图管理（运营管理）
+Route::put('banners/{banner}/toggle-status', [\App\Http\Controllers\Admin\BannerController::class, 'toggleStatus'])->name('banners.toggle-status');
+Route::post('banners/sort', [\App\Http\Controllers\Admin\BannerController::class, 'sort'])->name('banners.sort');
+Route::apiResource('banners', \App\Http\Controllers\Admin\BannerController::class);
