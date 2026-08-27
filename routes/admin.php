@@ -158,6 +158,9 @@ Route::get('schedule-logs/{id}', [\App\Http\Controllers\Admin\ScheduleLogControl
 Route::get('audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
 Route::get('audit-logs/{id}', [\App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('audit-logs.show');
 
+// 全局登录历史（跨管理员与前台用户，只读）
+Route::get('login-histories', [\App\Http\Controllers\Admin\LoginHistoryController::class, 'index'])->name('login-histories.index');
+
 // 队列管理（Laravel Horizon 数据代理）
 Route::group(['prefix' => 'queue'], function (Registrar $registrar) {
     $registrar->get('stats', [\App\Http\Controllers\Admin\QueueController::class, 'stats'])->name('queue.stats');

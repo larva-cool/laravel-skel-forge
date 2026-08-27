@@ -12,6 +12,7 @@ use Database\Factories\System\LoginHistoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -113,6 +114,34 @@ class LoginHistory extends Model
     public function user(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * 作用域：列表筛选
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->when(! empty($filters['user_type']), fn (Builder $q) => $q->where('user_type', $filters['user_type']))
+            ->when(! empty($filters['user_id']), fn (Builder $q) => $q->where('user_id', (int) $filters['user_id']))
+            ->when(! empty($filters['keyword']), function (Builder $q) use ($filters) {
+                $keyword = $filters['keyword'];
+
+                return $q->where(function (Builder $sub) use ($keyword) {
+                    $sub->where('address', 'like', "%{$keyword}%")
+                        ->orWhere('device', 'like', "%{$keyword}%")
+                        ->orWhere('platform', 'like', "%{$keyword}%")
+                        ->orWhere('browser', 'like', "%{$keyword}%");
+                });
+            })
+            ->when(! empty($filters['ip']), fn (Builder $q) => $q->where('ip', $filters['ip']))
+            ->when(isset($filters['result']) && $filters['result'] !== null && $filters['result'] !== '', function (Builder $q) use ($filters) {
+                return $q->where('result', filter_var($filters['result'], FILTER_VALIDATE_BOOLEAN));
+            })
+            ->when(! empty($filters['login_start']), fn (Builder $q) => $q->where('login_at', '>=', Carbon::parse($filters['login_start'])->startOfDay()))
+            ->when(! empty($filters['login_end']), fn (Builder $q) => $q->where('login_at', '<=', Carbon::parse($filters['login_end'])->endOfDay()));
     }
 
     /**

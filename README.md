@@ -151,7 +151,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 评论管理 | `/admin/comments` | 评论列表（按审核状态/源类型/关键词/用户过滤）、详情（含 IP 与上级评论摘要）、回复链分页查询、审核（通过/驳回/审核中）、删除 |
 | 公共接口 | `/admin/common` | 与业务无关的通用选项（如 `source-types` 多态源类型下拉） |
 | 监控 | `/admin/monitor`、`/admin/queue`、`/admin/debug` | Pulse 性能、Horizon 队列、Telescope 调试（仅 local） |
-| 审计 | `/admin/audit-logs`、`/admin/schedule-logs` | 操作审计与调度日志 |
+| 审计 | `/admin/audit-logs`、`/admin/schedule-logs`、`/admin/login-histories` | 操作审计、调度日志与全局登录历史（跨管理员/前台用户，可按 guard、结果、时间过滤） |
 | 仪表盘 | `/admin/dashboard` | 核心指标统计与趋势图 |
 | AI 聊天 | `/admin/chat` | SSE 流式对话、工具调用审批、会话管理 |
 

@@ -585,6 +585,18 @@ return new class extends Migration
                         'keep_alive' => true,
                         'permission' => 'audit-logs.index',
                     ],
+                    [
+                        'key' => 'monitor.login-history',
+                        'path' => 'login-history',
+                        'name' => 'LoginHistory',
+                        'component' => '/monitor/login-history/index',
+                        'title' => '登录日志',
+                        'icon' => 'ri:login-box-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 5,
+                        'keep_alive' => true,
+                        'permission' => 'login-histories.index',
+                    ],
                 ],
             ],
 
