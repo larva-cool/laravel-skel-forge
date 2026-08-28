@@ -226,7 +226,7 @@ return new class extends Migration
                         'path' => 'trash',
                         'name' => 'UserTrash',
                         'component' => '/user/trash/index',
-                        'title' => '回收站',
+                        'title' => '用户回收站',
                         'icon' => 'ri:delete-bin-line',
                         'type' => MenuType::MENU,
                         'sort' => 2,
