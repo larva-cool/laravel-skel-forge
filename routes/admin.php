@@ -225,3 +225,15 @@ Route::apiResource('feedbacks', \App\Http\Controllers\Admin\FeedbackController::
 Route::put('banners/{banner}/toggle-status', [\App\Http\Controllers\Admin\BannerController::class, 'toggleStatus'])->name('banners.toggle-status');
 Route::post('banners/sort', [\App\Http\Controllers\Admin\BannerController::class, 'sort'])->name('banners.sort');
 Route::apiResource('banners', \App\Http\Controllers\Admin\BannerController::class);
+
+// 用户分群管理（用户管理）
+Route::get('user-segments/options', [\App\Http\Controllers\Admin\UserSegmentController::class, 'options'])->name('user-segments.options');
+Route::post('user-segments/batch-attach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'batchAttach'])->name('user-segments.batch-attach');
+Route::post('user-segments/batch-detach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'batchDetach'])->name('user-segments.batch-detach');
+Route::put('user-segments/{segment}/toggle-status', [\App\Http\Controllers\Admin\UserSegmentController::class, 'toggleStatus'])->name('user-segments.toggle-status');
+Route::post('user-segments/{segment}/sync', [\App\Http\Controllers\Admin\UserSegmentController::class, 'sync'])->name('user-segments.sync');
+Route::get('user-segments/{segment}/preview', [\App\Http\Controllers\Admin\UserSegmentController::class, 'preview'])->name('user-segments.preview');
+Route::get('user-segments/{segment}/users', [\App\Http\Controllers\Admin\UserSegmentController::class, 'users'])->name('user-segments.users');
+Route::post('user-segments/{segment}/attach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'attach'])->name('user-segments.attach');
+Route::post('user-segments/{segment}/detach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'detach'])->name('user-segments.detach');
+Route::apiResource('user-segments', \App\Http\Controllers\Admin\UserSegmentController::class)->except(['create', 'edit']);

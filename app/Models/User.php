@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -78,6 +79,8 @@ use Laravel\Scout\Searchable;
  * @property Collection<int,CoinTrade> $coins 金币交易明细
  * @property Collection<int,LoginHistory> $loginHistories 登录历史
  * @property Collection<int,Social> $socials 社交账号
+ * @property \Illuminate\Database\Eloquent\Collection<int,\App\Models\UserSegment\Segment> $segments 用户分群
+ * @property \Illuminate\Database\Eloquent\Collection<int,\App\Models\UserSegment\Membership> $memberships 分群成员记录
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
@@ -211,6 +214,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function loginHistories(): MorphMany
     {
         return $this->morphMany(LoginHistory::class, 'user')->latest('login_at');
+    }
+
+    /**
+     * Get the segments relation.
+     */
+    public function segments(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\UserSegment\Segment::class,
+            'user_segment_memberships',
+            'user_id',
+            'segment_id'
+        )->withPivot(['source', 'created_at']);
+    }
+
+    /**
+     * 分群成员记录（一对多到 Membership）
+     */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(\App\Models\UserSegment\Membership::class, 'user_id');
     }
 
     /**

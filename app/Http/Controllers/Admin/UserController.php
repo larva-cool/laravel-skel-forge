@@ -96,6 +96,24 @@ class UserController extends Controller
             $query->whereDate('created_at', '<=', $registerEnd);
         }
 
+        // 按分群筛选（多值 AND：用户必须同时属于全部指定分群）
+        $segmentIds = $request->query('segment_ids');
+        if (is_string($segmentIds)) {
+            $segmentIds = array_filter(array_map('trim', explode(',', $segmentIds)));
+        }
+        if (is_array($segmentIds) && $segmentIds !== []) {
+            $segmentIds = array_values(array_unique(array_filter(
+                array_map('intval', $segmentIds),
+                fn ($v) => $v > 0
+            )));
+            foreach ($segmentIds as $sid) {
+                $query->whereHas(
+                    'memberships',
+                    fn ($q) => $q->where('segment_id', $sid)
+                );
+            }
+        }
+
         $items = $query->orderByDesc('id')->paginate(per_page($request));
 
         return UserResource::collection($items);

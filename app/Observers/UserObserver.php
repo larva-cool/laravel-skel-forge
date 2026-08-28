@@ -34,6 +34,8 @@ class UserObserver
     public function deleted(User $user): void
     {
         $user->tokens()->delete();
+        // 软删时清理分群成员记录（外键 CASCADE 仅对硬删生效，软删需要手动清理）
+        $user->memberships()->delete();
     }
 
     /**

@@ -16,6 +16,9 @@ Schedule::command('model:prune')->dailyAt('1:05')->onOneServer();
 // 每天凌晨 1:10 统计昨天的用户数据（总数、新增、活跃）
 Schedule::command('stats:user')->dailyAt('1:10')->onOneServer();
 
+// 每天凌晨 2:00 同步所有启用的规则分群成员
+Schedule::command('segments:sync-rules')->dailyAt('2:00')->onOneServer();
+
 // 每天凌晨 1:15 清理 48 小时前的 Telescope 记录，保留异常数据
 Schedule::command('telescope:prune --hours=48 --keep-exceptions')->dailyAt('1:15')->onOneServer();
 
