@@ -1397,18 +1397,20 @@ php artisan storage:link
 
 ### 13.1 P0 上线前必备
 
-#### 13.1.1 Banner / 轮播图管理
+> 状态：P0 共 7 项，已完成 3 项、进行中 1 项、未开始 3 项。
+
+#### 13.1.1 Banner / 轮播图管理 ✅
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 启动页、首页轮播是 App/H5 的标准运营位，是最高频的运营配置需求 |
-| 现状 | **已完成**（见 13.5 变更记录 2026-08-27）。后端 7 个管理端点 + 1 个前台公开端点全部交付：CRUD、启用/禁用切换、拖拽排序（同广告位内上移/下移）、按广告位/关键词/状态筛选、生效时间区间控制；前台公开接口自动过滤禁用/未开始/已过期 Banner。前端 `views/operation/banner/` 完整页面（列表+搜索+编辑弹窗），Apifox 8 个接口全部按 Admin/Api 模块规范发布并通过 PHPUnit 38 个用例验证 |
+| 状态 | **已完成**（见 13.5 变更记录 2026-08-27）。后端 7 个管理端点 + 1 个前台公开端点全部交付：CRUD、启用/禁用切换、拖拽排序（同广告位内上移/下移）、按广告位/关键词/状态筛选、生效时间区间控制；前台公开接口自动过滤禁用/未开始/已过期 Banner。前端 `views/operation/banner/` 完整页面（列表+搜索+编辑弹窗），Apifox 8 个接口全部按 Admin/Api 模块规范发布并通过 PHPUnit 38 个用例验证 |
 | 验收标准 | ✅ 广告位可配置（基于字典 banner_positions，无需改代码即可扩展）；✅ 过期/未开始的 Banner 前台不可见；✅ 排序可移动并保存（上移/下移方式）；✅ 字段安全：前台接口仅返回 6 个公开字段；✅ 跨平台字段安全：Admin 端用 EloquentPaginate `x-apifox-refs` 引用 #/definitions/304922372，Api 端独立 PublicBanner Schema #/definitions/308708084，零跨模块引用 |
 
-#### 13.1.2 管理员登录日志
+#### 13.1.2 管理员登录日志 ✅
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 安全合规必备。已有用户侧登录历史，管理员侧缺失审计能力 |
-| 现状 | **已完成**（见 13.5 变更记录 2026-08-27）。管理员与前台用户复用多态表 `login_histories`，`result` 字段区分成功/失败；单管理员视角 `GET /admin/admins/{id}/login-histories`、单用户视角 `GET /admin/users/{user}/login-histories` 均支持 `result` 过滤；全局视角 `GET /admin/login-histories`（跨管理员与前台用户，支持按 guard、用户ID、IP、结果、关键字、时间范围过滤）已提供 |
+| 状态 | **已完成**（见 13.5 变更记录 2026-08-27）。管理员与前台用户复用多态表 `login_histories`，`result` 字段区分成功/失败；单管理员视角 `GET /admin/admins/{id}/login-histories`、单用户视角 `GET /admin/users/{user}/login-histories` 均支持 `result` 过滤；全局视角 `GET /admin/login-histories`（跨管理员与前台用户，支持按 guard、用户ID、IP、结果、关键字、时间范围过滤）已提供 |
 | 前端页面 | `views/monitor/login-history/index.vue`，展示登录时间、归属主体、IP、归属地、设备、浏览器、结果（成功/失败） |
 | 验收标准 | ~~登录成功与失败均落库~~（已完成）；~~可按管理员和时间范围检索~~（已完成）；~~全局列表可跨主体检索~~（已完成，前端页面 `views/monitor/login-history/index.vue` 已实现），超级管理员可见全部 |
 
@@ -1416,17 +1418,20 @@ php artisan storage:link
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 当前通知仅由业务事件被动触发，缺少主动运营触达能力 |
-| 数据表 | `announcements`：id、title、content、type、target_type（全体/指定用户/用户标签）、target_value、publish_at、status |
+| 状态 | **进行中**——已具备的前置能力：① 分群能力（13.2.5）已就绪，可按分群圈定目标用户；② 批量打标/解标异步化（步骤 13）已就绪，可支撑百万级用户场景；③ `UserSegmentController::options` 已暴露手动分群下拉。**待补**：公告主模块（CRUD + 发布/撤回 + 发送范围预览 + 发送进度查询） |
+| 数据表 | `announcements`：id、title、content、type、target_type（全体/指定用户/用户分群）、target_value、publish_at、status |
 | 后台接口 | 公告 CRUD、发布/撤回、发送范围预览、发送进度查询 |
-| 实现要点 | 群发通过队列分批投递（避免大批量同步写入）；复用现有 `notifications` 通知体系 |
+| 实现要点 | 群发通过队列分批投递（避免大批量同步写入）；复用现有 `notifications` 通知体系；目标范围支持"全体 / 手动分群 / 规则分群 / 指定用户"四类，分群选项直接复用 `GET /admin/user-segments/options` |
 | 前台接口 | `GET /api/v1/announcements` 公告列表、`GET /api/v1/announcements/{id}` 详情 |
-| 前端页面 | `views/operation/announcement/index.vue`，富文本编辑（复用 ArtWangEditor）、发送范围选择 |
-| 验收标准 | 支持定时发布；群发通过队列异步执行；用户端可查看未读公告数 |
+| 前端页面 | `views/operation/announcement/index.vue`，富文本编辑（复用 ArtWangEditor）、发送范围选择（复用分群下拉组件） |
+| 验收标准 | 支持定时发布；群发通过队列异步执行；用户端可查看未读公告数；分群圈选体验与分群管理一致 |
+| 排期建议 | **P0 优先级第一**（P0 仅剩 3 个未开始项，公告群发是上线后运营触达最关键能力） |
 
 #### 13.1.4 敏感词过滤
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | UGC 内容（评论、反馈、昵称）合规底线要求 |
+| 状态 | **未开始** |
 | 数据表 | `sensitive_words`：id、word、category、level（警告/拦截）、status |
 | 实现要点 | 提供 `SensitiveWordService`，支持 DFA 算法匹配；结果缓存到 Redis；命中拦截级直接返回 422，命中警告级自动置为待审核 |
 | 接入点 | 评论发布、反馈提交、用户昵称/简介修改 |
@@ -1434,57 +1439,69 @@ php artisan storage:link
 | 前端页面 | `views/system/sensitive-word/index.vue`，支持分类管理与批量导入 |
 | 验收标准 | 命中拦截级内容无法提交；命中警告级自动进入待审核队列；词库变更后缓存自动刷新 |
 
-#### 13.1.5 列表数据导出
+#### 13.1.5 列表数据导出 ✅
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 运营/财务对账的刚性需求；前端已有 `ArtExcelExport` 组件，后端接口层已补齐 |
-| 现状 | **已完成**（后端 + 前端，见 13.5 变更记录 2026-08-27）。后端：`maatwebsite/excel` 4.0.2 已集成，发布 `config/excel.php`；新增 `App\Support\Export\AbstractExport` 基类（实现 `FromQuery`/`WithHeadings`/`WithMapping`/`WithTitle`/`WithColumnFormatting`，自动追加主键避免 chunk 漏行）与 `HandlesExports` 共享 trait；5 个 Export 类（用户/评论/反馈/审计日志/用户积分/金币流水），所有 .xlsx 导出；同步/异步双通道：≤ `SYNC_THRESHOLD`（用户/评论/反馈/审计日志 1000 行、流水 2000 行）走 `BinaryFileResponse` 直接下载（`Content-Disposition: attachment; filename*=UTF-8''...`），超阈值走 `PerformExportJob` 队列生成文件并通过 `ExportCompletedNotification` 推送站内信下载链接，失败推 `ExportFailedNotification`；控制器与路由：用户 `users/export`、`users/{user}/point-trades/export` 与 `coin-trades/export`、评论 `comments/export`、反馈 `feedbacks/export`、审计日志 `audit-logs/export`（共 6 个端点）；权限点：`users.export`/`comments.export`/`feedbacks.export`/`audit-logs.export`。前端（laravel-skel-admin）：HTTP 层 `request()` 新增 `returnRawResponse` 选项（返回完整 AxiosResponse，保留 `Content-Disposition` 响应头用于读文件名）；新增 `src/utils/file/download.ts` 提供 `parseFilenameFromDisposition()`（RFC 5987 UTF-8 文件名解析 + plain 回退）与 `downloadBlob()`（Blob → ObjectURL → `<a download>` 下载链路）；新增 `src/hooks/core/useExport.ts` 通用导出 Hook，封装「全屏 loading → blob 请求 → 按 status/contentType 分流处理」：200 + xlsx → 解析文件名并触发下载；202 + JSON → 读取 Blob 为 JSON 并 `ElMessage.success` 提示「导出任务已提交，完成后将通过站内信通知您」；200 + JSON → 警告提示；新增 6 个 `fetchExport*` API 函数（`responseType: 'blob'` + `returnRawResponse: true` + `showErrorMessage: true`）；`Api.Common.ExportTaskResponse` 类型入 `api.d.ts`；4 个列表页（用户/评论/反馈/审计日志）在 `ArtTableHeader` #left 插槽新增「导出」按钮（带 `v-auth` 权限指令、`isExporting` loading 状态），复用 `useTable.searchParams` 自动携带当前筛选条件（剔除 `page`/`per_page`）；用户详情弹窗（`user-detail-dialog.vue`）积分/金币两个 Tab 的筛选栏各加一个独立 loading 的「导出」按钮，复用各自的 `keyword` + `dateRange` 状态作为筛选参数；ESLint / vue-tsc / vite 生产构建均通过 |
+| 状态 | **已完成**（后端 + 前端，见 13.5 变更记录 2026-08-27）。后端：`maatwebsite/excel` 4.0.2 已集成，发布 `config/excel.php`；新增 `App\Support\Export\AbstractExport` 基类（实现 `FromQuery`/`WithHeadings`/`WithMapping`/`WithTitle`/`WithColumnFormatting`，自动追加主键避免 chunk 漏行）与 `HandlesExports` 共享 trait；5 个 Export 类（用户/评论/反馈/审计日志/用户积分/金币流水），所有 .xlsx 导出；同步/异步双通道：≤ `SYNC_THRESHOLD`（用户/评论/反馈/审计日志 1000 行、流水 2000 行）走 `BinaryFileResponse` 直接下载（`Content-Disposition: attachment; filename*=UTF-8''...`），超阈值走 `PerformExportJob` 队列生成文件并通过 `ExportCompletedNotification` 推送站内信下载链接，失败推 `ExportFailedNotification`；控制器与路由：用户 `users/export`、`users/{user}/point-trades/export` 与 `coin-trades/export`、评论 `comments/export`、反馈 `feedbacks/export`、审计日志 `audit-logs/export`（共 6 个端点）；权限点：`users.export`/`comments.export`/`feedbacks.export`/`audit-logs.export`。前端（laravel-skel-admin）：HTTP 层 `request()` 新增 `returnRawResponse` 选项（返回完整 AxiosResponse，保留 `Content-Disposition` 响应头用于读文件名）；新增 `src/utils/file/download.ts` 提供 `parseFilenameFromDisposition()`（RFC 5987 UTF-8 文件名解析 + plain 回退）与 `downloadBlob()`（Blob → ObjectURL → `<a download>` 下载链路）；新增 `src/hooks/core/useExport.ts` 通用导出 Hook，封装「全屏 loading → blob 请求 → 按 status/contentType 分流处理」：200 + xlsx → 解析文件名并触发下载；202 + JSON → 读取 Blob 为 JSON 并 `ElMessage.success` 提示「导出任务已提交，完成后将通过站内信通知您」；200 + JSON → 警告提示；新增 6 个 `fetchExport*` API 函数（`responseType: 'blob'` + `returnRawResponse: true` + `showErrorMessage: true`）；`Api.Common.ExportTaskResponse` 类型入 `api.d.ts`；4 个列表页（用户/评论/反馈/审计日志）在 `ArtTableHeader` #left 插槽新增「导出」按钮（带 `v-auth` 权限指令、`isExporting` loading 状态），复用 `useTable.searchParams` 自动携带当前筛选条件（剔除 `page`/`per_page`）；用户详情弹窗（`user-detail-dialog.vue`）积分/金币两个 Tab 的筛选栏各加一个独立 loading 的「导出」按钮，复用各自的 `keyword` + `dateRange` 状态作为筛选参数；ESLint / vue-tsc / vite 生产构建均通过 |
 | 实现要点 | 统一导出基类，接收当前列表筛选条件；大数据量走队列异步生成后推送下载链接（结合通知）；前端统一走 `useExport()` Hook，同步下载/异步通知自动分流 |
 | 覆盖模块 | 用户列表、评论管理、反馈管理、审计日志、用户详情内积分流水/金币流水 |
 | 前端交互 | 导出按钮挂载在表格工具栏左侧；点击后全屏 loading 遮罩防止重复点击；同步场景自动触发浏览器下载，文件名形如 `users_20260827_153045.xlsx`；异步场景弹出成功提示，用户稍后在站内信中心下载；导出参数自动与当前表格搜索/筛选条件联动 |
 | 验收标准 | ✅ 导出结果与当前筛选条件一致；✅ 超过阈值走异步并通过站内信推送下载链接；✅ 中文文件名正确解析（RFC 5987）；✅ 导出按钮受权限指令控制；✅ ESLint / vue-tsc / 生产构建零错误 |
 
-#### 13.1.6 安全基线加固
+#### 13.1.6 安全基线加固（部分完成）
 | 项目 | 说明 |
 |------|------|
+| 状态 | **部分完成**——登录限流（`admin.login_throttle`）与失败日志（13.1.2）已交付。**待补**：验证码限流、密码重置限流、CORS 白名单收敛、安全响应头 |
 | CORS 配置 | 确认 `config/cors.php` 生产环境白名单收敛（不使用 `*`） |
 | 接口限流 | ~~登录~~（已完成：`/api/v1` 侧 `user.login_throttle`、`/admin` 侧 `admin.login_throttle`）、注册、验证码发送、密码重置等敏感接口配置独立 `throttle` 规则 |
 | 安全响应头 | 补充 `X-Frame-Options`、`X-Content-Type-Options`、`Referrer-Policy`、CSP |
 | 验收标准 | 生产环境安全扫描无高危项；敏感接口具备防爆破限流 |
+| 排期建议 | 与 13.1.4 敏感词过滤并行推进，作为上线前最后一轮安全加固 |
 
 #### 13.1.7 国际化落地
 | 项目 | 说明 |
 |------|------|
+| 业务价值 | 海外市场准入基础。已完成 13.2.5（分群）等运营闭环后，海外化是业务扩张的下一前提 |
+| 状态 | **未开始** |
 | 现状 | 后端有 `lang/` 目录，前端已安装 `vue-i18n` 但未实际落地语言包 |
 | 后端 | 校验消息、枚举 label、异常提示统一走 `__()`；根据 `Accept-Language` 切换 |
 | 前端 | 补齐 `src/locales/` 中英文语言包；页面文案全部走 `$t()` |
 | 验收标准 | 切换语言后界面与接口提示同步切换；无硬编码中文残留 |
+| 排期建议 | **下调至 P2**（海外化非短期目标；过早投入会拖慢 P0/P1 闭环；本节可后移到 P2 阶段再启动） |
 
 ### 13.2 P1 强烈建议
+
+> 状态：P1 共 9 项，已完成 1 项、未开始 8 项。优先顺序：内容/帖子（13.2.1）→ 举报（13.2.2）→ 消息模板+业务通知（13.2.3/4）→ 业务数据看板（13.2.8）→ 敏感操作二次验证（13.2.6）→ 业务定时任务（13.2.9）→ 素材增强（13.2.7）。
 
 #### 13.2.1 内容 / 帖子管理
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 评论模块已按多态（morphTo）设计，但缺少"内容主体"。补齐后评论体系才形成闭环 |
+| 状态 | **未开始** |
 | 数据表 | `posts`：id、user_id、title、content、images、category_id、status（审核状态）、view_count、like_count、comment_count、is_top、published_at |
 | 后台接口 | 内容 CRUD、审核（复用 `ReviewStatus` 枚举）、置顶、推荐、批量操作 |
 | 前台接口 | 内容列表/详情/发布/删除，复用现有点赞、收藏、评论多态能力 |
 | 验收标准 | 内容可作为 `source_type` 被评论、点赞、收藏正确关联；审核流程与评论一致 |
+| 排期建议 | **P1 优先级第一**——补齐"内容"主体是评论/举报/通知联动的根，缺它则 13.2.2/13.2.3/13.2.4 都只能空转 |
 
 #### 13.2.2 举报管理
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | UGC 平台合规必备，与内容/评论管理配套 |
+| 状态 | **未开始** |
 | 数据表 | `reports`：id、user_id、source_type、source_id（多态）、reason_type、reason、images、status、admin_id、handle_remark、handled_at |
 | 后台接口 | 举报列表（按状态/类型过滤）、处理（举报成立→联动下架内容/封禁用户 / 举报不成立→驳回） |
 | 前台接口 | `POST /api/v1/reports` 提交举报 |
 | 前端页面 | `views/operation/report/index.vue`，处理弹窗内可直接跳转查看被举报内容 |
 | 验收标准 | 举报成立后自动联动处置被举报对象；同一用户对同一对象不可重复举报 |
+| 排期建议 | 紧随 13.2.1；举报是合规最敏感一环，须在内容上线后立即补齐 |
 
 #### 13.2.3 消息模板管理
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 当前短信/邮件仅有固定验证码模板，业务通知（注册欢迎、审核结果、反馈回复）需可视化维护 |
+| 状态 | **未开始** |
 | 数据表 | `message_templates`：id、code、name、channel（sms/mail/notification）、title、content、variables、status |
 | 实现要点 | 模板变量以 `{{name}}` 占位；提供 `MessageTemplateService::render(code, vars)` 统一渲染 |
 | 前端页面 | `views/system/message-template/index.vue`，支持变量说明、内容预览 |
@@ -1494,77 +1511,112 @@ php artisan storage:link
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 当前评论审核、反馈处理完成后未通知用户，运营闭环断裂 |
+| 状态 | **未开始**（依赖 13.2.3 消息模板先行） |
 | 覆盖场景 | 评论审核通过/驳回 → 通知作者；反馈处理完成 → 通知提交人；举报处理完成 → 通知举报人；VIP 到期前 → 提醒续费 |
 | 实现要点 | 通过模型事件/领域事件触发，走队列异步发送，复用消息模板 |
 | 验收标准 | 各场景通知准确送达；通知内容可通过模板配置；不阻塞主流程 |
 
-#### 13.2.5 用户标签与分群
+#### 13.2.5 用户标签与分群 ✅
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 精细化运营基础，是公告群发指定范围、定向推送的前置能力 |
-| 数据表 | `tags`（标签定义）+ `taggables`（多态关联，可复用于用户/内容） |
-| 后台接口 | 标签 CRUD、为用户批量打标/移除标签、按标签筛选用户 |
-| 实现要点 | 支持手动标签与规则自动标签（如"7日未登录"、"VIP用户"），自动标签由定时任务刷新 |
-| 验收标准 | 用户列表可按标签筛选；公告群发可选择标签作为目标范围 |
+| 状态 | **已完成**（见 13.5 变更记录 2026-08-27 + 2026-08-28）。交付内容：① `user_segments` + `user_segment_memberships` 双表 + 4 个二级索引；② 手动/规则两种分群类型 + JSON 规则评估器（11 种操作符 + 7 字段）；③ 14 个 Admin 端点 + 异步化（>1000 ID 入队）+ 进度查询；④ 前端 5 个页面（分群管理 + 搜索 + 规则构建器 + 编辑弹窗 + 成员弹窗 + 预览弹窗 + 异步任务列表页）；⑤ Apifox 全量发布到 Admin 模块；⑥ PHPUnit 85 个用例 / 263 断言全绿 |
+| 验收标准 | ✅ 用户列表可按分群筛选（AND 语义）；✅ 公告群发可选择分群作为目标范围（13.1.3 待集成）；✅ 批量打标支持 1000 同步 / 超限异步，站内信通知；✅ 任务列表权限隔离，仅本人可见 |
 
 #### 13.2.6 敏感操作二次验证
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 高风险操作防误操作与防越权 |
+| 状态 | **未开始** |
 | 覆盖操作 | 删除用户、彻底删除、积分/金币余额调整、角色权限变更、清理缓存 |
 | 实现要点 | 中间件 `confirm.password`，校验管理员在 N 分钟内已完成密码确认；前端统一确认弹窗组件 |
 | 验收标准 | 未确认密码时高风险接口返回 423；确认后在有效期内不重复要求 |
+| 排期建议 | **P1 第二批**——优先级低于内容/举报/通知闭环，是治理型而非业务型需求 |
 
 #### 13.2.7 素材管理增强
 | 项目 | 说明 |
 |------|------|
+| 业务价值 | 附件管理基础已就绪，缺分组目录/缩略图/批量管理/引用保护，运营中台常用 |
+| 状态 | **未开始**（依赖 13.1.5 列表数据导出的批量操作经验复用） |
 | 现状 | 附件管理已支持中转/直传、重命名、移动、删除 |
 | 待补 | 素材分组/分类目录树、图片缩略图自动生成、批量删除/批量移动、按类型与尺寸筛选、引用计数（防误删被使用的素材） |
 | 验收标准 | 支持目录树管理；被引用的素材删除时给出提示；列表加载缩略图而非原图 |
+| 排期建议 | **P1 末位**——本项更接近 P3 体验优化，挪到 P1 是因为它被多个 P2 业务（如商品/订单）依赖 |
 
 #### 13.2.8 业务数据看板
 | 项目 | 说明 |
 |------|------|
+| 业务价值 | 精细化运营必备，是 P2 业务扩展后做决策的核心入口 |
+| 状态 | **未开始** |
 | 现状 | Dashboard 仅有用户数/登录数等基础卡片与趋势图 |
 | 待补指标 | DAU/MAU、次日/7日/30日留存、内容与评论发布量趋势、评论审核通过率/驳回率、反馈处理时效（平均处理时长）、活跃用户排行、积分/金币发放与消耗对比 |
 | 实现要点 | 指标预聚合到统计表（扩展现有 `stats:user` 定时任务），看板只读聚合表，避免实时全表扫描 |
 | 验收标准 | 看板首屏加载 < 1s；支持时间范围切换；指标口径在文档中明确定义 |
+| 排期建议 | 紧随 13.2.1 内容上线后——内容数据是看板最关键的数据源之一 |
 
 #### 13.2.9 业务定时任务管理
 | 项目 | 说明 |
 |------|------|
+| 业务价值 | 业务侧需要可配置的定时任务（优惠券过期、积分清零、统计聚合等），不必每次都发版 |
+| 状态 | **未开始** |
 | 现状 | 已有调度日志（只读），但任务本身在代码中硬编码，无法运营侧调整 |
 | 待补 | 任务配置表（任务名、Cron 表达式、参数、启用状态）、手动立即执行、暂停/恢复 |
 | 边界 | 系统级任务仍保留在 `routes/console.php`；本模块面向业务可配置任务 |
 | 验收标准 | Cron 表达式变更后无需发版即生效；手动执行结果可在调度日志查看 |
+| 排期建议 | **P1 末位**——P2 业务上线前必须有，否则每次新增优惠券/活动都要发版 |
 
 ### 13.3 P2 业务扩展（按业务形态选做）
 
-| 需求 | 说明 |
-|------|------|
-| 优惠券 / 活动管理 | 积分体系已就绪，缺营销工具：优惠券模板、领取记录、核销、活动页配置 |
-| 工单 / 客服系统 | 现有反馈模块偏轻量，若需客服能力则需补：工单流转、分配、SLA 计时、多轮会话 |
-| 支付与订单 | 若涉及交易场景，需补：订单、支付渠道（微信/支付宝/苹果内购）、退款、对账 |
-| 签到与任务体系 | 配合积分体系：每日签到、连续签到奖励、成长任务、任务奖励发放 |
-| 邀请与分销 | 邀请码、邀请关系树、邀请奖励结算 |
-| 地区数据校验 | 核对地区表是否符合最新国家标准，并与收货地址接口打通联动 |
-| 前台用户端 | 目前仅有管理后台，若产品需要则补 H5 / 小程序 / App 用户端 |
+> 状态：P2 共 8 项，全部未开始。按"支付 > 营销 > 客服 > 前台 > 其他"排序：① 支付与订单 ② 优惠券/活动 ③ 签到与任务 ④ 邀请与分销 ⑤ 工单/客服 ⑥ 前台用户端 ⑦ 国际化（由 P0 下调） ⑧ 地区数据校验。
+>
+> 选做原则：选 P2 项时必须先确认 P0/P1 全部 ✅ + 至少 2 个 P2 排在前面的核心业务已交付。
+
+| # | 需求 | 说明 | 依赖 |
+|---|------|------|------|
+| 1 | 支付与订单 | 涉及交易场景的根基：订单、支付渠道（微信/支付宝/苹果内购）、退款、对账。**P2 优先级第一**——一切商业化业务都建立在它之上 | 13.2.9 业务定时任务（订单超时关闭）|
+| 2 | 优惠券 / 活动管理 | 积分体系已就绪，缺营销工具：优惠券模板、领取记录、核销、活动页配置 | 13.2.3 消息模板（核销成功通知）|
+| 3 | 签到与任务体系 | 配合积分体系：每日签到、连续签到奖励、成长任务、任务奖励发放 | 13.2.4 业务通知（任务完成通知）|
+| 4 | 邀请与分销 | 邀请码、邀请关系树、邀请奖励结算 | 13.2.5 分群（拉新统计）|
+| 5 | 工单 / 客服系统 | 现有反馈模块偏轻量，若需客服能力则需补：工单流转、分配、SLA 计时、多轮会话 | 无强依赖 |
+| 6 | 前台用户端 | 目前仅有管理后台，若产品需要则补 H5 / 小程序 / App 用户端 | 13.1.3 公告群发、13.1.7 国际化（如果海外）|
+| 7 | 国际化落地（原 13.1.7 下调） | 海外市场扩张的下一前提；前端 vue-i18n 已安装但未落地语言包 | 13.1.3 公告群发（多语言公告）|
+| 8 | 地区数据校验 | 核对地区表是否符合最新国家标准，并与收货地址接口打通联动 | 仅在 P2 选做"商品/物流"时启动 |
 
 ### 13.4 P3 体验与性能优化
 
-| 需求 | 说明 |
-|------|------|
-| 批量操作 | 各列表页目前仅支持单条操作，需补批量审核、批量删除、批量打标签 |
-| 暗黑模式完整度 | 框架已支持，但抽屉、详情弹窗、图表等场景需逐页检查暗色适配 |
-| 前端错误边界 | 已有路由级 403/404/500，缺组件级错误捕获与降级渲染 |
-| 大列表性能 | 审计日志、Telescope 条目等大数据量列表需虚拟滚动 / 图片懒加载 |
-| 单元测试覆盖 | 持续补齐至 70%+ 覆盖率（项目规范要求） |
-| API 文档同步 | 新增接口同步发布至 Apifox，保持文档与代码一致 |
-| 性能基准测试 | 建立关键接口的基准测试与压测报告，为容量规划提供依据 |
+> 状态：P3 共 7 项，部分已在 13.1.5 列表导出（13.4.5）中部分完成。P3 排期最末，仅在前述 P0/P1/P2 全部稳定后启动；每月迭代 1-2 项即可。
+
+| # | 需求 | 说明 | 状态 |
+|---|------|------|------|
+| 1 | 批量操作 | 各列表页目前仅支持单条操作，需补批量审核、批量删除、批量打标签 | **未开始** |
+| 2 | 暗黑模式完整度 | 框架已支持，但抽屉、详情弹窗、图表等场景需逐页检查暗色适配 | **未开始** |
+| 3 | 前端错误边界 | 已有路由级 403/404/500，缺组件级错误捕获与降级渲染 | **未开始** |
+| 4 | 大列表性能 | 审计日志、Telescope 条目等大数据量列表需虚拟滚动 / 图片懒加载 | **未开始** |
+| 5 | 单元测试覆盖 | 持续补齐至 70%+ 覆盖率（项目规范要求） | **进行中**（当前 1209 tests / 2919 assertions 已绿，仍需补 70% 覆盖率指标）|
+| 6 | API 文档同步 | 新增接口同步发布至 Apifox，保持文档与代码一致 | **进行中**（13.1.1/13.2.5 已全量发布，沉淀发布规范）|
+| 7 | 性能基准测试 | 建立关键接口的基准测试与压测报告，为容量规划提供依据 | **未开始** |
 
 ### 13.5 已完成事项
 
-记录已从待办清单中交付的能力，便于追踪进展。
+按 P 级别归档记录已从待办清单中交付的能力，便于追踪进展。
+
+#### 13.5.1 P0 已交付
+
+| 完成时间 | 事项 | 交付内容 |
+|----------|------|----------|
+| 2026-08-27 | Banner / 轮播图管理（13.1.1） | 后端：`App\Enums\LinkType`（链接类型枚举 none/url/page/goods/webview）；`App\Models\Operation\Banner` + `BannerFactory`（带 disabled/noLink/withDuration 状态）；迁移 `2026_03_27_120000_create_banners_table.php` 创建表（id 从 10000000 起，含 position/title/image/link_type/link_value/sort/status/start_at/end_at 字段）并预置 `banner_positions` 字典（home_top/home_banner/launch/user_center/discover 5 个广告位）；`App\Http\Controllers\Admin\BannerController`（index/store/show/update/destroy + toggleStatus + sort 共 7 个端点，index 接口按广告位/关键词/状态筛选，sort 接口按 ids 数组顺序回写 sort 字段，仅修改传入的 ID 不影响其他 Banner），3 个 FormRequest（BannerIndexRequest/BannerSaveRequest/BannerSortRequest），`BannerResource`（含 position_label/link_type_label）按 `banner_positions` 字典缓存映射；菜单与权限点 `banners.index/create/edit/delete` 合并至 `2026_07_31_111934_seed_initial_admin_data.php` 运营管理目录下（评论、反馈之后排序 3）；前台 `App\Http\Controllers\Api\V1\BannerController::index` 公开接口（`GET /api/v1/banners?position=home_top`），自动过滤 status=false、start_at 未到、end_at 已过的 Banner，按 sort 升序 + id 倒序返回，`BannerPublicResource` 仅返回 6 个公开字段（id/title/image/link_type/link_value/sort）保护后台字段；7 个 Admin 接口 + 1 个 Api 接口全部按 Apifox 规范发布（Admin 模块用 `EloquentPaginate` #/definitions/304922372 + 覆写 data 字段，Api 模块独立定义 `PublicBanner` Schema #/definitions/308708084，跨模块零共享 Schema）；前端 `src/views/operation/banner/`（index.vue + modules/banner-search.vue + modules/banner-edit-dialog.vue），用 `useTable` 模式 + `ArtTableHeader` + `ArtTable` + 状态列 `ElSwitch` 直接切换 + 操作列「上移/下移」按钮（同广告位内交换 sort 后批量回写，替代第三方拖拽库）、新增/编辑弹窗含图片预览、链接类型联动显示「链接值」输入框、生效时间区间选择器；`src/api/operation-manage.ts` 7 个 fetch 方法 + `src/types/api/api.d.ts` 新增 `Api.OperationManage` 命名空间（BannerList/BannerListItem/BannerSearchParams/BannerSaveParams/BannerSortParams/BannerPositionOption 6 个类型）；ESLint / vue-tsc / vite 生产构建零错误；PHPUnit 测试 38 个用例全通过（Admin 24 + Api 14，共 115 个断言，1.017s），覆盖 CRUD、筛选、状态切换、拖拽排序、字段安全、生效时间过滤等场景 |
+| 2026-08-27 | 管理员登录日志（13.1.2） | 包含登录失败落库、限流、全局登录历史接口、前端 login-history 页面，详见上方 13.1.2 描述；Admin 端用全局 `GET /admin/login-histories` 跨主体检索 |
+| 2026-08-27 | 列表数据导出（13.1.5） | 详见上方 13.1.5 描述；后端 6 端点 + 前端 useExport Hook + 4 列表页导出按钮 + 2 个用户详情弹窗 Tab 导出按钮 |
+
+#### 13.5.2 P1 已交付
+
+| 完成时间 | 事项 | 交付内容 |
+|----------|------|----------|
+| 2026-08-27 | 用户分群与分群（13.2.5） | 命名 `user_segments` + `user_segment_memberships` 两张独立表，避开未来「内容分群」；迁移 `2026_08_28_000001_create_user_segment_tables.php`（id 从 10000000 起，外键双 cascade，唯一键防重复，3 个二级索引）；3 个枚举 `SegmentType`（MANUAL=1/RULE=2）、`SegmentRuleOperator`（11 种操作符 + isNullCheck/requiresMultipleValues）、`SegmentRuleField`（7 字段 + valueType/allowedOperators/label/resolveValue 支持 now/today/now-7d/today-1d 特殊值解析）；`App\Models\UserSegment\Segment`（含 scopeActive/Manual/Rule）+ `App\Models\UserSegment\Membership`（SOURCE_MANUAL=1/SOURCE_RULE=2 来源字段，区分手动/规则打标）；User 模型新增 `segments()` BelongsToMany + `memberships()` HasMany；`App\Services\Segment\SegmentRuleEvaluator`（compile → 闭包，validate 结构 + 字段/操作符兼容性，AND/OR 嵌套闭包编译）+ `App\Services\Segment\SegmentService`（attach/detach/batchAttach/batchDetach 幂等去重，BATCH_LIMIT=1000，syncRuleSegment 全量 diff 仅动 SOURCE_RULE 不影响手动打标，previewRuleSegment 不写库）；`App\Console\Commands\SyncSegmentRulesCommand`（signature `segments:sync-rules {--segment=* :...} {--code=* :...}`，支持单分群指定或全量同步，输出分群名/新增/移除/总数/耗时表格，单分群失败不影响其他） + `routes/console.php` 调度 `Schedule::command('segments:sync-rules')->dailyAt('2:00')->onOneServer()`；`App\Http\Controllers\Admin\UserSegmentController` 14 个端点（index/store/show/update/destroy/toggleStatus/sync/preview/options/attach/detach/users/batchAttach/batchDetach），5 个 FormRequest（Index/Save/ToggleStatus/Attach/BatchAttach — Save 通过 `withValidator` 调 SegmentRuleEvaluator::validate 做规则结构二次校验），3 个 Resource（Segment 含 users_count via withCount、SegmentList 列表省 COUNT、SegmentOption 公告群发下拉复用）；`routes/admin.php` 注册 11 条 `/admin/user-segments*` 路由；`UserController::index` 新增 `segment_ids[]` 筛选（多值 AND 语义，逗号分隔字符串兼容，非法值自动过滤）；`UserObserver::deleted()` 增加 `$user->memberships()->delete()`（软删时手动清理，外键 CASCADE 仅对硬删生效）；seed 迁移 `2026_07_31_111934_seed_initial_admin_data.php` 在「用户管理」顶级菜单 children 末尾追加 `user.segment` 子菜单（sort=99，component `/user/segment`），按钮权限 segments.create/edit/delete/assign 5 个全部挂载，权限点由 AdminMenu::saved 钩子自动写入 permissions 表，超级管理员自动获得全套权限；前端 `src/views/user/segment/` 5 个 vue（index.vue + modules 下 search/rule-builder/edit-dialog/users-dialog/preview-dialog）+ `src/api/segment-manage.ts` 13 个 fetch 方法 + `src/types/api/api.d.ts` 新增 `Api.SegmentManage` 命名空间（SegmentListItem/SegmentDetail/SegmentSearchParams/SegmentRuleOperator/SegmentRuleField/SegmentRuleCondition/SegmentRule/SegmentSaveParams/SegmentAttachParams/SegmentBatchAttachParams/SegmentOption/SegmentPreviewResponse/SegmentSyncResponse/SegmentAttachResponse/SegmentDetachResponse 15 个类型）；ESLint / vue-tsc / vite 生产构建零错误；PHPUnit 7 个测试文件 73 个用例全通过（215 个断言，~2s），Segment 模块覆盖 RuleEvaluator 17 + Service 14 + UserSegmentFilter 5 + SyncCommand 6 + UserDeletedCleanup 3 + MenuSeed 4 + ControllerTest 24；全项目 1197 tests / 2871 assertions 零回归；OpenAPI 3.0 片段已生成至 `.apifox/segment-openapi.json`（14 端点 + 3 Schema + 分页用 `x-apifox-refs` 引用 Admin `EloquentPaginate` #/definitions/304922372 + 覆写 data 字段，跨模块零共享 Schema），待用户确认后由 AI 分支 publish 到 Apifox |
+| 2026-08-27 | 分群批量打标异步化（13.2.5 步骤 13） | 批量 > 1000 ID 时自动入队异步执行：迁移 `2026_08_28_000002_create_segment_tasks_table.php`（segment_tasks：admin_id / type attach|detach / payload JSON / total_count / processed_count / added_count / status pending|running|completed|failed / error_message / started_at / finished_at，4 个二级索引）；2 个枚举 `SegmentTaskStatus`（pending/running/completed/failed + isTerminal）+ `SegmentTaskType`（attach/detach）；`App\Models\UserSegment\SegmentTask`（含 progressPercent / markRunning / incrementProgress / markCompleted / markFailed）+ `SegmentTaskFactory`（含 completed/failed 状态）；`App\Jobs\Segment\BulkSegmentTaskJob`（tries=2 timeout=600，对存在的 segment 按 BATCH_LIMIT chunk 执行，实时更新进度，完成/失败后站内信通知提交管理员，重复执行幂等）；2 个通知 `SegmentTaskCompletedNotification` / `SegmentTaskFailedNotification`（type=segment.task.completed/failed）；`SegmentService` 新增 `dispatchTask()`（创建记录 + dispatch 到 `segments` 队列）与 `shouldEnqueue()`（任一维度 > BATCH_LIMIT 返回 true）；`UserSegmentController` 4 个打标/解标端点改造：>1000 自动入队返回 202 + task_id + mode=async，否则同步 200 + mode=sync；`App\Http\Controllers\Admin\SegmentTaskController`（index 按 admin_id 过滤 + show 仅本人可见，权限 segments.assign）+ `SegmentTaskResource`（含 progress_percent）+ `SegmentTaskIndexRequest`；`routes/admin.php` 注册 2 条 `/admin/segment-tasks*` 路由；前端 `segment-manage.ts` 4 个 fetch 返回类型改为 同步|异步 联合类型 + 新增 2 个 fetchGetSegmentTask* 方法，`api.d.ts` 新增 SegmentTaskList/SegmentTaskSearchParams/SegmentTaskItem/SegmentAsyncResponse 4 个类型，users-dialog 移标时识别 task_id 显示"任务已提交"提示；ESLint / vue-tsc / vite 构建零错误；PHPUnit 新增 BulkSegmentTaskTest 12 个用例（dispatchTask 创建+入队、shouldEnqueue 阈值、Job attach/detach 完成、跳过不存在 segment、幂等、通知断言、Controller 202、任务列表/详情仅本人可见、progressPercent），Segment 模块累计 85 tests / 263 assertions，全项目 1209 tests / 2919 assertions 零回归 |
+| 2026-08-28 | 分群异步任务前端列表页（13.2.5 步骤 14） | 菜单合并到 `2026_07_31_111934_seed_initial_admin_data.php` 的「用户管理」顶级菜单 children 末尾，名称 `分群异步任务`（path=segment-task，component `/user/segment-task`，sort=100，permission=`segments.task`，与 `分群管理` 同级；权限点 `segments.task` 由 AdminMenu::booted saved 监听器自动写入 Spatie permissions 表，超级管理员 `syncPermissions(Permission::all())` 自动继承；前端 `src/views/user/segment-task/` 3 个 vue（index.vue 列表页 + modules/segment-task-search.vue 搜索栏 + modules/segment-task-detail-dialog.vue 详情弹窗），useTable 模式分页（page/per_page=status/type 筛选） + 进度条列（ElProgress 实时显示 processed/total，状态决定 success/exception 样式） + 自动轮询（hasActiveTask 命中 pending/running 时 setInterval 5s refreshSoft，全部终态自动停止轮询）；segment-users-dialog 移标时识别 task_id 显示"任务已提交（ID: xxx），完成后站内信通知"提示；segment-manage.ts 与 api.d.ts 类型已在步骤 13 同步补齐；ESLint / vue-tsc / pnpm build 零错误 |
+
+#### 13.5.3 P3 已交付（部分）
 
 | 完成时间 | 事项 | 交付内容 |
 |----------|------|----------|
@@ -1577,37 +1629,54 @@ php artisan storage:link
 | 2026-08-27 | 列表数据导出接口发布至 Apifox | 6 个导出端点（用户、用户积分流水、用户金币流水、评论、反馈、审计日志）按 Apifox 规范全部发布到 Admin 模块（Apifox 端点 ID 分别为 507519423/507524413/507524424/507524428/507527307/507527357）；分页响应统一使用 `x-apifox-refs` 引用 Admin 模块 `EloquentPaginate`（#/definitions/304922372）并覆写 `data` 字段，接口模块归属严格按 `/admin` 前缀归入 Admin 模块，未跨模块引用 Schema |
 | 2026-08-27 | 前端导出能力接入（laravel-skel-admin） | HTTP 层 `request()` 新增 `returnRawResponse` 选项（保留完整 AxiosResponse 与 headers）；新增 `src/utils/file/download.ts`（`parseFilenameFromDisposition` RFC 5987 文件名解析 + `downloadBlob` Blob 下载工具）；新增 `src/hooks/core/useExport.ts` 通用导出 Hook（全屏 loading + 200/xlsx 同步下载 + 202/JSON 异步入队提示双通道自动分流）；`src/api/` 下 4 个 API 文件新增 6 个 `fetchExport*` 方法（`responseType: 'blob'` + `returnRawResponse: true`）；`Api.Common.ExportTaskResponse` 类型入库；用户/评论/反馈/审计日志 4 个列表页在 `ArtTableHeader` #left 挂载「导出」按钮（v-auth 权限控制 + isExporting loading + 自动携带当前 searchParams 筛选条件），用户详情弹窗积分/金币两个 Tab 各加一个独立 loading 的导出按钮；ESLint / vue-tsc / vite 生产构建零错误 |
 | 2026-08-27 | 登录日志操作列 UI 统一 | `views/monitor/login-history/index.vue` 操作列由原 `ElLink` 文字「查看」改为与附件管理一致的 `ArtButtonTable` 圆形图标按钮（`type: 'view'`，眼睛图标），列宽由 100 收窄到 80，保持全后台操作列视觉风格统一 |
-| 2026-08-27 | Banner / 轮播图管理 | 后端：`App\Enums\LinkType`（链接类型枚举 none/url/page/goods/webview）；`App\Models\Operation\Banner` + `BannerFactory`（带 disabled/noLink/withDuration 状态）；迁移 `2026_03_27_120000_create_banners_table.php` 创建表（id 从 10000000 起，含 position/title/image/link_type/link_value/sort/status/start_at/end_at 字段）并预置 `banner_positions` 字典（home_top/home_banner/launch/user_center/discover 5 个广告位）；`App\Http\Controllers\Admin\BannerController`（index/store/show/update/destroy + toggleStatus + sort 共 7 个端点，index 接口按广告位/关键词/状态筛选，sort 接口按 ids 数组顺序回写 sort 字段，仅修改传入的 ID 不影响其他 Banner），3 个 FormRequest（BannerIndexRequest/BannerSaveRequest/BannerSortRequest），`BannerResource`（含 position_label/link_type_label）按 `banner_positions` 字典缓存映射；菜单与权限点 `banners.index/create/edit/delete` 合并至 `2026_07_31_111934_seed_initial_admin_data.php` 运营管理目录下（评论、反馈之后排序 3）；前台 `App\Http\Controllers\Api\V1\BannerController::index` 公开接口（`GET /api/v1/banners?position=home_top`），自动过滤 status=false、start_at 未到、end_at 已过的 Banner，按 sort 升序 + id 倒序返回，`BannerPublicResource` 仅返回 6 个公开字段（id/title/image/link_type/link_value/sort）保护后台字段；7 个 Admin 接口 + 1 个 Api 接口全部按 Apifox 规范发布（Admin 模块用 `EloquentPaginate` #/definitions/304922372 + 覆写 data 字段，Api 模块独立定义 `PublicBanner` Schema #/definitions/308708084，跨模块零共享 Schema）；前端 `src/views/operation/banner/`（index.vue + modules/banner-search.vue + modules/banner-edit-dialog.vue），用 `useTable` 模式 + `ArtTableHeader` + `ArtTable` + 状态列 `ElSwitch` 直接切换 + 操作列「上移/下移」按钮（同广告位内交换 sort 后批量回写，替代第三方拖拽库）、新增/编辑弹窗含图片预览、链接类型联动显示「链接值」输入框、生效时间区间选择器；`src/api/operation-manage.ts` 7 个 fetch 方法 + `src/types/api/api.d.ts` 新增 `Api.OperationManage` 命名空间（BannerList/BannerListItem/BannerSearchParams/BannerSaveParams/BannerSortParams/BannerPositionOption 6 个类型）；ESLint / vue-tsc / vite 生产构建零错误；PHPUnit 测试 38 个用例全通过（Admin 24 + Api 14，共 115 个断言，1.017s），覆盖 CRUD、筛选、状态切换、拖拽排序、字段安全、生效时间过滤等场景 |
-| 2026-08-27 | 用户分群与分群（13.2.5） | 命名 `user_segments` + `user_segment_memberships` 两张独立表，避开未来「内容分群」；迁移 `2026_08_28_000001_create_user_segment_tables.php`（id 从 10000000 起，外键双 cascade，唯一键防重复，3 个二级索引）；3 个枚举 `SegmentType`（MANUAL=1/RULE=2）、`SegmentRuleOperator`（11 种操作符 + isNullCheck/requiresMultipleValues）、`SegmentRuleField`（7 字段 + valueType/allowedOperators/label/resolveValue 支持 now/today/now-7d/today-1d 特殊值解析）；`App\Models\UserSegment\Segment`（含 scopeActive/Manual/Rule）+ `App\Models\UserSegment\Membership`（SOURCE_MANUAL=1/SOURCE_RULE=2 来源字段，区分手动/规则打标）；User 模型新增 `segments()` BelongsToMany + `memberships()` HasMany；`App\Services\Segment\SegmentRuleEvaluator`（compile → 闭包，validate 结构 + 字段/操作符兼容性，AND/OR 嵌套闭包编译）+ `App\Services\Segment\SegmentService`（attach/detach/batchAttach/batchDetach 幂等去重，BATCH_LIMIT=1000，syncRuleSegment 全量 diff 仅动 SOURCE_RULE 不影响手动打标，previewRuleSegment 不写库）；`App\Console\Commands\SyncSegmentRulesCommand`（signature `segments:sync-rules {--segment=* :...} {--code=* :...}`，支持单分群指定或全量同步，输出分群名/新增/移除/总数/耗时表格，单分群失败不影响其他） + `routes/console.php` 调度 `Schedule::command('segments:sync-rules')->dailyAt('2:00')->onOneServer()`；`App\Http\Controllers\Admin\UserSegmentController` 14 个端点（index/store/show/update/destroy/toggleStatus/sync/preview/options/attach/detach/users/batchAttach/batchDetach），5 个 FormRequest（Index/Save/ToggleStatus/Attach/BatchAttach — Save 通过 `withValidator` 调 SegmentRuleEvaluator::validate 做规则结构二次校验），3 个 Resource（Segment 含 users_count via withCount、SegmentList 列表省 COUNT、SegmentOption 公告群发下拉复用）；`routes/admin.php` 注册 11 条 `/admin/user-segments*` 路由；`UserController::index` 新增 `segment_ids[]` 筛选（多值 AND 语义，逗号分隔字符串兼容，非法值自动过滤）；`UserObserver::deleted()` 增加 `$user->memberships()->delete()`（软删时手动清理，外键 CASCADE 仅对硬删生效）；seed 迁移 `2026_07_31_111934_seed_initial_admin_data.php` 在「用户管理」顶级菜单 children 末尾追加 `user.segment` 子菜单（sort=99，component `/user/segment`），按钮权限 segments.create/edit/delete/assign 5 个全部挂载，权限点由 AdminMenu::saved 钩子自动写入 permissions 表，超级管理员自动获得全套权限；前端 `src/views/user/segment/` 5 个 vue（index.vue + modules 下 search/rule-builder/edit-dialog/users-dialog/preview-dialog）+ `src/api/segment-manage.ts` 13 个 fetch 方法 + `src/types/api/api.d.ts` 新增 `Api.SegmentManage` 命名空间（SegmentListItem/SegmentDetail/SegmentSearchParams/SegmentRuleOperator/SegmentRuleField/SegmentRuleCondition/SegmentRule/SegmentSaveParams/SegmentAttachParams/SegmentBatchAttachParams/SegmentOption/SegmentPreviewResponse/SegmentSyncResponse/SegmentAttachResponse/SegmentDetachResponse 15 个类型）；ESLint / vue-tsc / vite 生产构建零错误；PHPUnit 7 个测试文件 73 个用例全通过（215 个断言，~2s），Segment 模块覆盖 RuleEvaluator 17 + Service 14 + UserSegmentFilter 5 + SyncCommand 6 + UserDeletedCleanup 3 + MenuSeed 4 + ControllerTest 24；全项目 1197 tests / 2871 assertions 零回归；OpenAPI 3.0 片段已生成至 `.apifox/segment-openapi.json`（14 端点 + 3 Schema + 分页用 `x-apifox-refs` 引用 Admin `EloquentPaginate` #/definitions/304922372 + 覆写 data 字段，跨模块零共享 Schema），待用户确认后由 AI 分支 publish 到 Apifox |
-| 2026-08-27 | 分群批量打标异步化（步骤 13） | 批量 > 1000 ID 时自动入队异步执行：迁移 `2026_08_28_000002_create_segment_tasks_table.php`（segment_tasks：admin_id / type attach|detach / payload JSON / total_count / processed_count / added_count / status pending|running|completed|failed / error_message / started_at / finished_at，4 个二级索引）；2 个枚举 `SegmentTaskStatus`（pending/running/completed/failed + isTerminal）+ `SegmentTaskType`（attach/detach）；`App\Models\UserSegment\SegmentTask`（含 progressPercent / markRunning / incrementProgress / markCompleted / markFailed）+ `SegmentTaskFactory`（含 completed/failed 状态）；`App\Jobs\Segment\BulkSegmentTaskJob`（tries=2 timeout=600，对存在的 segment 按 BATCH_LIMIT chunk 执行，实时更新进度，完成/失败后站内信通知提交管理员，重复执行幂等）；2 个通知 `SegmentTaskCompletedNotification` / `SegmentTaskFailedNotification`（type=segment.task.completed/failed）；`SegmentService` 新增 `dispatchTask()`（创建记录 + dispatch 到 `segments` 队列）与 `shouldEnqueue()`（任一维度 > BATCH_LIMIT 返回 true）；`UserSegmentController` 4 个打标/解标端点改造：>1000 自动入队返回 202 + task_id + mode=async，否则同步 200 + mode=sync；`App\Http\Controllers\Admin\SegmentTaskController`（index 按 admin_id 过滤 + show 仅本人可见，权限 segments.assign）+ `SegmentTaskResource`（含 progress_percent）+ `SegmentTaskIndexRequest`；`routes/admin.php` 注册 2 条 `/admin/segment-tasks*` 路由；前端 `segment-manage.ts` 4 个 fetch 返回类型改为 同步|异步 联合类型 + 新增 2 个 fetchGetSegmentTask* 方法，`api.d.ts` 新增 SegmentTaskList/SegmentTaskSearchParams/SegmentTaskItem/SegmentAsyncResponse 4 个类型，users-dialog 移标时识别 task_id 显示"任务已提交"提示；ESLint / vue-tsc / vite 构建零错误；PHPUnit 新增 BulkSegmentTaskTest 12 个用例（dispatchTask 创建+入队、shouldEnqueue 阈值、Job attach/detach 完成、跳过不存在 segment、幂等、通知断言、Controller 202、任务列表/详情仅本人可见、progressPercent），Segment 模块累计 85 tests / 263 assertions，全项目 1209 tests / 2919 assertions 零回归 |
-| 2026-08-28 | 分群异步任务前端列表页 | 菜单合并到 `2026_07_31_111934_seed_initial_admin_data.php` 的「用户管理」顶级菜单 children 末尾，名称 `分群异步任务`（path=segment-task，component `/user/segment-task`，sort=100，permission=`segments.task`，与 `分群管理` 同级；权限点 `segments.task` 由 AdminMenu::booted saved 监听器自动写入 Spatie permissions 表，超级管理员 `syncPermissions(Permission::all())` 自动继承；前端 `src/views/user/segment-task/` 3 个 vue（index.vue 列表页 + modules/segment-task-search.vue 搜索栏 + modules/segment-task-detail-dialog.vue 详情弹窗），useTable 模式分页（page/per_page=status/type 筛选） + 进度条列（ElProgress 实时显示 processed/total，状态决定 success/exception 样式） + 自动轮询（hasActiveTask 命中 pending/running 时 setInterval 5s refreshSoft，全部终态自动停止轮询）；segment-users-dialog 移标时识别 task_id 显示"任务已提交（ID: xxx），完成后站内信通知"提示；segment-manage.ts 与 api.d.ts 类型已在步骤 13 同步补齐；ESLint / vue-tsc / pnpm build 零错误 |
 
 ### 13.6 建议实施顺序
 
-**第一阶段（上线必备最小集）**
+> 与 13.1-13.4 P 级别映射：P0 第一批 → P0 第二批 → P1 第一批 → P1 第二批 → P1 第三批 → P2 选做 → P3 长期。每个阶段开始前必须确认上一阶段所有 ✅ 项已上线稳定。
+
+**第一阶段（P0 必达 · 上线前）**
 1. ~~Banner / 轮播图管理（13.1.1）~~ ✅ 2026-08-27
 2. ~~管理员登录日志（13.1.2）~~ ✅ 2026-08-27
-3. 系统公告 / 站内信群发（13.1.3）
-4. 敏感词过滤（13.1.4）
-5. ~~列表数据导出（13.1.5）~~ ✅ 2026-08-27
-6. 安全基线加固（13.1.6）— 登录限流已完成；验证码与密码重置限流、CORS 白名单、安全响应头仍待补齐
+3. ~~列表数据导出（13.1.5）~~ ✅ 2026-08-27
+4. 系统公告 / 站内信群发（13.1.3）— **本阶段起点**
+5. 敏感词过滤（13.1.4）
+6. 安全基线加固（13.1.6 剩余项）
 
-**第二阶段（业务闭环）**
-7. 内容 / 帖子管理（13.2.1）
-8. 举报管理（13.2.2）
-9. 消息模板管理（13.2.3）+ 业务通知联动（13.2.4）
-10. 业务数据看板（13.2.8）
-11. 敏感操作二次验证（13.2.6）
-
-**第三阶段（精细化运营）**
-12. ~~用户标签与分群（13.2.5）~~ ✅ 2026-08-28（含分群异步任务前端列表页）
-13. 素材管理增强（13.2.7）
+**第二阶段（P1 业务闭环）**
+7. ~~用户标签与分群（13.2.5）~~ ✅ 2026-08-28（含分群异步任务前端列表页）
+8. 内容 / 帖子管理（13.2.1）
+9. 举报管理（13.2.2）
+10. 消息模板管理（13.2.3）
+11. 业务通知联动（13.2.4）
+12. 业务数据看板（13.2.8）
+13. 敏感操作二次验证（13.2.6）
 14. 业务定时任务管理（13.2.9）
-15. 国际化落地（13.1.7）
+15. 素材管理增强（13.2.7）
 
-**第四阶段（按业务形态扩展）**
-16. P2 业务扩展模块按实际产品形态选做
-17. P3 体验与性能优化持续迭代
+**第三阶段（P2 业务扩展 · 按需选做）**
+16. 支付与订单
+17. 优惠券 / 活动管理
+18. 签到与任务体系
+19. 邀请与分销
+20. 工单 / 客服系统
+21. 前台用户端
+22. 国际化落地（原 13.1.7 下调至此）
+23. 地区数据校验
+
+**第四阶段（P3 体验与性能 · 长期迭代）**
+24. 批量操作、暗黑模式完整度、前端错误边界、大列表性能、单元测试覆盖、API 文档同步、性能基准测试（每月迭代 1-2 项）
+
+---
+
+### 13.6.1 P 级别优先级总览
+
+| P 级别 | 总项 | 已完成 | 进行中 | 未开始 | 下一行动 |
+|--------|------|--------|--------|--------|----------|
+| **P0** | 7 | 3 ✅ | 1 🔄（13.1.3 公告群发，部分完成） | 3（13.1.4 敏感词 / 13.1.6 安全加固 / 13.1.7→已下调 P2） | 启动 13.1.3 公告群发主模块 |
+| **P1** | 9 | 1 ✅ | 0 | 8 | 启动 13.2.1 内容/帖子管理 |
+| **P2** | 8 | 0 | 0 | 8 | 评估商业化需求，确认是否启动"支付与订单" |
+| **P3** | 7 | 0 | 2（13.4.5 测试覆盖 / 13.4.6 API 文档同步） | 5 | 持续推进，与每次新功能同步发布 |
+| **合计** | 31 | 4 | 3 | 24 | — |
 
 ### 13.7 技术演进方向（长期）
 
@@ -1633,6 +1702,6 @@ php artisan storage:link
 
 ---
 
-**文档版本**：v2.6
+**文档版本**：v2.7
 **最后更新**：2026-08-28
 **维护人员**：Tongle Xu
