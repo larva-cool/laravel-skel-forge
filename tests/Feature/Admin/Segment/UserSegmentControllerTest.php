@@ -467,14 +467,18 @@ class UserSegmentControllerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('批量操作超限返回 422')]
-    public function batch_size_limit_returns_422(): void
+    #[TestDox('批量操作超限自动入队返回 202 + task_id')]
+    public function batch_over_limit_returns_202_async(): void
     {
         $seg = Segment::factory()->manual()->create();
         $ids = range(1, \App\Services\Segment\SegmentService::BATCH_LIMIT + 1);
 
-        $this->actingAsAdmin()
-            ->postJson("/admin/user-segments/{$seg->id}/attach", ['user_ids' => $ids])
-            ->assertStatus(422);
+        $r = $this->actingAsAdmin()
+            ->postJson("/admin/user-segments/{$seg->id}/attach", ['user_ids' => $ids]);
+
+        $r->assertStatus(202)
+            ->assertJsonPath('mode', 'async')
+            ->assertJsonPath('status', 'pending');
+        $this->assertIsInt($r->json('task_id'));
     }
 }

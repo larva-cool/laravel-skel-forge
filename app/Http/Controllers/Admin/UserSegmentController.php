@@ -244,12 +244,33 @@ class UserSegmentController extends Controller
 
     /**
      * 单分群批量绑定用户
+     *
+     * > BATCH_LIMIT 自动入队，返回 202；否则同步执行返回 200。
      */
     public function attach(SegmentAttachRequest $request, int $id): JsonResponse
     {
         $segment = Segment::query()->findOrFail($id);
         $userIds = $request->validated('user_ids');
+        $admin = $request->user('admin');
 
+        // 超限：入队 + 返回 202
+        if (count($userIds) > \App\Services\Segment\SegmentService::BATCH_LIMIT) {
+            $task = $this->segments->dispatchTask(
+                adminId: $admin?->id ?? 0,
+                type: \App\Enums\SegmentTaskType::ATTACH,
+                segmentIds: [$segment->id],
+                userIds: $userIds,
+            );
+
+            return response()->json([
+                'task_id' => $task->id,
+                'status' => $task->status->value,
+                'mode' => 'async',
+                'message' => '任务已提交，完成后将通过站内信通知。',
+            ], 202);
+        }
+
+        // 同步执行
         try {
             $added = $this->segments->attachUsers($segment, $userIds, Membership::SOURCE_MANUAL);
         } catch (InvalidArgumentException $e) {
@@ -259,16 +280,36 @@ class UserSegmentController extends Controller
         return response()->json([
             'added' => $added,
             'requested' => count($userIds),
+            'mode' => 'sync',
         ]);
     }
 
     /**
      * 单分群批量解绑用户
+     *
+     * > BATCH_LIMIT 自动入队，返回 202；否则同步执行返回 200。
      */
     public function detach(SegmentAttachRequest $request, int $id): JsonResponse
     {
         $segment = Segment::query()->findOrFail($id);
         $userIds = $request->validated('user_ids');
+        $admin = $request->user('admin');
+
+        if (count($userIds) > \App\Services\Segment\SegmentService::BATCH_LIMIT) {
+            $task = $this->segments->dispatchTask(
+                adminId: $admin?->id ?? 0,
+                type: \App\Enums\SegmentTaskType::DETACH,
+                segmentIds: [$segment->id],
+                userIds: $userIds,
+            );
+
+            return response()->json([
+                'task_id' => $task->id,
+                'status' => $task->status->value,
+                'mode' => 'async',
+                'message' => '任务已提交，完成后将通过站内信通知。',
+            ], 202);
+        }
 
         try {
             $removed = $this->segments->detachUsers($segment, $userIds);
@@ -279,16 +320,37 @@ class UserSegmentController extends Controller
         return response()->json([
             'removed' => $removed,
             'requested' => count($userIds),
+            'mode' => 'sync',
         ]);
     }
 
     /**
      * 笛卡尔批量打标
+     *
+     * 任一维度 > BATCH_LIMIT 自动入队，返回 202；否则同步执行返回 200。
      */
     public function batchAttach(SegmentBatchAttachRequest $request): JsonResponse
     {
         $segmentIds = $request->validated('segment_ids');
         $userIds = $request->validated('user_ids');
+        $admin = $request->user('admin');
+
+        if ($this->segments->shouldEnqueue($segmentIds, $userIds)) {
+            $task = $this->segments->dispatchTask(
+                adminId: $admin?->id ?? 0,
+                type: \App\Enums\SegmentTaskType::ATTACH,
+                segmentIds: $segmentIds,
+                userIds: $userIds,
+            );
+
+            return response()->json([
+                'task_id' => $task->id,
+                'status' => $task->status->value,
+                'mode' => 'async',
+                'requested' => count($segmentIds) * count($userIds),
+                'message' => '笛卡尔批量任务已提交，完成后将通过站内信通知。',
+            ], 202);
+        }
 
         try {
             $added = $this->segments->batchAttach($segmentIds, $userIds, Membership::SOURCE_MANUAL);
@@ -299,16 +361,37 @@ class UserSegmentController extends Controller
         return response()->json([
             'added' => $added,
             'requested' => count($segmentIds) * count($userIds),
+            'mode' => 'sync',
         ]);
     }
 
     /**
      * 笛卡尔批量解标
+     *
+     * 任一维度 > BATCH_LIMIT 自动入队，返回 202；否则同步执行返回 200。
      */
     public function batchDetach(SegmentBatchAttachRequest $request): JsonResponse
     {
         $segmentIds = $request->validated('segment_ids');
         $userIds = $request->validated('user_ids');
+        $admin = $request->user('admin');
+
+        if ($this->segments->shouldEnqueue($segmentIds, $userIds)) {
+            $task = $this->segments->dispatchTask(
+                adminId: $admin?->id ?? 0,
+                type: \App\Enums\SegmentTaskType::DETACH,
+                segmentIds: $segmentIds,
+                userIds: $userIds,
+            );
+
+            return response()->json([
+                'task_id' => $task->id,
+                'status' => $task->status->value,
+                'mode' => 'async',
+                'requested' => count($segmentIds) * count($userIds),
+                'message' => '笛卡尔批量解标任务已提交，完成后将通过站内信通知。',
+            ], 202);
+        }
 
         try {
             $removed = $this->segments->batchDetach($segmentIds, $userIds);
@@ -319,6 +402,7 @@ class UserSegmentController extends Controller
         return response()->json([
             'removed' => $removed,
             'requested' => count($segmentIds) * count($userIds),
+            'mode' => 'sync',
         ]);
     }
 }

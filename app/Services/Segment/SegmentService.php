@@ -7,9 +7,13 @@ declare(strict_types=1);
 
 namespace App\Services\Segment;
 
+use App\Enums\SegmentTaskStatus;
+use App\Enums\SegmentTaskType;
+use App\Jobs\Segment\BulkSegmentTaskJob;
 use App\Models\User;
 use App\Models\UserSegment\Membership;
 use App\Models\UserSegment\Segment;
+use App\Models\UserSegment\SegmentTask;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -275,5 +279,63 @@ class SegmentService
                 '单次批量操作不能超过 '.self::BATCH_LIMIT.' 个 ID'
             );
         }
+    }
+
+    // ========================================================================
+    //  异步任务入口（> BATCH_LIMIT 时入队）
+    // ========================================================================
+
+    /**
+     * 创建并派发分群异步任务（attach / detach 通用）
+     *
+     * 当笛卡尔积任一维度 > BATCH_LIMIT 时，Controller 改走本方法：
+     *  - 创建 segment_tasks 记录（pending）
+     *  - 派发 BulkSegmentTaskJob 到 'segments' 队列
+     *  - 返回 task 对象供 Controller 响应 202
+     *
+     * @param  array<int, int>  $segmentIds
+     * @param  array<int, int>  $userIds
+     */
+    public function dispatchTask(
+        int $adminId,
+        SegmentTaskType $type,
+        array $segmentIds,
+        array $userIds,
+    ): SegmentTask {
+        $segmentIds = array_values(array_unique(array_map('intval', $segmentIds)));
+        $userIds = array_values(array_unique(array_map('intval', $userIds)));
+
+        $total = $type === SegmentTaskType::ATTACH
+            ? count($segmentIds) * count($userIds)
+            : count($segmentIds) * count($userIds);
+
+        $task = SegmentTask::query()->create([
+            'admin_id' => $adminId,
+            'type' => $type,
+            'payload' => [
+                'segment_ids' => $segmentIds,
+                'user_ids' => $userIds,
+            ],
+            'total_count' => $total,
+            'processed_count' => 0,
+            'added_count' => 0,
+            'status' => SegmentTaskStatus::PENDING,
+        ]);
+
+        BulkSegmentTaskJob::dispatch($task->id)->onQueue('segments');
+
+        return $task;
+    }
+
+    /**
+     * 是否应入队（任一维度超过 BATCH_LIMIT）
+     *
+     * @param  array<int, int>  $segmentIds
+     * @param  array<int, int>  $userIds
+     */
+    public function shouldEnqueue(array $segmentIds, array $userIds): bool
+    {
+        return count($segmentIds) > self::BATCH_LIMIT
+            || count($userIds) > self::BATCH_LIMIT;
     }
 }

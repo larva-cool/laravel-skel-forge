@@ -237,3 +237,7 @@ Route::get('user-segments/{segment}/users', [\App\Http\Controllers\Admin\UserSeg
 Route::post('user-segments/{segment}/attach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'attach'])->name('user-segments.attach');
 Route::post('user-segments/{segment}/detach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'detach'])->name('user-segments.detach');
 Route::apiResource('user-segments', \App\Http\Controllers\Admin\UserSegmentController::class)->except(['create', 'edit']);
+
+// 分群异步任务查询（提交人可见自己的任务）
+Route::get('segment-tasks', [\App\Http\Controllers\Admin\SegmentTaskController::class, 'index'])->name('segment-tasks.index');
+Route::get('segment-tasks/{task}', [\App\Http\Controllers\Admin\SegmentTaskController::class, 'show'])->name('segment-tasks.show');
