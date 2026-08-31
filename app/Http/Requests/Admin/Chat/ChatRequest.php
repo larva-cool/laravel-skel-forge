@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace App\Http\Requests\Admin;
+namespace App\Http\Requests\Admin\Chat;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -29,19 +29,6 @@ class ChatRequest extends FormRequest
         return [
             'prompt' => ['required', 'string', 'min:1', 'max:10000'],
             'conversation_id' => ['nullable', 'string', 'uuid'],
-        ];
-    }
-
-    /**
-     * Get custom attributes for validator errors.
-     *
-     * @return array<string, string>
-     */
-    public function attributes(): array
-    {
-        return [
-            'prompt' => '对话内容',
-            'conversation_id' => '会话ID',
         ];
     }
 }

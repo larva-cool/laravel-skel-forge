@@ -95,7 +95,7 @@ class AppVersionController extends Controller
         $appVersion = AppVersion::query()->where('app_release_id', $app)->findOrFail($version);
 
         if ($appVersion->status === ReleaseStatus::PUBLISHED) {
-            abort(400, '已发布的版本不可删除，请先撤回或废弃');
+            abort(400, __('system.version_published_cannot_delete'));
         }
 
         $appVersion->delete();
@@ -122,7 +122,7 @@ class AppVersionController extends Controller
         $appVersion = AppVersion::query()->where('app_release_id', $app)->findOrFail($version);
 
         if (! $appVersion->status->isPublished()) {
-            abort(400, '仅已发布状态的版本可以撤回');
+            abort(400, __('system.version_only_published_withdraw'));
         }
 
         $appVersion->withdraw();
@@ -138,7 +138,7 @@ class AppVersionController extends Controller
         $appVersion = AppVersion::query()->where('app_release_id', $app)->findOrFail($version);
 
         if ($appVersion->status->isObsolete()) {
-            abort(400, '版本已处于废弃状态');
+            abort(400, __('system.version_already_obsolete'));
         }
 
         $appVersion->obsolete();

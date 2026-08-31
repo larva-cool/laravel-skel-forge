@@ -64,7 +64,7 @@ abstract class UploadRequest extends FormRequest
 
         if ($filePath === false) {
             throw ValidationException::withMessages([
-                'file' => '上传失败，请重试',
+                'file' => __('system.upload_failed'),
             ]);
         }
 

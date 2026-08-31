@@ -274,6 +274,7 @@ return [
         'bank_account' => '银行账户',
         'bank_name' => '开户行',
         'reason' => '驳回原因',
+        'chat_reason' => '拒绝原因',
         'remark' => '驳回备注',
         'conversation_id' => '会话ID',
         'approval_id' => '审批ID',

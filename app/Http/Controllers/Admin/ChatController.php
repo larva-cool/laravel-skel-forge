@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Ai\Agents\Assistant;
-use App\Http\Requests\Admin\ChatApprovalRequest;
-use App\Http\Requests\Admin\ChatRequest;
+use App\Http\Requests\Admin\Chat\ChatApprovalRequest;
+use App\Http\Requests\Admin\Chat\ChatRequest;
 use App\Models\Admin\Admin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

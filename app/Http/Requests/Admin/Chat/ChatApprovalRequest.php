@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace App\Http\Requests\Admin;
+namespace App\Http\Requests\Admin\Chat;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -44,10 +44,7 @@ class ChatApprovalRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'conversation_id' => '会话ID',
-            'approval_id' => '审批ID',
-            'approved' => '审批结果',
-            'reason' => '拒绝原因',
+            'reason' => __('validation.attributes.chat_reason'),
         ];
     }
 }

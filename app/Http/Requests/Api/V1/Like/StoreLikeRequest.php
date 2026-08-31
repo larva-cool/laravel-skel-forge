@@ -63,7 +63,7 @@ class StoreLikeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'source_id.unique' => '已经点赞过该资源',
+            'source_id.unique' => __('system.like_duplicate'),
         ];
     }
 }

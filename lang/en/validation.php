@@ -274,6 +274,7 @@ return [
         'bank_account' => 'Corporate bank account',
         'bank_name' => 'Bank name',
         'reason' => 'Reject reason',
+        'chat_reason' => 'Rejection reason',
         'remark' => 'Reject remark',
         'conversation_id' => 'Conversation ID',
         'approval_id' => 'Approval ID',

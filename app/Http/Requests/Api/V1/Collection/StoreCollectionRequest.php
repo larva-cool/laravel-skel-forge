@@ -65,7 +65,7 @@ class StoreCollectionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'source_id.unique' => '已经收藏过该资源',
+            'source_id.unique' => __('system.collection_duplicate'),
         ];
     }
 }

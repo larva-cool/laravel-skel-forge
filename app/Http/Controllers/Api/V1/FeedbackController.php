@@ -48,7 +48,7 @@ class FeedbackController extends Controller
 
         return response()->json([
             'code' => $feedback->code,
-            'message' => '反馈提交成功，感谢您的反馈！',
+            'message' => __('system.feedback_submit_success'),
         ], 201);
     }
 

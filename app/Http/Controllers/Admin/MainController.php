@@ -73,7 +73,7 @@ class MainController extends Controller
         }
 
         return response()->json([
-            'message' => '缓存清理成功',
+            'message' => __('system.cache_clear_success'),
             'types' => array_values(array_unique($types)),
         ]);
     }

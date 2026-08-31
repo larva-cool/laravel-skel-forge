@@ -266,7 +266,7 @@ class UserSegmentController extends Controller
                 'task_id' => $task->id,
                 'status' => $task->status->value,
                 'mode' => 'async',
-                'message' => '任务已提交，完成后将通过站内信通知。',
+                'message' => __('system.segment_task_submitted'),
             ], 202);
         }
 
@@ -307,7 +307,7 @@ class UserSegmentController extends Controller
                 'task_id' => $task->id,
                 'status' => $task->status->value,
                 'mode' => 'async',
-                'message' => '任务已提交，完成后将通过站内信通知。',
+                'message' => __('system.segment_task_submitted'),
             ], 202);
         }
 
@@ -348,7 +348,7 @@ class UserSegmentController extends Controller
                 'status' => $task->status->value,
                 'mode' => 'async',
                 'requested' => count($segmentIds) * count($userIds),
-                'message' => '笛卡尔批量任务已提交，完成后将通过站内信通知。',
+                'message' => __('system.segment_batch_attach_task_submitted'),
             ], 202);
         }
 
@@ -389,7 +389,7 @@ class UserSegmentController extends Controller
                 'status' => $task->status->value,
                 'mode' => 'async',
                 'requested' => count($segmentIds) * count($userIds),
-                'message' => '笛卡尔批量解标任务已提交，完成后将通过站内信通知。',
+                'message' => __('system.segment_batch_detach_task_submitted'),
             ], 202);
         }
 
