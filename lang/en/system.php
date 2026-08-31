@@ -18,6 +18,21 @@ return [
 
     'successful_operation' => 'Operation successful.',
     'server_busy' => 'The server is busy, please try again later.',
+    'cache_clear_success' => 'Cache cleared successfully.',
+    'upload_failed' => 'Upload failed, please try again.',
+
+    'feedback_submit_success' => 'Feedback submitted successfully. Thank you!',
+
+    'like_duplicate' => 'You have already liked this resource.',
+    'collection_duplicate' => 'You have already collected this resource.',
+
+    'version_published_cannot_delete' => 'Published versions cannot be deleted. Please withdraw or obsolete it first.',
+    'version_only_published_withdraw' => 'Only published versions can be withdrawn.',
+    'version_already_obsolete' => 'The version is already obsolete.',
+
+    'segment_task_submitted' => 'Task submitted. You will be notified by in-app message when completed.',
+    'segment_batch_attach_task_submitted' => 'Cartesian batch task submitted. You will be notified by in-app message when completed.',
+    'segment_batch_detach_task_submitted' => 'Cartesian batch detach task submitted. You will be notified by in-app message when completed.',
 
     'identity_pending_exists' => 'You already have a pending verification record, please do not submit again',
     'identity_submit_success' => 'Verification submitted, please wait for review',
