@@ -148,6 +148,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 应用版本 | `/admin/apps`、`/admin/apps/{app}/versions` | 客户端应用与版本发布/撤回/废弃 |
 | 前台用户 | `/admin/users` | 前台用户 CRUD、状态、积分/金币调整、VIP 延期、登录历史（可按 `result` 过滤）、社交账号、流水、回收站，列表与流水可导出 Excel |
 | 反馈管理 | `/admin/feedbacks` | 用户反馈列表、统计、详情、处理、删除，列表可导出 Excel |
+| 实名认证 | `/admin/identity-verifications` | 用户实名认证审核（个人/企业），支持通过/驳回、统计、详情查看证件附件 |
 | 评论管理 | `/admin/comments` | 评论列表（按审核状态/源类型/关键词/用户过滤）、详情（含 IP 与上级评论摘要）、回复链分页查询、审核（通过/驳回/审核中）、删除，列表可导出 Excel |
 | 用户分群 | `/admin/user-segments`、`/admin/segment-tasks`、`/user/segment`、`/user/segment-task` | 用户分群（segment）CRUD：手动分群与规则分群两种类型，规则分群按 JSON 条件由定时任务每天 02:00 增量同步成员；支持为用户批量打标/移标（含笛卡尔批量，>1000 ID 自动转为异步任务入队，通过 `/admin/segment-tasks` 后端接口 + 前端 `/user/segment-task` 任务列表页轮询查询进度，完成/失败时站内信通知）、按分群筛选用户（AND 语义）、规则预览；公告群发可复用 `options` 接口拉取手动分群作为目标范围 |
 | 公共接口 | `/admin/common` | 与业务无关的通用选项（如 `source-types` 多态源类型下拉） |

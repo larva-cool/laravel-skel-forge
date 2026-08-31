@@ -120,5 +120,12 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->get('points', [\App\Http\Controllers\Api\V1\UserController::class, 'points'])->name('points'); // 获取用户积分记录
         $registrar->get('coins', [\App\Http\Controllers\Api\V1\UserController::class, 'coins'])->name('coins'); // 获取用户金币记录
         $registrar->delete('', [\App\Http\Controllers\Api\V1\UserController::class, 'destroy'])->name('destroy'); // 注销并删除自己的账户
+
+        /**
+         * 实名认证
+         */
+        $registrar->get('identity', [\App\Http\Controllers\Api\V1\User\IdentityController::class, 'show'])->name('identity.show'); // 当前用户的最新认证记录
+        $registrar->get('identity/status', [\App\Http\Controllers\Api\V1\User\IdentityController::class, 'status'])->name('identity.status'); // 简要状态
+        $registrar->post('identity', [\App\Http\Controllers\Api\V1\User\IdentityController::class, 'submit'])->name('identity.submit'); // 提交/重新提交
     });
 });

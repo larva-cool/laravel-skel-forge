@@ -879,6 +879,21 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 
 > 评论父子关系通过多态自关联实现：回复的 `source_type='comment'`、`source_id` 指向父评论 ID。列表接口不返回 `ip_address`，仅详情接口返回。
 
+#### 6.3.13 实名认证（/api/v1/user/identity & /admin/identity-verifications）
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/v1/user/identity` | 当前用户最新一条实名认证记录 | -（登录） |
+| GET | `/api/v1/user/identity/status` | 简要状态（是否已通过、类型、最新驳回原因） | -（登录） |
+| POST | `/api/v1/user/identity` | 提交/重新提交实名认证（personal 个人 / enterprise 企业） | -（登录） |
+| GET | `/admin/identity-verifications` | 认证记录列表（分页，支持 `keyword`/`user_id`/`type`/`status`/`start_date`/`end_date` 过滤） | identity-verifications.index |
+| GET | `/admin/identity-verifications/stats` | 认证统计（总量/待审/今日新增/已通过/已驳回） | identity-verifications.index |
+| GET | `/admin/identity-verifications/{verification}` | 认证记录详情（含证件附件 URL） | identity-verifications.index |
+| POST | `/admin/identity-verifications/{verification}/approve` | 审核通过（同步 `users.identity_verified`/`identity_type`） | identity-verifications.edit |
+| POST | `/admin/identity-verifications/{verification}/reject` | 审核驳回（必填 `reason`、可选 `remark`） | identity-verifications.edit |
+
+> 同一用户同时仅允许一条 `pending`/`review` 记录；已认证用户禁止再次提交，驳回后可重新提交。`users` 表仅保留 `identity_type` 与 `identity_verified` 两个标记位，详细证件数据保存在 `identity_verifications` 表。证件图片通过现有 `/api/v1/uploader/image` 上传后回填 `attachment_id`。
+
 #### 6.3.13 反馈管理（/admin/feedbacks）
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|

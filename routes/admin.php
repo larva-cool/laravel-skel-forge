@@ -241,3 +241,10 @@ Route::apiResource('user-segments', \App\Http\Controllers\Admin\UserSegmentContr
 // 分群异步任务查询（提交人可见自己的任务）
 Route::get('segment-tasks', [\App\Http\Controllers\Admin\SegmentTaskController::class, 'index'])->name('segment-tasks.index');
 Route::get('segment-tasks/{task}', [\App\Http\Controllers\Admin\SegmentTaskController::class, 'show'])->name('segment-tasks.show');
+
+// 实名认证审核
+Route::get('identity-verifications/stats', [\App\Http\Controllers\Admin\IdentityVerificationController::class, 'stats'])->name('identity-verifications.stats');
+Route::get('identity-verifications', [\App\Http\Controllers\Admin\IdentityVerificationController::class, 'index'])->name('identity-verifications.index');
+Route::get('identity-verifications/{verification}', [\App\Http\Controllers\Admin\IdentityVerificationController::class, 'show'])->name('identity-verifications.show');
+Route::post('identity-verifications/{verification}/approve', [\App\Http\Controllers\Admin\IdentityVerificationController::class, 'approve'])->name('identity-verifications.approve');
+Route::post('identity-verifications/{verification}/reject', [\App\Http\Controllers\Admin\IdentityVerificationController::class, 'reject'])->name('identity-verifications.reject');

@@ -10,6 +10,7 @@ namespace App\Models;
 use App\Enums\UserStatus;
 use App\Events\User\EmailReset;
 use App\Events\User\EmailVerified;
+use App\Events\User\IdentityVerified;
 use App\Events\User\PhoneReset;
 use App\Events\User\UsernameReset;
 use App\Models\Coin\CoinTrade;
@@ -17,6 +18,7 @@ use App\Models\Point\PointTrade;
 use App\Models\System\LoginHistory;
 use App\Models\System\Social;
 use App\Models\Traits\DateTimeFormatter;
+use App\Models\User\IdentityVerification;
 use App\Models\User\UserExtra;
 use App\Models\User\UserProfile;
 use App\Observers\UserObserver;
@@ -64,6 +66,8 @@ use Laravel\Scout\Searchable;
  * @property Carbon|null $vip_expires_at VIP过期时间
  * @property Carbon|null $last_active_at 最后活动时间
  * @property Carbon|null $last_login_at 最后登录时间
+ * @property string|null $identity_type 实名认证类型
+ * @property bool $identity_verified 是否已通过实名认证
  * @property Carbon|null $created_at 注册时间
  * @property Carbon|null $updated_at 更新时间
  * @property Carbon|null $deleted_at 删除时间
@@ -71,6 +75,8 @@ use Laravel\Scout\Searchable;
  * 只读属性
  * @property-read string|null $phone_text 手机号文本
  * @property-read string $status_label 状态文本
+ * @property-read \App\Enums\IdentityType|null $identity_type_enum 实名认证类型枚举
+ * @property-read \App\Models\User\IdentityVerification|null $latest_identity 最新认证记录
  *
  * 关系对象
  * @property UserProfile $profile 用户资料
@@ -79,6 +85,7 @@ use Laravel\Scout\Searchable;
  * @property Collection<int,CoinTrade> $coins 金币交易明细
  * @property Collection<int,LoginHistory> $loginHistories 登录历史
  * @property Collection<int,Social> $socials 社交账号
+ * @property Collection<int,IdentityVerification> $identityVerifications 实名认证记录
  * @property \Illuminate\Database\Eloquent\Collection<int,\App\Models\UserSegment\Segment> $segments 用户分群
  * @property \Illuminate\Database\Eloquent\Collection<int,\App\Models\UserSegment\Membership> $memberships 分群成员记录
  *
@@ -106,6 +113,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'available_points' => 0,
         'available_coins' => 0,
         'vip_expires_at' => null,
+        'identity_verified' => false,
     ];
 
     /**
@@ -382,6 +390,39 @@ class User extends Authenticatable implements MustVerifyEmail
     public function markActive(): bool
     {
         return $this->updateQuietly(['status' => UserStatus::ACTIVE]);
+    }
+
+    /**
+     * 是否已通过实名认证
+     */
+    public function isVerified(): bool
+    {
+        return (bool) $this->getAttribute('identity_verified');
+    }
+
+    /**
+     * 标记用户已通过实名认证
+     */
+    public function markVerified(\App\Enums\IdentityType $type, ?IdentityVerification $verification = null): bool
+    {
+        $status = $this->forceFill([
+            'identity_type' => $type,
+            'identity_verified' => true,
+        ])->saveQuietly();
+        Event::dispatch(new IdentityVerified($this, $verification));
+
+        return $status;
+    }
+
+    /**
+     * 标记用户未通过实名认证
+     */
+    public function markUnverified(): bool
+    {
+        return $this->forceFill([
+            'identity_type' => null,
+            'identity_verified' => false,
+        ])->saveQuietly();
     }
 
     /**

@@ -222,6 +222,21 @@ return new class extends Migration
                         'buttons' => [],
                     ],
                     [
+                        'key' => 'user.identity',
+                        'path' => 'identity',
+                        'name' => 'UserIdentity',
+                        'component' => '/user/identity',
+                        'title' => '实名认证',
+                        'icon' => 'ri:shield-user-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 3,
+                        'keep_alive' => true,
+                        'permission' => 'identity-verifications.index',
+                        'buttons' => [
+                            ['title' => '审核通过', 'permission' => 'identity-verifications.edit'],
+                        ],
+                    ],
+                    [
                         'key' => 'user.trash',
                         'path' => 'trash',
                         'name' => 'UserTrash',
@@ -229,7 +244,7 @@ return new class extends Migration
                         'title' => '用户回收站',
                         'icon' => 'ri:delete-bin-line',
                         'type' => MenuType::MENU,
-                        'sort' => 2,
+                        'sort' => 102,
                         'keep_alive' => true,
                         'permission' => 'users.index',
                         'buttons' => [
