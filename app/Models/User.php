@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\IdentityType;
 use App\Enums\UserStatus;
 use App\Events\User\EmailReset;
 use App\Events\User\EmailVerified;
@@ -21,6 +22,7 @@ use App\Models\Traits\DateTimeFormatter;
 use App\Models\User\IdentityVerification;
 use App\Models\User\UserExtra;
 use App\Models\User\UserProfile;
+use App\Models\UserSegment\Membership;
 use App\Observers\UserObserver;
 use App\Policies\UserPolicy;
 use Database\Factories\UserFactory;
@@ -75,7 +77,7 @@ use Laravel\Scout\Searchable;
  * 只读属性
  * @property-read string|null $phone_text 手机号文本
  * @property-read string $status_label 状态文本
- * @property-read \App\Enums\IdentityType|null $identity_type_enum 实名认证类型枚举
+ * @property-read IdentityType|null $identity_type_enum 实名认证类型枚举
  * @property-read \App\Models\User\IdentityVerification|null $latest_identity 最新认证记录
  *
  * 关系对象
@@ -87,7 +89,7 @@ use Laravel\Scout\Searchable;
  * @property Collection<int,Social> $socials 社交账号
  * @property Collection<int,IdentityVerification> $identityVerifications 实名认证记录
  * @property \Illuminate\Database\Eloquent\Collection<int,\App\Models\UserSegment\Segment> $segments 用户分群
- * @property \Illuminate\Database\Eloquent\Collection<int,\App\Models\UserSegment\Membership> $memberships 分群成员记录
+ * @property \Illuminate\Database\Eloquent\Collection<int,Membership> $memberships 分群成员记录
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
@@ -242,7 +244,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function memberships(): HasMany
     {
-        return $this->hasMany(\App\Models\UserSegment\Membership::class, 'user_id');
+        return $this->hasMany(Membership::class, 'user_id');
     }
 
     /**
@@ -403,7 +405,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * 标记用户已通过实名认证
      */
-    public function markVerified(\App\Enums\IdentityType $type, ?IdentityVerification $verification = null): bool
+    public function markVerified(IdentityType $type, ?IdentityVerification $verification = null): bool
     {
         $status = $this->forceFill([
             'identity_type' => $type,
