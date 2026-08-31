@@ -202,6 +202,12 @@ return [
         'verify_code' => [
             'required' => 'The :attribute is required.',
         ],
+        'id_card_no' => [
+            'regex' => 'The ID card number format is invalid',
+        ],
+        'credit_code' => [
+            'regex' => 'The unified social credit code format is invalid',
+        ],
     ],
 
     /*
@@ -254,6 +260,21 @@ return [
         'user_id' => 'User ID',
         'username' => 'Username',
         'verify_code' => 'Verify Code',
+        'real_name' => 'Real name',
+        'id_card_no' => 'ID card number',
+        'id_card_front_id' => 'ID card front attachment',
+        'id_card_back_id' => 'ID card back attachment',
+        'handheld_id' => 'Handheld ID attachment',
+        'company_name' => 'Company name',
+        'credit_code' => 'Unified social credit code',
+        'legal_person_name' => 'Legal person name',
+        'legal_person_id_card_no' => 'Legal person ID card number',
+        'business_license_id' => 'Business license attachment',
+        'opening_permit_id' => 'Opening permit attachment',
+        'bank_account' => 'Corporate bank account',
+        'bank_name' => 'Bank name',
+        'reason' => 'Reject reason',
+        'remark' => 'Reject remark',
     ],
 
 ];

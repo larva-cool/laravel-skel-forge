@@ -202,6 +202,12 @@ return [
         'verify_code' => [
             'required' => '请输入:attribute。',
         ],
+        'id_card_no' => [
+            'regex' => '身份证号格式不正确',
+        ],
+        'credit_code' => [
+            'regex' => '统一社会信用代码格式不正确',
+        ],
     ],
 
     /*
@@ -254,6 +260,21 @@ return [
         'user_id' => '用户ID',
         'username' => '用户名',
         'verify_code' => '验证码',
+        'real_name' => '真实姓名',
+        'id_card_no' => '身份证号',
+        'id_card_front_id' => '身份证人像面附件',
+        'id_card_back_id' => '身份证国徽面附件',
+        'handheld_id' => '手持身份证附件',
+        'company_name' => '企业名称',
+        'credit_code' => '统一社会信用代码',
+        'legal_person_name' => '法人姓名',
+        'legal_person_id_card_no' => '法人身份证号',
+        'business_license_id' => '营业执照附件',
+        'opening_permit_id' => '开户许可证附件',
+        'bank_account' => '对公账户',
+        'bank_name' => '开户行',
+        'reason' => '驳回原因',
+        'remark' => '驳回备注',
     ],
 
 ];

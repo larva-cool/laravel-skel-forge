@@ -142,7 +142,7 @@ class IdentityVerificationController extends Controller
     protected function authorizeAction(IdentityVerification $verification): void
     {
         if ($verification->status === ReviewStatus::APPROVED || $verification->status === ReviewStatus::REJECTED) {
-            abort(422, '该记录已审核完成，无法再次审核');
+            abort(422, __('system.identity_already_reviewed'));
         }
     }
 }

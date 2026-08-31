@@ -44,7 +44,7 @@ class IdentityVerificationService
                 ->first();
 
             if ($existing) {
-                abort(422, '当前已有待审核的认证记录，请勿重复提交');
+                abort(422, __('system.identity_pending_exists'));
             }
 
             $data['user_id'] = $user->id;

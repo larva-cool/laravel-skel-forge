@@ -66,17 +66,4 @@ class SubmitIdentityRequest extends FormRequest
             'bank_name' => ['nullable', 'string', 'max:64'],
         ];
     }
-
-    /**
-     * 自定义错误消息
-     *
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'id_card_no.regex' => '身份证号格式不正确',
-            'credit_code.regex' => '统一社会信用代码格式不正确',
-        ];
-    }
 }
