@@ -271,10 +271,14 @@ return [
         'legal_person_id_card_no' => '法人身份证号',
         'business_license_id' => '营业执照附件',
         'opening_permit_id' => '开户许可证附件',
-        'bank_account' => '对公账户',
+        'bank_account' => '银行账户',
         'bank_name' => '开户行',
         'reason' => '驳回原因',
         'remark' => '驳回备注',
+        'conversation_id' => '会话ID',
+        'approval_id' => '审批ID',
+        'approved' => '审批结果',
+        'prompt' => '对话内容',
     ],
 
 ];

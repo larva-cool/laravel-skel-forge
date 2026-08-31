@@ -275,6 +275,10 @@ return [
         'bank_name' => 'Bank name',
         'reason' => 'Reject reason',
         'remark' => 'Reject remark',
+        'conversation_id' => 'Conversation ID',
+        'approval_id' => 'Approval ID',
+        'approved' => 'Approval result',
+        'prompt' => 'Prompt',
     ],
 
 ];
