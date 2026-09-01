@@ -229,3 +229,15 @@ if (! function_exists('base64_urldecode')) {
         return base64_decode(strtr($data, '-_', '+/'));
     }
 }
+
+/**
+ * 解析IP归属地
+ */
+if (! function_exists('ip_location')) {
+    function ip_location(string $ip): ?string
+    {
+        $searcher = new Ip2Region();
+
+        return $searcher->simple($ip);
+    }
+}

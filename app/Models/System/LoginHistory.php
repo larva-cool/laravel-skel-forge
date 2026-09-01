@@ -88,12 +88,12 @@ class LoginHistory extends Model
                 $model->device = $agent->device() ?: null;
                 $model->browser = $agent->browser() ?: null;
             }
-            //            if ($model->ip) {
-            //                $model->address = ip_address($model->ip);
-            //            }
+            if ($model->ip) {
+                $model->address = ip_location($model->ip);
+            }
         });
         static::created(function (LoginHistory $model) {
-            if (! $model->result) { // 登录失败的记录不参与用户登录统计
+            if (!$model->result) { // 登录失败的记录不参与用户登录统计
                 return;
             }
             // 更新用户登录信息
@@ -102,7 +102,7 @@ class LoginHistory extends Model
                 'last_login_at' => $model->login_at,
             ]);
 
-            if (! static::isTodayLogged($model->user_id, $model->user_type)) {// 当天首次登录
+            if (!static::isTodayLogged($model->user_id, $model->user_type)) {// 当天首次登录
                 Event::dispatch(new TodayFirstLogged($model));
             }
         });
@@ -124,9 +124,9 @@ class LoginHistory extends Model
     public function scopeFilter(Builder $query, array $filters): Builder
     {
         return $query
-            ->when(! empty($filters['user_type']), fn (Builder $q) => $q->where('user_type', $filters['user_type']))
-            ->when(! empty($filters['user_id']), fn (Builder $q) => $q->where('user_id', (int) $filters['user_id']))
-            ->when(! empty($filters['keyword']), function (Builder $q) use ($filters) {
+            ->when(!empty($filters['user_type']), fn(Builder $q) => $q->where('user_type', $filters['user_type']))
+            ->when(!empty($filters['user_id']), fn(Builder $q) => $q->where('user_id', (int) $filters['user_id']))
+            ->when(!empty($filters['keyword']), function (Builder $q) use ($filters) {
                 $keyword = $filters['keyword'];
 
                 return $q->where(function (Builder $sub) use ($keyword) {
@@ -136,12 +136,12 @@ class LoginHistory extends Model
                         ->orWhere('browser', 'like', "%{$keyword}%");
                 });
             })
-            ->when(! empty($filters['ip']), fn (Builder $q) => $q->where('ip', $filters['ip']))
+            ->when(!empty($filters['ip']), fn(Builder $q) => $q->where('ip', $filters['ip']))
             ->when(isset($filters['result']) && $filters['result'] !== null && $filters['result'] !== '', function (Builder $q) use ($filters) {
                 return $q->where('result', filter_var($filters['result'], FILTER_VALIDATE_BOOLEAN));
             })
-            ->when(! empty($filters['login_start']), fn (Builder $q) => $q->where('login_at', '>=', Carbon::parse($filters['login_start'])->startOfDay()))
-            ->when(! empty($filters['login_end']), fn (Builder $q) => $q->where('login_at', '<=', Carbon::parse($filters['login_end'])->endOfDay()));
+            ->when(!empty($filters['login_start']), fn(Builder $q) => $q->where('login_at', '>=', Carbon::parse($filters['login_start'])->startOfDay()))
+            ->when(!empty($filters['login_end']), fn(Builder $q) => $q->where('login_at', '<=', Carbon::parse($filters['login_end'])->endOfDay()));
     }
 
     /**
