@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Segment;
 
+use App\Enums\IdentityType;
 use App\Models\User;
 use App\Models\UserSegment\Membership;
 use App\Models\UserSegment\Segment;
@@ -286,5 +287,202 @@ class SegmentServiceTest extends TestCase
         $seg = Segment::factory()->manual()->create();
         $this->assertSame(0, $this->service->attachUsers($seg, []));
         $this->assertSame(0, Membership::count());
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 identity_verified=true 过滤：仅已实名用户被纳入分群')]
+    public function sync_rule_segment_filters_by_identity_verified_true(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'identity_verified', 'op' => '=', 'value' => true],
+                ],
+            ],
+        ]);
+
+        $verified = $this->makeUser();
+        $verified->forceFill([
+            'identity_verified' => true,
+            'identity_type' => IdentityType::PERSONAL,
+        ])->saveQuietly();
+
+        $unverified = $this->makeUser(); // 默认 identity_verified=false
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(1, $result['added']);
+        $this->assertSame(0, $result['removed']);
+        $this->assertSame(1, $result['total']);
+        $this->assertTrue(
+            Membership::where('segment_id', $seg->id)
+                ->where('user_id', $verified->id)
+                ->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)
+                ->where('user_id', $unverified->id)
+                ->exists()
+        );
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 identity_verified!=true 过滤：仅未实名用户被纳入分群')]
+    public function sync_rule_segment_filters_by_identity_verified_false(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'identity_verified', 'op' => '!=', 'value' => true],
+                ],
+            ],
+        ]);
+
+        $verified = $this->makeUser();
+        $verified->forceFill([
+            'identity_verified' => true,
+            'identity_type' => IdentityType::PERSONAL,
+        ])->saveQuietly();
+
+        $unverifiedA = $this->makeUser();
+        $unverifiedB = $this->makeUser();
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(2, $result['added']);
+        $this->assertSame(0, $result['removed']);
+        $this->assertSame(2, $result['total']);
+        $matched = Membership::where('segment_id', $seg->id)
+            ->pluck('user_id')
+            ->all();
+        sort($matched);
+        $this->assertSame([$unverifiedA->id, $unverifiedB->id], $matched);
+        $this->assertFalse(in_array($verified->id, $matched, true));
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 identity_type=enterprise 过滤：仅企业认证用户被纳入分群')]
+    public function sync_rule_segment_filters_by_identity_type_eq(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'identity_type', 'op' => '=', 'value' => IdentityType::ENTERPRISE->value],
+                ],
+            ],
+        ]);
+
+        $enterprise = $this->makeUser();
+        $enterprise->forceFill([
+            'identity_verified' => true,
+            'identity_type' => IdentityType::ENTERPRISE,
+        ])->saveQuietly();
+
+        $personal = $this->makeUser();
+        $personal->forceFill([
+            'identity_verified' => true,
+            'identity_type' => IdentityType::PERSONAL,
+        ])->saveQuietly();
+
+        $unverified = $this->makeUser(); // identity_type=null
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(1, $result['added']);
+        $this->assertSame(0, $result['removed']);
+        $this->assertSame(1, $result['total']);
+        $this->assertTrue(
+            Membership::where('segment_id', $seg->id)->where('user_id', $enterprise->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $personal->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $unverified->id)->exists()
+        );
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 identity_type in [personal,enterprise] 过滤：含所有已实名用户')]
+    public function sync_rule_segment_filters_by_identity_type_in(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    [
+                        'field' => 'identity_type',
+                        'op' => 'in',
+                        'value' => [IdentityType::PERSONAL->value, IdentityType::ENTERPRISE->value],
+                    ],
+                ],
+            ],
+        ]);
+
+        $personal = $this->makeUser();
+        $personal->forceFill([
+            'identity_verified' => true,
+            'identity_type' => IdentityType::PERSONAL,
+        ])->saveQuietly();
+
+        $enterprise = $this->makeUser();
+        $enterprise->forceFill([
+            'identity_verified' => true,
+            'identity_type' => IdentityType::ENTERPRISE,
+        ])->saveQuietly();
+
+        $unverified = $this->makeUser(); // identity_type=null，不在 in 列表
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(2, $result['added']);
+        $this->assertSame(0, $result['removed']);
+        $this->assertSame(2, $result['total']);
+        $matched = Membership::where('segment_id', $seg->id)->pluck('user_id')->all();
+        sort($matched);
+        $expected = [$enterprise->id, $personal->id];
+        sort($expected);
+        $this->assertSame($expected, $matched);
+        $this->assertFalse(in_array($unverified->id, $matched, true));
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 identity_type is_null 过滤：仅未填类型的用户被纳入分群')]
+    public function sync_rule_segment_filters_by_identity_type_is_null(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'identity_type', 'op' => 'is_null', 'value' => null],
+                ],
+            ],
+        ]);
+
+        $personal = $this->makeUser();
+        $personal->forceFill([
+            'identity_verified' => true,
+            'identity_type' => IdentityType::PERSONAL,
+        ])->saveQuietly();
+
+        $unverifiedA = $this->makeUser(); // identity_type=null
+        $unverifiedB = $this->makeUser(); // identity_type=null
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(2, $result['added']);
+        $this->assertSame(0, $result['removed']);
+        $this->assertSame(2, $result['total']);
+        $matched = Membership::where('segment_id', $seg->id)->pluck('user_id')->all();
+        sort($matched);
+        $this->assertSame([$unverifiedA->id, $unverifiedB->id], $matched);
+        $this->assertFalse(in_array($personal->id, $matched, true));
     }
 }

@@ -25,6 +25,8 @@ enum SegmentRuleField: string implements \JsonSerializable
     use HasLabel;
 
     case STATUS = 'status';
+    case IDENTITY_VERIFIED = 'identity_verified';
+    case IDENTITY_TYPE = 'identity_type';
     case VIP_EXPIRES_AT = 'vip_expires_at';
     case LAST_LOGIN_AT = 'last_login_at';
     case CREATED_AT = 'created_at';
@@ -47,6 +49,8 @@ enum SegmentRuleField: string implements \JsonSerializable
     {
         return match ($this) {
             self::STATUS, self::AVAILABLE_POINTS, self::AVAILABLE_COINS, self::LOGIN_COUNT => 'int',
+            self::IDENTITY_VERIFIED => 'bool',
+            self::IDENTITY_TYPE => 'string',
             self::VIP_EXPIRES_AT, self::LAST_LOGIN_AT, self::CREATED_AT => 'datetime',
         };
     }
@@ -64,6 +68,18 @@ enum SegmentRuleField: string implements \JsonSerializable
                 SegmentRuleOperator::NEQ,
                 SegmentRuleOperator::IN,
                 SegmentRuleOperator::NOT_IN,
+            ],
+            self::IDENTITY_VERIFIED => [
+                SegmentRuleOperator::EQ,
+                SegmentRuleOperator::NEQ,
+            ],
+            self::IDENTITY_TYPE => [
+                SegmentRuleOperator::EQ,
+                SegmentRuleOperator::NEQ,
+                SegmentRuleOperator::IN,
+                SegmentRuleOperator::NOT_IN,
+                SegmentRuleOperator::IS_NULL,
+                SegmentRuleOperator::IS_NOT_NULL,
             ],
             self::VIP_EXPIRES_AT => [
                 SegmentRuleOperator::GT,
@@ -103,6 +119,8 @@ enum SegmentRuleField: string implements \JsonSerializable
     {
         return match ($this) {
             self::STATUS => '账号状态',
+            self::IDENTITY_VERIFIED => '是否已实名认证',
+            self::IDENTITY_TYPE => '实名认证类型',
             self::VIP_EXPIRES_AT => 'VIP 到期时间',
             self::LAST_LOGIN_AT => '最近登录时间',
             self::CREATED_AT => '注册时间',
