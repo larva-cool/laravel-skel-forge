@@ -485,4 +485,75 @@ class SegmentServiceTest extends TestCase
         $this->assertSame([$unverifiedA->id, $unverifiedB->id], $matched);
         $this->assertFalse(in_array($personal->id, $matched, true));
     }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 last_active_at > now-7d 过滤：仅近 7 天活跃用户被纳入分群')]
+    public function sync_rule_segment_filters_by_last_active_recent(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'last_active_at', 'op' => '>', 'value' => 'now-7d'],
+                ],
+            ],
+        ]);
+
+        $recent = $this->makeUser();
+        $recent->forceFill(['last_active_at' => now()->subDays(2)])->saveQuietly();
+
+        $longAgo = $this->makeUser();
+        $longAgo->forceFill(['last_active_at' => now()->subDays(30)])->saveQuietly();
+
+        $never = $this->makeUser(); // last_active_at=null
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(1, $result['added']);
+        $this->assertSame(0, $result['removed']);
+        $this->assertSame(1, $result['total']);
+        $this->assertTrue(
+            Membership::where('segment_id', $seg->id)->where('user_id', $recent->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $longAgo->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $never->id)->exists()
+        );
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 last_active_at is_null 过滤：仅从未活跃用户被纳入分群')]
+    public function sync_rule_segment_filters_by_last_active_is_null(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'last_active_at', 'op' => 'is_null', 'value' => null],
+                ],
+            ],
+        ]);
+
+        $recent = $this->makeUser();
+        $recent->forceFill(['last_active_at' => now()->subDay()])->saveQuietly();
+
+        $neverA = $this->makeUser();
+        $neverB = $this->makeUser();
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(2, $result['added']);
+        $this->assertSame(0, $result['removed']);
+        $this->assertSame(2, $result['total']);
+        $matched = Membership::where('segment_id', $seg->id)->pluck('user_id')->all();
+        sort($matched);
+        $expected = [$neverA->id, $neverB->id];
+        sort($expected);
+        $this->assertSame($expected, $matched);
+        $this->assertFalse(in_array($recent->id, $matched, true));
+    }
 }

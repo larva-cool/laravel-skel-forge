@@ -29,6 +29,7 @@ enum SegmentRuleField: string implements \JsonSerializable
     case IDENTITY_TYPE = 'identity_type';
     case VIP_EXPIRES_AT = 'vip_expires_at';
     case LAST_LOGIN_AT = 'last_login_at';
+    case LAST_ACTIVE_AT = 'last_active_at';
     case CREATED_AT = 'created_at';
     case AVAILABLE_POINTS = 'available_points';
     case AVAILABLE_COINS = 'available_coins';
@@ -51,7 +52,7 @@ enum SegmentRuleField: string implements \JsonSerializable
             self::STATUS, self::AVAILABLE_POINTS, self::AVAILABLE_COINS, self::LOGIN_COUNT => 'int',
             self::IDENTITY_VERIFIED => 'bool',
             self::IDENTITY_TYPE => 'string',
-            self::VIP_EXPIRES_AT, self::LAST_LOGIN_AT, self::CREATED_AT => 'datetime',
+            self::VIP_EXPIRES_AT, self::LAST_LOGIN_AT, self::LAST_ACTIVE_AT, self::CREATED_AT => 'datetime',
         };
     }
 
@@ -100,7 +101,7 @@ enum SegmentRuleField: string implements \JsonSerializable
                 SegmentRuleOperator::IN,
                 SegmentRuleOperator::NOT_IN,
             ],
-            self::LAST_LOGIN_AT, self::CREATED_AT => [
+            self::LAST_LOGIN_AT, self::LAST_ACTIVE_AT, self::CREATED_AT => [
                 SegmentRuleOperator::GT,
                 SegmentRuleOperator::GTE,
                 SegmentRuleOperator::LT,
@@ -123,6 +124,7 @@ enum SegmentRuleField: string implements \JsonSerializable
             self::IDENTITY_TYPE => '实名认证类型',
             self::VIP_EXPIRES_AT => 'VIP 到期时间',
             self::LAST_LOGIN_AT => '最近登录时间',
+            self::LAST_ACTIVE_AT => '最后活跃时间',
             self::CREATED_AT => '注册时间',
             self::AVAILABLE_POINTS => '可用积分',
             self::AVAILABLE_COINS => '可用金币',
