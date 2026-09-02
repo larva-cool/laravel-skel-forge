@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('name', 100)->comment('字典名称');
             $table->string('code', 50)->comment('字典编码');
             $table->tinyInteger('status')->default(1)->comment('状态：1启用 0禁用');
-            $table->unsignedInteger('sort')->default(0)->comment('排序权重，越小越靠前');
+            $table->unsignedInteger('sort')->default(1000)->comment('排序权重，越小越靠前');
             $table->string('remark', 255)->nullable()->comment('备注');
             $table->timestamps();
             $table->unique(['code'], 'uk_dict_code');
@@ -36,7 +36,7 @@ return new class extends Migration
             $table->string('value', 100)->comment('字典项值');
             $table->string('label_type', 20)->default('default')->comment('标签样式');
             $table->tinyInteger('status')->default(1)->comment('状态：1启用 0禁用');
-            $table->unsignedInteger('sort')->default(0)->comment('排序权重，越小越靠前');
+            $table->unsignedInteger('sort')->default(1000)->comment('排序权重，越小越靠前');
             $table->string('remark', 255)->nullable()->comment('备注');
             $table->timestamps();
             $table->unique(['dict_id', 'value'], 'uk_dict_value');

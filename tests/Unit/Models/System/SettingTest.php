@@ -153,7 +153,7 @@ class SettingTest extends TestCase
         $this->assertNull($setting->name);
         $this->assertSame('string', $setting->cast_type);
         $this->assertSame('text', $setting->input_type);
-        $this->assertSame(0, $setting->sort);
+        $this->assertSame(1000, $setting->sort);
     }
 
     /**

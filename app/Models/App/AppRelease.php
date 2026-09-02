@@ -42,6 +42,15 @@ class AppRelease extends Model
     use HasFactory, SoftDeletes;
 
     /**
+     * The model's attributes.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'sort' => 1000,
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

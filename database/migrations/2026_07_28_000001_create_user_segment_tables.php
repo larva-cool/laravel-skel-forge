@@ -28,7 +28,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('type')->index()->comment('分群类型：1=手动 2=规则');
             $table->string('group', 32)->nullable()->index()->comment('分组（用户画像/运营分群/风控 等）');
             $table->string('description', 500)->nullable()->comment('分群说明');
-            $table->unsignedInteger('sort')->default(0)->comment('排序权重，越小越靠前');
+            $table->unsignedInteger('sort')->default(1000)->comment('排序权重，越小越靠前');
             $table->boolean('status')->default(true)->index()->comment('启用状态：0=禁用 1=启用');
             $table->json('rule')->nullable()->comment('规则定义（仅 type=2 有效，结构详见 SegmentRuleEvaluator）');
             $table->timestamp('last_synced_at')->nullable()->comment('最近一次规则刷新时间');

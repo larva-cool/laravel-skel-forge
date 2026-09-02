@@ -51,7 +51,7 @@ class Area extends Model
      * @var array
      */
     protected $attributes = [
-        'sort' => 0,
+        'sort' => 1000,
     ];
 
     /**

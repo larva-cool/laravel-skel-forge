@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('cast_type', 20)->nullable()->default('string')->comment('变量类型');
             $table->string('input_type')->nullable()->default('text')->comment('输入类型');
             $table->mediumText('param')->nullable()->comment('配置参数');
-            $table->unsignedInteger('sort')->default(0)->comment('排序权重，越小越靠前');
+            $table->unsignedInteger('sort')->default(1000)->comment('排序权重，越小越靠前');
             $table->string('remark')->nullable()->comment('备注');
             $table->timestamp('updated_at')->nullable()->comment('最后更新时间');
             $table->unique(['key']);

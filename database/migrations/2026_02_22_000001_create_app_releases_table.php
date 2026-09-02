@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('slug', 100)->unique()->comment('应用唯一标识');
             $table->string('description', 500)->nullable()->comment('应用描述');
             $table->string('icon', 500)->nullable()->comment('应用图标URL');
-            $table->unsignedSmallInteger('sort')->default(0)->comment('排序权重');
+            $table->unsignedSmallInteger('sort')->default(1000)->comment('排序权重');
             $table->boolean('status')->default(true)->comment('状态：true启用 false禁用');
             $table->timestamps();
             $table->softDeletes();

@@ -48,17 +48,17 @@ class AreaTest extends TestCase
     }
 
     /**
-     * 测试 sort 默认值为 0
+     * 测试 sort 默认值为 1000
      */
     #[Test]
-    #[TestDox('未指定 sort 时使用默认值 0')]
+    #[TestDox('未指定 sort 时使用默认值 1000')]
     public function create_area_uses_default_sort(): void
     {
         $area = Area::create([
             'name' => '天津市',
         ]);
 
-        $this->assertSame(0, $area->sort);
+        $this->assertSame(1000, $area->sort);
     }
 
     /**

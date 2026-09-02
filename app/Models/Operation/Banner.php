@@ -41,6 +41,15 @@ class Banner extends Model
     use HasFactory;
 
     /**
+     * The model's attributes.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'sort' => 1000,
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

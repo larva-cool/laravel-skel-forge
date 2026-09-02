@@ -45,7 +45,7 @@ class Setting extends Model
      * @var array
      */
     protected $attributes = [
-        'sort' => 0,
+        'sort' => 1000,
     ];
 
     /**
@@ -112,7 +112,7 @@ class Setting extends Model
                 'cast_type' => 'string',
                 'input_type' => 'text',
                 'param' => null,
-                'sort' => 0,
+                'sort' => 1000,
                 'remark' => null,
             ], $item);
 

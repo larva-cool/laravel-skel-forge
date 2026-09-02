@@ -65,6 +65,15 @@ class AdminMenu extends Model
     public const string GUARD_NAME = 'admin';
 
     /**
+     * The model's attributes.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'sort' => 1000,
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

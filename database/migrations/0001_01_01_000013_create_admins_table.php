@@ -46,7 +46,7 @@ return new class extends Migration
             $table->string('icon', 100)->nullable()->comment('菜单图标');
             $table->string('link', 500)->nullable()->comment('外部链接地址');
             $table->unsignedTinyInteger('type')->default(1)->comment('菜单类型：0目录、1菜单、2按钮、3内嵌、4外链');
-            $table->unsignedInteger('sort')->default(0)->comment('排序权重，越小越靠前');
+            $table->unsignedInteger('sort')->default(1000)->comment('排序权重，越小越靠前');
             $table->boolean('is_enable')->default(true)->comment('是否启用');
             $table->boolean('is_hide')->default(false)->comment('是否在菜单中隐藏');
             $table->boolean('is_hide_tab')->default(false)->comment('是否在标签页中隐藏');

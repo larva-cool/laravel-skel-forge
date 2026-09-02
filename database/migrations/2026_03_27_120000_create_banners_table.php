@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('image', 500)->comment('图片 URL');
             $table->string('link_type', 32)->default('none')->comment('链接类型：none无链接 url外部链接 page内部页面');
             $table->string('link_value', 500)->nullable()->comment('链接值（对应 link_type）');
-            $table->unsignedInteger('sort')->default(0)->comment('排序权重，越小越靠前');
+            $table->unsignedInteger('sort')->default(1000)->comment('排序权重，越小越靠前');
             $table->boolean('status')->default(true)->index()->comment('启用状态：0禁用 1启用');
             $table->timestamp('start_at')->nullable()->comment('生效开始时间');
             $table->timestamp('end_at')->nullable()->comment('生效结束时间');

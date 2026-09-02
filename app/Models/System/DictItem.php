@@ -46,7 +46,7 @@ class DictItem extends Model
     protected $attributes = [
         'label_type' => 'default',
         'status' => 1,
-        'sort' => 0,
+        'sort' => 1000,
     ];
 
     /**
