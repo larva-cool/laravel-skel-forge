@@ -284,6 +284,253 @@ class WechatServiceTest extends TestCase
         $this->assertSame('wx_test_appid', $account->getAppId());
         $this->assertSame('test_secret', $account->getSecret());
     }
+
+    #[Test]
+    #[TestDox('getUserInfoBatch 组装 user_list 并返回 user_info_list')]
+    public function batch_user_info_returns_user_info_list(): void
+    {
+        $service = $this->fakeService([
+            'user_info_list' => [
+                ['openid' => 'o_1', 'nickname' => 'A'],
+                ['openid' => 'o_2', 'nickname' => 'B'],
+            ],
+        ]);
+
+        $users = $service->getUserInfoBatch(['o_1', 'o_2'], 'en');
+
+        $this->assertCount(2, $users);
+        $this->assertSame('A', $users[0]['nickname']);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/user/info/batchget', $service->lastCall['uri']);
+        $this->assertSame([
+            ['openid' => 'o_1', 'lang' => 'en'],
+            ['openid' => 'o_2', 'lang' => 'en'],
+        ], $service->lastCall['params']['user_list']);
+    }
+
+    #[Test]
+    #[TestDox('getUserInfoBatch 过滤空 openid 后空列表直接返回空数组')]
+    public function batch_user_info_returns_empty_when_no_openids(): void
+    {
+        $service = $this->fakeService();
+
+        $this->assertSame([], $service->getUserInfoBatch(['']));
+        $this->assertSame([], $service->lastCall);
+    }
+
+    #[Test]
+    #[TestDox('listFollowers 不传 next_openid 时不携带该字段')]
+    public function list_followers_omits_next_openid_by_default(): void
+    {
+        $service = $this->fakeService(['total' => 2, 'count' => 2, 'data' => ['openid' => ['o_1', 'o_2']]]);
+
+        $result = $service->listFollowers();
+
+        $this->assertSame([], $service->lastCall['params']);
+        $this->assertSame(['o_1', 'o_2'], $result['data']);
+        $this->assertSame('get', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/user/get', $service->lastCall['uri']);
+    }
+
+    #[Test]
+    #[TestDox('listFollowers 传入 next_openid 时附带在请求参数中')]
+    public function list_followers_passes_next_openid(): void
+    {
+        $service = $this->fakeService(['total' => 0, 'count' => 0, 'data' => ['openid' => []]]);
+
+        $service->listFollowers('o_next');
+
+        $this->assertSame(['next_openid' => 'o_next'], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('listFollowers 当 data.openid 缺失时回退为空数组')]
+    public function list_followers_falls_back_to_empty_openid_list(): void
+    {
+        $service = $this->fakeService(['total' => 0, 'count' => 0]);
+
+        $this->assertSame([], $service->listFollowers()['data']);
+    }
+
+    #[Test]
+    #[TestDox('changeOpenid 提交 from_appid 与 openid_list 并返回 result_list')]
+    public function change_openid_returns_result_list(): void
+    {
+        $service = $this->fakeService([
+            'result_list' => [
+                ['ori_openid' => 'o_1', 'new_openid' => 'o_new_1', 'err_msg' => 'ok'],
+            ],
+        ]);
+
+        $result = $service->changeOpenid('gh_original_id', ['o_1', 'o_2']);
+
+        $this->assertSame([
+            ['ori_openid' => 'o_1', 'new_openid' => 'o_new_1', 'err_msg' => 'ok'],
+        ], $result);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/changeopenid', $service->lastCall['uri']);
+        $this->assertSame([
+            'from_appid' => 'gh_original_id',
+            'openid_list' => ['o_1', 'o_2'],
+        ], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('changeOpenid openid 列表全为空时直接返回空数组不发请求')]
+    public function change_openid_returns_empty_when_no_valid_openids(): void
+    {
+        $service = $this->fakeService();
+
+        $this->assertSame([], $service->changeOpenid('gh_original_id', ['']));
+        $this->assertSame([], $service->lastCall);
+    }
+
+    #[Test]
+    #[TestDox('batchBlacklist 提交 openid_list 并返回成功状态')]
+    public function batch_blacklist_submits_openid_list(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->batchBlacklist(['o_1', 'o_2']));
+        $this->assertSame('cgi-bin/tags/members/batchblacklist', $service->lastCall['uri']);
+        $this->assertSame(['openid_list' => ['o_1', 'o_2']], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('batchUnblacklist 提交 openid_list 并返回成功状态')]
+    public function batch_unblacklist_submits_openid_list(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->batchUnblacklist(['o_1']));
+        $this->assertSame('cgi-bin/tags/members/batchunblacklist', $service->lastCall['uri']);
+        $this->assertSame(['openid_list' => ['o_1']], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('getBlacklist 提交 begin_openid 并展开 data.openid')]
+    public function get_blacklist_submits_begin_openid_and_flattens_data(): void
+    {
+        $service = $this->fakeService(['total' => 2, 'count' => 2, 'data' => ['openid' => ['o_1', 'o_2']]]);
+
+        $result = $service->getBlacklist('o_next');
+
+        $this->assertSame('cgi-bin/tags/members/getblacklist', $service->lastCall['uri']);
+        $this->assertSame(['begin_openid' => 'o_next'], $service->lastCall['params']);
+        $this->assertSame(['o_1', 'o_2'], $result['data']);
+    }
+
+    #[Test]
+    #[TestDox('updateUserRemark 提交 openid 与 remark')]
+    public function update_user_remark_submits_openid_and_remark(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->updateUserRemark('o_1', 'VIP'));
+        $this->assertSame('cgi-bin/user/info/updateremark', $service->lastCall['uri']);
+        $this->assertSame(['openid' => 'o_1', 'remark' => 'VIP'], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('createTag 提交名称并返回 tag 字段')]
+    public function create_tag_returns_created_tag(): void
+    {
+        $service = $this->fakeService(['tag' => ['id' => 101, 'name' => 'VIP']]);
+
+        $tag = $service->createTag('VIP');
+
+        $this->assertSame(['id' => 101, 'name' => 'VIP'], $tag);
+        $this->assertSame('cgi-bin/tags/create', $service->lastCall['uri']);
+        $this->assertSame(['tag' => ['name' => 'VIP']], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('getTags 返回 tags 字段列表')]
+    public function get_tags_returns_tags_list(): void
+    {
+        $service = $this->fakeService(['tags' => [['id' => 1, 'name' => 'A']]]);
+
+        $this->assertSame([['id' => 1, 'name' => 'A']], $service->getTags());
+        $this->assertSame('cgi-bin/tags/get', $service->lastCall['uri']);
+        $this->assertSame('get', $service->lastCall['method']);
+    }
+
+    #[Test]
+    #[TestDox('updateTag 提交 id 与 name')]
+    public function update_tag_submits_id_and_name(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->updateTag(101, '新 VIP'));
+        $this->assertSame('cgi-bin/tags/update', $service->lastCall['uri']);
+        $this->assertSame(['tag' => ['id' => 101, 'name' => '新 VIP']], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('deleteTag 提交 id')]
+    public function delete_tag_submits_id(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->deleteTag(101));
+        $this->assertSame('cgi-bin/tags/delete', $service->lastCall['uri']);
+        $this->assertSame(['tag' => ['id' => 101]], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('batchTag 提交 openid_list 与 tagid')]
+    public function batch_tag_submits_openids_and_tag_id(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->batchTag(['o_1', 'o_2'], 101));
+        $this->assertSame('cgi-bin/tags/members/batchtagging', $service->lastCall['uri']);
+        $this->assertSame([
+            'openid_list' => ['o_1', 'o_2'],
+            'tagid' => 101,
+        ], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('batchUntag 提交 openid_list 与 tagid')]
+    public function batch_untag_submits_openids_and_tag_id(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->batchUntag(['o_1'], 101));
+        $this->assertSame('cgi-bin/tags/members/batchuntagging', $service->lastCall['uri']);
+        $this->assertSame([
+            'openid_list' => ['o_1'],
+            'tagid' => 101,
+        ], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('getUserTagIds 返回 tagid_list')]
+    public function get_user_tag_ids_returns_tagid_list(): void
+    {
+        $service = $this->fakeService(['tagid_list' => [101, 102]]);
+
+        $this->assertSame([101, 102], $service->getUserTagIds('o_1'));
+        $this->assertSame('cgi-bin/tags/getidlist', $service->lastCall['uri']);
+        $this->assertSame(['openid' => 'o_1'], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('getTagFans 提交 tagid 与 next_openid 并展开 data.openid')]
+    public function get_tag_fans_submits_tag_and_openid(): void
+    {
+        $service = $this->fakeService(['count' => 2, 'data' => ['openid' => ['o_1', 'o_2']]]);
+
+        $result = $service->getTagFans(101, 'o_next');
+
+        $this->assertSame('cgi-bin/user/tag/get', $service->lastCall['uri']);
+        $this->assertSame([
+            'tagid' => 101,
+            'next_openid' => 'o_next',
+        ], $service->lastCall['params']);
+        $this->assertSame(['o_1', 'o_2'], $result['data']);
+    }
 }
 
 /**

@@ -82,6 +82,241 @@ class WechatService
     }
 
     /**
+     * 批量获取用户基本信息
+     *
+     * @param  array<int, string>  $openids  openid 列表，单次最多 100 个
+     * @param  string  $lang  国家语言版本，zh_CN / zh_TW / en
+     * @return array<int, array<string, mixed>> 用户信息列表，失败时返回空数组
+     */
+    public function getUserInfoBatch(array $openids, string $lang = 'zh_CN'): array
+    {
+        $users = array_values(array_filter($openids, static fn (string $openid): bool => $openid !== ''));
+
+        if ($users === []) {
+            return [];
+        }
+
+        $response = $this->call('postJson', 'cgi-bin/user/info/batchget', [
+            'user_list' => array_map(static fn (string $openid): array => [
+                'openid' => $openid,
+                'lang' => $lang,
+            ], $users),
+        ]);
+
+        return $response['user_info_list'] ?? [];
+    }
+
+    /**
+     * 获取关注用户列表
+     *
+     * 一次拉取最多 10000 个关注者，单次返回的 next_openid 即下一次请求的起点。
+     *
+     * @param  string|null  $nextOpenid  起始 openid，首次拉取传 null
+     * @return array<string, mixed> 含 total / count / data / next_openid 的分页结果
+     */
+    public function listFollowers(?string $nextOpenid = null): array
+    {
+        $params = [];
+
+        if ($nextOpenid !== null && $nextOpenid !== '') {
+            $params['next_openid'] = $nextOpenid;
+        }
+
+        $response = $this->call('get', 'cgi-bin/user/get', $params);
+
+        $response['data'] = $response['data']['openid'] ?? [];
+
+        return $response;
+    }
+
+    /**
+     * 转换 openid（公众号 / 服务号迁移场景）
+     *
+     * 用于将原账号下关注用户 / 授权关系用户 / 卡券关联用户的 openid 转换为新账号下的 openid。
+     * 仅在原账号为非个人主体、且审核完成后调用，迁移完成 15 天后该接口失效。
+     * 原账号取原始 id（gh_ 开头），不是 appid。
+     *
+     * @param  string  $fromAppId  原账号原始 id（gh_xxxx 形式）
+     * @param  array<int, string>  $openids  原账号下的 openid 列表，单次最多 100 个
+     * @return array<int, array<string, mixed>> 含 ori_openid / new_openid / err_msg 的转换结果
+     */
+    public function changeOpenid(string $fromAppId, array $openids): array
+    {
+        $openidList = array_values(array_filter($openids, static fn (string $openid): bool => $openid !== ''));
+
+        if ($openidList === []) {
+            return [];
+        }
+
+        $response = $this->call('postJson', 'cgi-bin/changeopenid', [
+            'from_appid' => $fromAppId,
+            'openid_list' => $openidList,
+        ]);
+
+        return $response['result_list'] ?? [];
+    }
+
+    /**
+     * 拉黑一批用户
+     *
+     * @param  array<int, string>  $openids  openid 列表，单次最多 20 个
+     */
+    public function batchBlacklist(array $openids): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/tags/members/batchblacklist', [
+            'openid_list' => array_values($openids),
+        ]));
+    }
+
+    /**
+     * 取消拉黑一批用户
+     *
+     * @param  array<int, string>  $openids  openid 列表，单次最多 20 个
+     */
+    public function batchUnblacklist(array $openids): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/tags/members/batchunblacklist', [
+            'openid_list' => array_values($openids),
+        ]));
+    }
+
+    /**
+     * 获取公众号的黑名单列表
+     *
+     * 一次拉取最多 10000 个 openid，单次返回的 next_openid 即下一次请求的起点。
+     *
+     * @param  string|null  $nextOpenid  起始 openid，首次拉取传 null
+     * @return array<string, mixed> 含 total / count / data / next_openid 的分页结果
+     */
+    public function getBlacklist(?string $nextOpenid = null): array
+    {
+        $params = [
+            'begin_openid' => $nextOpenid ?? '',
+        ];
+
+        $response = $this->call('postJson', 'cgi-bin/tags/members/getblacklist', $params);
+
+        $response['data'] = $response['data']['openid'] ?? [];
+
+        return $response;
+    }
+
+    /**
+     * 为指定用户设置备注名
+     */
+    public function updateUserRemark(string $openid, string $remark): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/user/info/updateremark', [
+            'openid' => $openid,
+            'remark' => $remark,
+        ]));
+    }
+
+    /**
+     * 创建公众号标签
+     *
+     * @return array<string, mixed> 含 tag 的创建结果，失败时返回空数组
+     */
+    public function createTag(string $name): array
+    {
+        $response = $this->call('postJson', 'cgi-bin/tags/create', [
+            'tag' => ['name' => $name],
+        ]);
+
+        return $response['tag'] ?? [];
+    }
+
+    /**
+     * 获取公众号已创建的标签列表
+     *
+     * @return array<int, array<string, mixed>> 标签列表
+     */
+    public function getTags(): array
+    {
+        $response = $this->call('get', 'cgi-bin/tags/get');
+
+        return $response['tags'] ?? [];
+    }
+
+    /**
+     * 编辑标签
+     */
+    public function updateTag(int $tagId, string $name): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/tags/update', [
+            'tag' => ['id' => $tagId, 'name' => $name],
+        ]));
+    }
+
+    /**
+     * 删除标签
+     */
+    public function deleteTag(int $tagId): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/tags/delete', [
+            'tag' => ['id' => $tagId],
+        ]));
+    }
+
+    /**
+     * 批量为用户打标签
+     *
+     * @param  array<int, string>  $openids  openid 列表，单次最多 50 个
+     */
+    public function batchTag(array $openids, int $tagId): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/tags/members/batchtagging', [
+            'openid_list' => array_values($openids),
+            'tagid' => $tagId,
+        ]));
+    }
+
+    /**
+     * 批量为用户取消标签
+     *
+     * @param  array<int, string>  $openids  openid 列表，单次最多 50 个
+     */
+    public function batchUntag(array $openids, int $tagId): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/tags/members/batchuntagging', [
+            'openid_list' => array_values($openids),
+            'tagid' => $tagId,
+        ]));
+    }
+
+    /**
+     * 获取用户身上的标签列表
+     *
+     * @return array<int, int> 标签 id 列表，失败时返回空数组
+     */
+    public function getUserTagIds(string $openid): array
+    {
+        $response = $this->call('postJson', 'cgi-bin/tags/getidlist', ['openid' => $openid]);
+
+        return $response['tagid_list'] ?? [];
+    }
+
+    /**
+     * 获取标签下粉丝列表
+     *
+     * @param  string|null  $nextOpenid  起始 openid，首次拉取传 null
+     * @return array<string, mixed> 含 count / data / next_openid 的分页结果
+     */
+    public function getTagFans(int $tagId, ?string $nextOpenid = null): array
+    {
+        $params = [
+            'tagid' => $tagId,
+            'next_openid' => $nextOpenid ?? '',
+        ];
+
+        $response = $this->call('postJson', 'cgi-bin/user/tag/get', $params);
+
+        $response['data'] = $response['data']['openid'] ?? [];
+
+        return $response;
+    }
+
+    /**
      * 发送模板消息
      *
      * @param  array<string, mixed>  $params  模板消息参数
