@@ -13,5 +13,4 @@
 /.workbuddy export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
-composer.lock export-ignore
 package-lock.json export-ignore
