@@ -44,8 +44,7 @@ class SubmitIdentityRequest extends FormRequest
             'type' => ['required', 'string', Rule::enum(IdentityType::class)],
             'real_name' => ['required_if:type,personal', 'nullable', 'string', 'max:64'],
             'id_card_no' => [
-                'required_if:type,personal', 'nullable', 'string', 'max:32',
-                'regex:/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/',
+                'required_if:type,personal', 'nullable', 'string', 'max:32', new IdCardRule,
             ],
             'id_card_front_id' => ['required_if:type,personal', 'nullable', 'integer', 'exists:attachments,id'],
             'id_card_back_id' => ['nullable', 'integer', 'exists:attachments,id'],
@@ -57,8 +56,7 @@ class SubmitIdentityRequest extends FormRequest
             ],
             'legal_person_name' => ['required_if:type,enterprise', 'nullable', 'string', 'max:64'],
             'legal_person_id_card_no' => [
-                'required_if:type,enterprise', 'nullable', 'string', 'max:32',
-                'regex:/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/',
+                'required_if:type,enterprise', 'nullable', 'string', 'max:32', new IdCardRule,
             ],
             'business_license_id' => ['required_if:type,enterprise', 'nullable', 'integer', 'exists:attachments,id'],
             'opening_permit_id' => ['nullable', 'integer', 'exists:attachments,id'],

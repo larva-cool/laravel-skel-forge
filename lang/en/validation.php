@@ -187,6 +187,7 @@ return [
     'username' => 'The :attribute field format is invalid.',
     'phone' => 'The :attribute field format is invalid.',
     'verify_code' => 'The :attribute field format is invalid.',
+    'id_card' => 'The :attribute field format is invalid.',
 
     'custom' => [
         'phone' => [

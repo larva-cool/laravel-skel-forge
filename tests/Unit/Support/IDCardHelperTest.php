@@ -242,11 +242,12 @@ class IDCardHelperTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('getInfo 作为兼容入口，对合法身份证返回数组，对非法返回 false')]
-    public function get_info_returns_array_or_false(): void
+    #[TestDox('parse 替代 getInfo：对合法身份证返回数组字段，对非法返回 null')]
+    public function parse_replaces_get_info(): void
     {
-        $this->assertIsArray(IDCardHelper::getInfo(self::SAMPLE_IDCARD));
-        $this->assertFalse(IDCardHelper::getInfo('invalid'));
+        $info = IDCardHelper::parse(self::SAMPLE_IDCARD);
+        $this->assertIsArray($info);
+        $this->assertNull(IDCardHelper::parse('invalid'));
     }
 
     #[Test]

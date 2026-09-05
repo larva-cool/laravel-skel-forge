@@ -63,6 +63,17 @@ class IDCardHelper
     private static array $power = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
 
     /**
+     * 将身份证号统一规范为字符串。
+     *
+     * PHP 8.4 在 strict_types 模式下，substr() 不再接受 int 入参；
+     * 为兼容历史调用方对 getXxxByIdCard(int) 的支持，统一在方法入口转为 string。
+     */
+    private static function normalize(int|string $idCard): string
+    {
+        return is_int($idCard) ? (string) $idCard : $idCard;
+    }
+
+    /**
      * 解析身份证号码，返回完整身份信息。
      *
      * 公共解析接口：校验通过后返回年龄、生日、性别、行政区划代码及名称；
@@ -178,6 +189,7 @@ class IDCardHelper
      */
     public static function getAgeByIdCard(int|string $idCard): int
     {
+        $idCard = static::normalize($idCard);
         $year = (int) substr($idCard, 6, 4);
         $iCurrYear = (int) date('Y', time());
 
@@ -191,6 +203,8 @@ class IDCardHelper
      */
     public static function getBirthdayByIdCard(int|string $idCard): string
     {
+        $idCard = static::normalize($idCard);
+
         return substr($idCard, 6, 4).'-'.substr($idCard, 10, 2).'-'.substr($idCard, 12, 2);
     }
 
@@ -202,6 +216,7 @@ class IDCardHelper
      */
     public static function getGenderByIdCard(int|string $idCard): string
     {
+        $idCard = static::normalize($idCard);
         $sCardNum = substr($idCard, 16, 1);
         if ((int) $sCardNum % 2 != 0) {
             $sGender = 'M';
@@ -217,6 +232,8 @@ class IDCardHelper
      */
     public static function getProvinceCodeByIdCard(int|string $creditCode): string
     {
+        $creditCode = static::normalize($creditCode);
+
         return substr($creditCode, 0, 2).'0000';
     }
 
@@ -237,6 +254,8 @@ class IDCardHelper
      */
     public static function getCityCodeByIdCard(int|string $idCard): string
     {
+        $idCard = static::normalize($idCard);
+
         return substr($idCard, 0, 4).'00';
     }
 
@@ -257,6 +276,8 @@ class IDCardHelper
      */
     public static function getDistrictCodeByIdCard(int|string $idCard): string
     {
+        $idCard = static::normalize($idCard);
+
         return substr($idCard, 0, 6);
     }
 
