@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
@@ -6,6 +7,9 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+/**
+ * 身份证号帮助类。
+ */
 class IDCardHelper
 {
     /**
@@ -98,21 +102,6 @@ class IDCardHelper
             'city' => static::$locationCodes[$cityCode] ?? '',
             'district' => static::$locationCodes[$districtCode] ?? '',
         ];
-    }
-
-    /**
-     * 获取身份证信息
-     *
-     * @param  string|int  $idCard  身份证号码
-     * @return array|false 合法时返回信息数组，非法时返回 false
-     *
-     * @deprecated 1.3 删除，请改用 {@see self::parse()}
-     */
-    public static function getInfo(string $idCard): bool|array
-    {
-        $info = static::parse($idCard);
-
-        return $info ?? false;
     }
 
     /**
