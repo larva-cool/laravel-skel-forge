@@ -2,6 +2,7 @@
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
+declare(strict_types=1);
 
 namespace App\Support;
 
@@ -14,7 +15,6 @@ class IDCardHelper
 
     /**
      * 行政区划
-     * @var array
      */
     public static array $locationCodes = [
         '110000' => '北京市', '110100' => '市辖区', '110101' => '东城区', '110102' => '西城区', '110103' => '崇文区', '110104' => '宣武区', '110105' => '朝阳区', '110106' => '丰台区', '110107' => '石景山区', '110108' => '海淀区', '110109' => '门头沟区', '110111' => '房山区', '110112' => '通州区', '110113' => '顺义区', '110114' => '昌平区', '110115' => '大兴区', '110116' => '怀柔区', '110117' => '平谷区', '110200' => '县', '110228' => '密云县', '110229' => '延庆县',
@@ -104,7 +104,8 @@ class IDCardHelper
      * 获取身份证信息
      *
      * @param  string|int  $idCard  身份证号码
-     * @return array|false  合法时返回信息数组，非法时返回 false
+     * @return array|false 合法时返回信息数组，非法时返回 false
+     *
      * @deprecated 1.3 删除，请改用 {@see self::parse()}
      */
     public static function getInfo(string $idCard): bool|array
@@ -116,8 +117,6 @@ class IDCardHelper
 
     /**
      * 验证身份证是否合法
-     * @param string|int $idCard
-     * @return bool
      */
     public static function validate(string|int $idCard): bool
     {
@@ -138,13 +137,13 @@ class IDCardHelper
                 }
             }
         }
+
         return false;
     }
 
     /**
      * 验证身份证是否合法
-     * @param string|int $idCard
-     * @return bool
+     *
      * @deprecated 1.3删除
      */
     public static function validateCard(string|int $idCard): bool
@@ -154,28 +153,28 @@ class IDCardHelper
 
     /**
      * 生成随机身份证号码
-     * @param int|string $area
-     * @param string $gender M 男 F 女
-     * @param string $birthday 生日
-     * @return string
+     *
+     * @param  string  $gender  M 男 F 女
+     * @param  string  $birthday  生日
      */
     public static function generate(int|string $area, string $gender, string $birthday): string
     {
         $birthday = str_replace('-', '', $birthday);
-        $code17 = $area . $birthday . sprintf("%02d", rand(1, 99));
+        $code17 = $area.$birthday.sprintf('%02d', rand(1, 99));
         $code17 .= static::getGenderCode($gender);
         $iArr = str_split($code17);
         $iSum17 = static::getPowerSum($iArr);
         $val = static::getCheckCode($iSum17);
-        return $code17 . $val;
+
+        return $code17.$val;
     }
 
     /**
      * 生成随机身份证号码
-     * @param int|string $area
-     * @param string $gender M 男 F 女
-     * @param string $birthday 生日
-     * @return string
+     *
+     * @param  string  $gender  M 男 F 女
+     * @param  string  $birthday  生日
+     *
      * @deprecated 1.3删除
      */
     public static function generateCard(int|string $area, string $gender, string $birthday): string
@@ -186,88 +185,85 @@ class IDCardHelper
     /**
      * 根据身份编号获取年龄
      *
-     * @param string|int  $idCard  idCard 身份编号
+     * @param  string|int  $idCard  idCard 身份编号
      */
     public static function getAgeByIdCard(int|string $idCard): int
     {
-        $year = (int)substr($idCard, 6, 4);
-        $iCurrYear = (int)date('Y', time());
+        $year = (int) substr($idCard, 6, 4);
+        $iCurrYear = (int) date('Y', time());
+
         return $iCurrYear - $year;
     }
 
     /**
      * 根据身份编号获取生日天
      *
-     * @param int|string $idCard 身份编号
-     * @return string
+     * @param  int|string  $idCard  身份编号
      */
     public static function getBirthdayByIdCard(int|string $idCard): string
     {
-        return substr($idCard, 6, 4) . '-' . substr($idCard, 10, 2) . '-' . substr($idCard, 12, 2);
+        return substr($idCard, 6, 4).'-'.substr($idCard, 10, 2).'-'.substr($idCard, 12, 2);
     }
 
     /**
      * 根据身份编号获取性别
      *
-     * @param int|string $idCard 身份编号
+     * @param  int|string  $idCard  身份编号
      * @return string 性别(M-男，F-女，N-未知)
      */
     public static function getGenderByIdCard(int|string $idCard): string
     {
         $sCardNum = substr($idCard, 16, 1);
-        if (( int )$sCardNum % 2 != 0) {
-            $sGender = "M";
+        if ((int) $sCardNum % 2 != 0) {
+            $sGender = 'M';
         } else {
-            $sGender = "F";
+            $sGender = 'F';
         }
+
         return $sGender;
     }
 
     /**
      * 获取省代码
-     * @param int|string $creditCode
-     * @return string
      */
     public static function getProvinceCodeByIdCard(int|string $creditCode): string
     {
-        return substr($creditCode, 0, 2) . '0000';
+        return substr($creditCode, 0, 2).'0000';
     }
 
     /**
      * 获取身份证所在省
-     * @param int|string $idCard
-     * @return string
      */
     public static function getProvinceByIdCard(int|string $idCard): string
     {
         $provinceCode = static::getProvinceCodeByIdCard($idCard);
-        return static::$locationCodes [$provinceCode] ?? '';
+
+        return static::$locationCodes[$provinceCode] ?? '';
     }
 
     /**
      * 获取身份证所在市
-     * @param int|string $idCard
+     *
      * @return mixed
      */
     public static function getCityCodeByIdCard(int|string $idCard): string
     {
-        return substr($idCard, 0, 4) . '00';
+        return substr($idCard, 0, 4).'00';
     }
 
     /**
      * 获取身份证所在市
-     * @param int|string $idCard
-     * @return string|null
      */
     public static function getCityByIdCard(int|string $idCard): ?string
     {
         $cityCode = static::getCityCodeByIdCard($idCard);
-        return static::$locationCodes [$cityCode] ?? '';
+
+        return static::$locationCodes[$cityCode] ?? '';
     }
 
     /**
      * 获取身份证所在县
-     * @param int|string $idCard
+     *
      * @return mixed
      */
     public static function getDistrictCodeByIdCard(int|string $idCard): string
@@ -277,60 +273,58 @@ class IDCardHelper
 
     /**
      * 获取身份证所在县
-     * @param int|string $idCard
-     * @return string|null
      */
     public static function getDistrictByIdCard(int|string $idCard): ?string
     {
         $areaCode = static::getDistrictCodeByIdCard($idCard);
-        return static::$locationCodes [$areaCode] ?? '';
+
+        return static::$locationCodes[$areaCode] ?? '';
     }
 
     /**
      * 根据身份编号获取户籍所在地
      *
-     * @param string $idCard 身份编号
-     * @return array
+     * @param  string  $idCard  身份编号
      */
     public static function getLocationByIdCard(string $idCard): array
     {
         return [
             'province' => static::getProvinceByIdCard($idCard),
             'city' => static::getCityByIdCard($idCard),
-            'district' => static::getDistrictByIdCard($idCard)
+            'district' => static::getDistrictByIdCard($idCard),
         ];
     }
 
     /**
      * 将power和值与11取模获得余数进行校验码判断
      *
-     * @param int $iSum
      * @return string 校验位
+     *
      * @codeCoverageIgnore
      */
     private static function getCheckCode(int $iSum): string
     {
         return match ($iSum % 11) {
-            10 => "2",
-            9 => "3",
-            8 => "4",
-            7 => "5",
-            6 => "6",
-            5 => "7",
-            4 => "8",
-            3 => "9",
-            2 => "x",
-            1 => "0",
-            0 => "1",
-            default => "",
+            10 => '2',
+            9 => '3',
+            8 => '4',
+            7 => '5',
+            6 => '6',
+            5 => '7',
+            4 => '8',
+            3 => '9',
+            2 => 'x',
+            1 => '0',
+            0 => '1',
+            default => '',
         };
     }
 
     /**
      * 将身份证的每位和对应位的加权因子相乘之后，再得到和值
      *
-     * @param  array  $iArr
      * @return float|int 身份证编码。
+     *
      * @codeCoverageIgnore
      */
     private static function getPowerSum(array $iArr): float|int
@@ -342,18 +336,18 @@ class IDCardHelper
             for ($i = 0; $i < $arrLen; $i++) {
                 for ($j = 0; $j < $powerLen; $j++) {
                     if ($i == $j) {
-                        $iSum = $iSum + $iArr [$i] * static::$power [$j];
+                        $iSum = $iSum + $iArr[$i] * static::$power[$j];
                     }
                 }
             }
         }
+
         return $iSum;
     }
 
     /**
      * 获取一个随机的性别代码
-     * @param string $gender
-     * @return int
+     *
      * @codeCoverageIgnore
      */
     private static function getGenderCode(string $gender): int
@@ -364,6 +358,7 @@ class IDCardHelper
             $GenderCodes = [0, 2, 4, 6, 8];
         }
         $code = array_rand($GenderCodes, 1);
+
         return $GenderCodes[$code];
     }
 }
