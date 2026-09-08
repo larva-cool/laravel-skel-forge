@@ -87,6 +87,12 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     Route::get('banners', [\App\Http\Controllers\Api\V1\BannerController::class, 'index'])->name('banners.index');
     
     /**
+     * 公告（公开，无需认证）
+     */
+    Route::get('announcements', [\App\Http\Controllers\Api\V1\AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('announcements/{id}', [\App\Http\Controllers\Api\V1\AnnouncementController::class, 'show'])->name('announcements.show');
+
+    /**
      * 用户接口
      */
     Route::group(['prefix' => 'user', 'as' => 'user.'], function (Registrar $registrar) {
