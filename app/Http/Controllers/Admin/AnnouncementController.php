@@ -64,7 +64,7 @@ class AnnouncementController extends Controller
     public function store(AnnouncementSaveRequest $request): AnnouncementResource
     {
         $data = $request->validated();
-        $data['admin_id'] = $request->user('admin')->user_id;
+        $data['admin_id'] = $request->user('admin')->id;
 
         $announcement = Announcement::query()->create($data);
 

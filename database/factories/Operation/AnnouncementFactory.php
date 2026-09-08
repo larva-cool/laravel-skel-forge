@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace Database\Factories\Operation;
 
 use App\Enums\AnnouncementStatus;
-use App\Models\Admin\Admin;
 use App\Models\Operation\Announcement;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -42,7 +41,7 @@ class AnnouncementFactory extends Factory
             'cover_image' => null,
             'status' => AnnouncementStatus::DRAFT,
             'sort' => fake()->numberBetween(0, 100),
-            'admin_id' => Admin::factory(),
+            'admin_id' => 1,
             'published_at' => null,
         ];
     }

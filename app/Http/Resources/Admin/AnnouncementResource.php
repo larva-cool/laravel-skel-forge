@@ -42,7 +42,7 @@ class AnnouncementResource extends JsonResource
             'sort' => $this->sort,
             'admin_id' => $this->admin_id,
             'admin' => $this->whenLoaded('admin', fn () => [
-                'user_id' => $this->admin->user_id,
+                'id' => $this->admin->id,
                 'name' => $this->admin->name,
             ]),
             'published_at' => $this->published_at?->toDateTimeString(),
