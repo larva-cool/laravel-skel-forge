@@ -226,6 +226,10 @@ Route::put('banners/{banner}/toggle-status', [\App\Http\Controllers\Admin\Banner
 Route::post('banners/sort', [\App\Http\Controllers\Admin\BannerController::class, 'sort'])->name('banners.sort');
 Route::apiResource('banners', \App\Http\Controllers\Admin\BannerController::class);
 
+// 公告管理（运营管理）
+Route::put('announcements/{announcement}/toggle-status', [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggleStatus'])->name('announcements.toggle-status');
+Route::apiResource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
+
 // 用户分群管理（用户管理）
 Route::get('user-segments/options', [\App\Http\Controllers\Admin\UserSegmentController::class, 'options'])->name('user-segments.options');
 Route::post('user-segments/batch-attach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'batchAttach'])->name('user-segments.batch-attach');

@@ -329,6 +329,23 @@ return new class extends Migration
                             ['title' => '删除轮播图', 'permission' => 'banners.delete'],
                         ],
                     ],
+                    [
+                        'key' => 'operation.announcement',
+                        'path' => 'announcement',
+                        'name' => 'Announcement',
+                        'component' => '/operation/announcement',
+                        'title' => '公告管理',
+                        'icon' => 'ri:notification-3-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 4,
+                        'keep_alive' => true,
+                        'permission' => 'announcements.index',
+                        'buttons' => [
+                            ['title' => '新增公告', 'permission' => 'announcements.create'],
+                            ['title' => '编辑公告', 'permission' => 'announcements.edit'],
+                            ['title' => '删除公告', 'permission' => 'announcements.delete'],
+                        ],
+                    ],
                 ],
             ],
 
