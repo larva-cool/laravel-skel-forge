@@ -155,11 +155,24 @@ public function invitee(): MorphTo
 |--------|---------|---------|
 | `Events\Invite\InviteRelationshipCreated` | 邀请关系建立成功 | `inviteRecord`（邀请记录模型实例） |
 
-### 4.2 与现有事件的关系
+### 4.2 与注册流程的协作
 
-旧版 `InviteRegistered` 事件（`app/Events/User/InviteRegistered.php`）仅作为占位事件存在，未被任何地方触发，**已废弃**。
+```
+RegisterController 收到 invite_code
+        ↓
+触发 InviteRegistered 事件（同步，立即返回）
+        ↓
+InviteRegisteredListener（队列异步）
+        ↓
+调用 InviteService::createRelationshipByCode()
+        ↓
+创建 InviteRecord → 触发 InviteRelationshipCreated 事件
+```
 
-新的 `InviteRelationshipCreated` 事件聚焦于"邀请关系已建立"，是更底层的事实事件。`RegisterController` 中收到邀请码后直接调用 `InviteService::createRelationshipByCode()`，由该服务内部负责创建记录并触发事件。
+**设计意图**：
+- `InviteRegistered` 是**业务入口事件**，表示"有人用邀请码注册了"，由注册流程触发
+- `InviteRegisteredListener` 实现 `ShouldQueue`，走队列异步执行，不阻塞注册响应
+- `InviteRelationshipCreated` 是**数据落地事件**，表示"邀请关系已写入数据库"，供奖励、任务等下游监听
 
 ---
 
@@ -249,6 +262,9 @@ app/
 ├── Events/
 │   └── Invite/
 │       └── InviteRelationshipCreated.php
+├── Listeners/
+│   └── User/
+│       └── InviteRegisteredListener.php  # 邀请注册监听器（队列异步）
 ├── Services/
 │   └── InviteService.php           # 邀请关系建立编排
 ├── Support/
