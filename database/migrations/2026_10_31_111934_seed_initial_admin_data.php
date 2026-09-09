@@ -476,6 +476,21 @@ return new class extends Migration
                         ],
                     ],
                     [
+                        'key' => 'user.invite-record',
+                        'path' => 'invite-record',
+                        'name' => 'UserInviteRecord',
+                        'component' => '/user/invite-record/index',
+                        'title' => '邀请记录',
+                        'icon' => 'ri:user-shared-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 4,
+                        'keep_alive' => true,
+                        'permission' => 'invite-records.index',
+                        'buttons' => [
+                            ['title' => '查看详情', 'permission' => 'invite-records.show'],
+                        ],
+                    ],
+                    [
                         'key' => 'user.trash',
                         'path' => 'trash',
                         'name' => 'UserTrash',

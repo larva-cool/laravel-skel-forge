@@ -11,6 +11,7 @@ use App\Models\Model;
 use Database\Factories\Invite\InviteRecordFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
@@ -70,5 +71,22 @@ class InviteRecord extends Model
     public function invitee(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * 作用域：列表筛选
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->when(! empty($filters['inviter_type']), fn (Builder $q) => $q->where('inviter_type', $filters['inviter_type']))
+            ->when(! empty($filters['inviter_id']), fn (Builder $q) => $q->where('inviter_id', (int) $filters['inviter_id']))
+            ->when(! empty($filters['invitee_type']), fn (Builder $q) => $q->where('invitee_type', $filters['invitee_type']))
+            ->when(! empty($filters['invitee_id']), fn (Builder $q) => $q->where('invitee_id', (int) $filters['invitee_id']))
+            ->when(! empty($filters['description']), fn (Builder $q) => $q->where('description', 'like', '%'.$filters['description'].'%'))
+            ->when(! empty($filters['created_start']), fn (Builder $q) => $q->where('created_at', '>=', Carbon::parse($filters['created_start'])->startOfDay()))
+            ->when(! empty($filters['created_end']), fn (Builder $q) => $q->where('created_at', '<=', Carbon::parse($filters['created_end'])->endOfDay()));
     }
 }

@@ -193,6 +193,10 @@ Route::get('audit-logs/{id}', [\App\Http\Controllers\Admin\AuditLogController::c
 // 全局登录历史（跨管理员与前台用户，只读）
 Route::get('login-histories', [\App\Http\Controllers\Admin\LoginHistoryController::class, 'index'])->name('login-histories.index');
 
+// 邀请记录（只读）
+Route::get('invite-records', [\App\Http\Controllers\Admin\InviteRecordController::class, 'index'])->name('invite-records.index');
+Route::get('invite-records/{inviteRecord}', [\App\Http\Controllers\Admin\InviteRecordController::class, 'show'])->name('invite-records.show');
+
 // 队列管理（Laravel Horizon 数据代理）
 Route::group(['prefix' => 'queue'], function (Registrar $registrar) {
     $registrar->get('stats', [\App\Http\Controllers\Admin\QueueController::class, 'stats'])->name('queue.stats');

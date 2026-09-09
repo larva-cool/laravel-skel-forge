@@ -29,9 +29,9 @@ class InviteRecordResource extends JsonResource
             'id' => $this->id,
             'invitee' => [
                 'id' => $this->invitee_id,
-                'nickname' => $this->invitee?->nickname,
+                'name' => $this->invitee?->name,
                 'username' => $this->invitee?->username,
-                'avatar' => $this->invitee?->avatar_url,
+                'avatar' => $this->invitee?->avatar,
             ],
             'description' => $this->description,
             'created_at' => $this->created_at?->toDateTimeString(),
