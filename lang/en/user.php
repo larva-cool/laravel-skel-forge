@@ -27,6 +27,8 @@ return [
 
     'insufficient_points' => 'Insufficient points, currently available: :points',
     'insufficient_coins' => 'Insufficient coins, currently available: :coins',
+    'insufficient_balance' => 'Insufficient balance, currently available: :balance',
+    'insufficient_frozen_balance' => 'Insufficient frozen balance, currently frozen: :frozen',
 
     'username_modification_completed' => 'Username modification completed.',
     'email_modification_completed' => 'Email modification completed.',

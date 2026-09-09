@@ -10,4 +10,5 @@ return [
     'admin' => \App\Models\Admin\Admin::class,
     'point' => \App\Models\Point\PointRecord::class,
     'comment' => \App\Models\Content\Comment::class,
+    'wallet_trade' => \App\Models\Wallet\WalletTrade::class,
 ];

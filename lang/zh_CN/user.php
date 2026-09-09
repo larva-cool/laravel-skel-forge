@@ -27,6 +27,8 @@ return [
 
     'insufficient_points' => '积分不足，当前可用积分：:points',
     'insufficient_coins' => '金币不足，当前可用金币：:coins',
+    'insufficient_balance' => '余额不足，当前可用余额：:balance',
+    'insufficient_frozen_balance' => '冻结余额不足，当前冻结余额：:frozen',
 
     'username_modification_completed' => '用户名修改完成',
     'email_modification_completed' => '邮箱修改完成',

@@ -19,6 +19,7 @@ use App\Models\Point\PointTrade;
 use App\Models\System\LoginHistory;
 use App\Models\System\Social;
 use App\Models\Traits\DateTimeFormatter;
+use App\Models\Traits\HasWalletBalance;
 use App\Models\User\IdentityVerification;
 use App\Models\User\UserExtra;
 use App\Models\User\UserProfile;
@@ -61,6 +62,8 @@ use Laravel\Scout\Searchable;
  * @property UserStatus $status 状态
  * @property int|null $available_points 可用积分
  * @property int|null $available_coins 可用金币
+ * @property float $balance 可用余额（真实货币，元）
+ * @property float $frozen_balance 冻结余额（真实货币，元）
  * @property string|null $password 密码
  * @property string|null $remember_token 记住我令牌
  * @property int|null $login_count 登录次数
@@ -85,6 +88,7 @@ use Laravel\Scout\Searchable;
  * @property UserExtra $extra 用户扩展信息
  * @property Collection<int,PointTrade> $points 积分交易明细
  * @property Collection<int,CoinTrade> $coins 金币交易明细
+ * @property Collection<int,\App\Models\Wallet\WalletTrade> $walletTrades 钱包流水明细
  * @property Collection<int,LoginHistory> $loginHistories 登录历史
  * @property Collection<int,Social> $socials 社交账号
  * @property Collection<int,IdentityVerification> $identityVerifications 实名认证记录
@@ -101,9 +105,10 @@ use Laravel\Scout\Searchable;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use DateTimeFormatter;
-
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, Searchable, SoftDeletes;
+
+    use HasWalletBalance;
 
     /**
      * The model's attributes.
@@ -114,6 +119,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'status' => UserStatus::ACTIVE,
         'available_points' => 0,
         'available_coins' => 0,
+        'balance' => 0,
+        'frozen_balance' => 0,
         'vip_expires_at' => null,
         'identity_verified' => false,
     ];
@@ -135,6 +142,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'status' => UserStatus::class,
             'available_points' => 'integer',
             'available_coins' => 'integer',
+            'balance' => 'decimal:2',
+            'frozen_balance' => 'decimal:2',
             'password' => 'hashed',
             'remember_token' => 'string',
             'login_count' => 'integer',

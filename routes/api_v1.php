@@ -128,6 +128,14 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->delete('', [\App\Http\Controllers\Api\V1\UserController::class, 'destroy'])->name('destroy'); // 注销并删除自己的账户
 
         /**
+         * 钱包
+         */
+        Route::group(['prefix' => 'wallet', 'as' => 'wallet.'], function (Registrar $registrar) {
+            $registrar->get('', [\App\Http\Controllers\Api\V1\Wallet\WalletController::class, 'index'])->name('index'); // 钱包概览
+            $registrar->get('trades', [\App\Http\Controllers\Api\V1\Wallet\WalletController::class, 'trades'])->name('trades'); // 钱包流水
+        });
+
+        /**
          * 实名认证
          */
         $registrar->get('identity', [\App\Http\Controllers\Api\V1\User\IdentityController::class, 'show'])->name('identity.show'); // 当前用户的最新认证记录

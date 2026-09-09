@@ -80,6 +80,9 @@ Route::get('users/{user}/login-histories', [\App\Http\Controllers\Admin\UserCont
 Route::get('users/{user}/socials', [\App\Http\Controllers\Admin\UserController::class, 'socials'])->name('users.socials');
 Route::get('users/{user}/point-trades', [\App\Http\Controllers\Admin\UserController::class, 'pointTrades'])->name('users.point-trades');
 Route::get('users/{user}/coin-trades', [\App\Http\Controllers\Admin\UserController::class, 'coinTrades'])->name('users.coin-trades');
+Route::get('users/{user}/wallet', [\App\Http\Controllers\Admin\WalletController::class, 'userWallet'])->name('users.wallet');
+Route::get('users/{user}/wallet-trades', [\App\Http\Controllers\Admin\WalletController::class, 'userTrades'])->name('users.wallet-trades');
+Route::put('users/{user}/adjust-wallet', [\App\Http\Controllers\Admin\WalletController::class, 'adjust'])->name('users.adjust-wallet');
 Route::get('users/{user}/point-trades/export', [\App\Http\Controllers\Admin\UserController::class, 'exportPointTrades'])->name('users.point-trades.export');
 Route::get('users/{user}/coin-trades/export', [\App\Http\Controllers\Admin\UserController::class, 'exportCoinTrades'])->name('users.coin-trades.export');
 Route::put('users/{user}/toggle-status', [\App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])->name('users.toggle-status');
@@ -89,6 +92,13 @@ Route::put('users/{user}/adjust-balance', [\App\Http\Controllers\Admin\UserContr
 Route::put('users/{user}/extend-vip', [\App\Http\Controllers\Admin\UserController::class, 'extendVip'])->name('users.extend-vip');
 Route::get('users/export', [\App\Http\Controllers\Admin\UserController::class, 'export'])->name('users.export');
 Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->except(['store']);
+
+// 钱包管理
+Route::group(['prefix' => 'wallet', 'as' => 'wallet.'], function (Registrar $registrar) {
+    $registrar->get('stats', [\App\Http\Controllers\Admin\WalletController::class, 'stats'])->name('stats'); // 钱包统计
+    $registrar->get('trades', [\App\Http\Controllers\Admin\WalletController::class, 'index'])->name('trades.index'); // 全局流水列表
+    $registrar->get('trades/{trade}', [\App\Http\Controllers\Admin\WalletController::class, 'show'])->name('trades.show'); // 流水详情
+});
 
 // 配置管理
 Route::get('settings/groups', [\App\Http\Controllers\Admin\SettingController::class, 'groups'])->name('settings.groups');
