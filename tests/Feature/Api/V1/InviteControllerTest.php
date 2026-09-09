@@ -38,13 +38,6 @@ class InviteControllerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('未登录访问我的邀请码返回 401')]
-    public function guest_cannot_get_my_code(): void
-    {
-        $this->getJson('/api/v1/invite/my-code')->assertUnauthorized();
-    }
-
-    #[Test]
     #[TestDox('未登录访问邀请记录返回 401')]
     public function guest_cannot_get_records(): void
     {
@@ -59,19 +52,7 @@ class InviteControllerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('登录用户可获取自己的邀请码')]
-    public function user_can_get_my_invite_code(): void
-    {
-        Sanctum::actingAs($this->user);
-
-        $response = $this->getJson('/api/v1/invite/my-code')->assertOk();
-
-        $this->assertSame($this->user->inviteCode->code, $response->json('code'));
-        $this->assertSame(26, strlen((string) $response->json('code')));
-    }
-
-    #[Test]
-    #[TestDox('邀请记录列表返回 Laravel 标准分页结构')]
+    #[TestDox('邀请记录列表返回标准分页结构')]
     public function records_returns_paginated_structure(): void
     {
         Sanctum::actingAs($this->user);
@@ -89,13 +70,11 @@ class InviteControllerTest extends TestCase
             'data' => [
                 ['id', 'invitee' => ['id', 'name', 'username', 'avatar'], 'description', 'created_at'],
             ],
-            'current_page',
-            'last_page',
-            'per_page',
-            'total',
+            'links',
+            'meta',
         ]);
 
-        $this->assertSame(1, $response->json('total'));
+        $this->assertSame(1, $response->json('meta.total'));
         $this->assertSame('被邀请用户', $response->json('data.0.invitee.name'));
         $this->assertSame('通过邀请码注册', $response->json('data.0.description'));
     }
@@ -121,7 +100,7 @@ class InviteControllerTest extends TestCase
 
         $response = $this->getJson('/api/v1/invite/records')->assertOk();
 
-        $this->assertSame(1, $response->json('total'));
+        $this->assertSame(1, $response->json('meta.total'));
     }
 
     #[Test]
@@ -139,9 +118,30 @@ class InviteControllerTest extends TestCase
 
         $response = $this->getJson('/api/v1/invite/records?per_page=2')->assertOk();
 
-        $this->assertSame(2, $response->json('per_page'));
+        $this->assertSame(2, $response->json('meta.per_page'));
         $this->assertCount(2, $response->json('data'));
-        $this->assertSame(5, $response->json('total'));
+        $this->assertSame(5, $response->json('meta.total'));
+    }
+
+    #[Test]
+    #[TestDox('邀请记录按 ID 倒序返回')]
+    public function records_ordered_by_id_desc(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $first = InviteRecord::factory()
+            ->forInviter($this->user)
+            ->forInvitee(User::factory()->create())
+            ->create();
+        $second = InviteRecord::factory()
+            ->forInviter($this->user)
+            ->forInvitee(User::factory()->create())
+            ->create();
+
+        $response = $this->getJson('/api/v1/invite/records')->assertOk();
+
+        $this->assertSame($second->id, $response->json('data.0.id'));
+        $this->assertSame($first->id, $response->json('data.1.id'));
     }
 
     #[Test]
