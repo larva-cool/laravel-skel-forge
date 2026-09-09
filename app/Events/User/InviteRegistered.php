@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace App\Events\User;
 
-use App\Models\User;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -20,7 +19,7 @@ class InviteRegistered
 {
     use Dispatchable, SerializesModels;
 
-    public User $user;
+    public $user;
 
     /**
      * 邀请码
@@ -30,7 +29,7 @@ class InviteRegistered
     /**
      * Create a new event instance.
      */
-    public function __construct(User $user, string $inviteCode)
+    public function __construct($user, string $inviteCode)
     {
         $this->user = $user;
         $this->inviteCode = $inviteCode;

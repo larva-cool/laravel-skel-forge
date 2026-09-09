@@ -14,4 +14,5 @@ return [
     'recharge' => \App\Models\Wallet\Recharge::class,
     'withdraw' => \App\Models\Wallet\Withdraw::class,
     'invite_record' => \App\Models\Invite\InviteRecord::class,
+    'invite_code' => \App\Models\Invite\InviteCode::class,
 ];

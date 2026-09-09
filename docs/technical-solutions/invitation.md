@@ -114,12 +114,14 @@ public function invitee(): MorphTo
 
 ### 2.5 多态映射
 
-在 `config/morph_maps.php` 中已注册的类型均可作为邀请方/被邀请方：
+在 `config/morph_maps.php` 中注册的类型均可作为邀请方/被邀请方，邀请码模型自身也注册了多态别名：
 
 | 类型别名 | 模型类 | 典型场景 |
 |----------|--------|---------|
 | `user` | `App\Models\User` | 用户邀请用户（主流场景） |
 | `admin` | `App\Models\Admin\Admin` | 后台管理员手动添加邀请关系 |
+| `invite_code` | `App\Models\Invite\InviteCode` | 邀请码多态归属 |
+| `invite_record` | `App\Models\Invite\InviteRecord` | 邀请记录多态关联 |
 
 ---
 
@@ -155,12 +157,9 @@ public function invitee(): MorphTo
 
 ### 4.2 与现有事件的关系
 
-现有 `InviteRegistered` 事件（`app/Events/User/InviteRegistered.php`）携带 `$user` 和 `$inviteCode`，用于通知"有人用邀请码注册了"。
+旧版 `InviteRegistered` 事件（`app/Events/User/InviteRegistered.php`）仅作为占位事件存在，未被任何地方触发，**已废弃**。
 
-新的 `InviteRelationshipCreated` 事件聚焦于"邀请关系已建立"，是更底层的事实事件。两者职责区分：
-
-- `InviteRegistered` — 注册入口事件，携带邀请码原始信息
-- `InviteRelationshipCreated` — 关系落地事件，携带已持久化的邀请记录
+新的 `InviteRelationshipCreated` 事件聚焦于"邀请关系已建立"，是更底层的事实事件。`RegisterController` 中收到邀请码后直接调用 `InviteService::createRelationshipByCode()`，由该服务内部负责创建记录并触发事件。
 
 ---
 
@@ -223,12 +222,12 @@ $this->getInviteCode(): string
 
 ## 7. 实施阶段
 
-| 阶段 | 内容 | 交付物 |
-|------|------|--------|
-| **Phase 1 数据模型** | `invite_codes` / `invite_records` 表迁移 + `InviteCode`、`InviteRecord` 模型 + 多态映射 + 工厂 + 单元测试 | 邀请码与邀请关系数据层 |
-| **Phase 2 关系建立** | 用户创建自动发放邀请码 + 注册流程集成（创建邀请关系）+ `InviteRelationshipCreated` 事件 + 功能测试 | 邀请码自动生成、邀请关系可正常建立 |
-| **Phase 3 查询接口** | 前台「我的邀请码/邀请列表/统计」+ 后台邀请记录管理 + 权限菜单 | 前后端查询能力完整 |
-| **Phase 4 文档与发布** | Apifox 全量发布 + README 更新 + 测试覆盖率达标 | 生产可用 |
+| 阶段 | 内容 | 交付物 | 状态 |
+|------|------|--------|------|
+| **Phase 1 数据模型** | `invite_codes` / `invite_records` 表迁移 + `InviteCode`、`InviteRecord` 模型 + 多态映射 + 工厂 + 单元测试 | 邀请码与邀请关系数据层 | ✅ 已完成 |
+| **Phase 2 关系建立** | 用户创建自动发放邀请码 + 注册流程集成（创建邀请关系）+ `InviteRelationshipCreated` 事件 + 功能测试 | 邀请码自动生成、邀请关系可正常建立 | ✅ 已完成 |
+| **Phase 3 查询接口** | 前台「我的邀请码/邀请列表/统计」+ 后台邀请记录管理 + 权限菜单 | 前后端查询能力完整 | ⏳ 待启动 |
+| **Phase 4 文档与发布** | Apifox 全量发布 + README 更新 + 测试覆盖率达标 | 生产可用 | ⏳ 待启动 |
 
 > **暂缓项**（后续按需启动）：
 > - ~~邀请奖励发放~~（金币/积分/VIP 奖励、双向奖励）
