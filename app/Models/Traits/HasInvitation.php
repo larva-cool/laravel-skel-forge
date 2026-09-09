@@ -5,11 +5,12 @@
  */
 declare(strict_types=1);
 
-namespace App\Support\Traits;
+namespace App\Models\Traits;
 
 use App\Models\Invite\InviteCode;
 use App\Models\Invite\InviteRecord;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
@@ -26,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @method MorphOne inviterRelation() 我的邀请关系
  * @method MorphOne inviteCode() 我的邀请码
  *
- * @mixin \Illuminate\Database\Eloquent\Model
+ * @mixin Model
  *
  * @author Tongle Xu <xutongle@msn.com>
  */

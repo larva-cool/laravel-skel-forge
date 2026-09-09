@@ -19,7 +19,7 @@ use Tests\TestCase;
 /**
  * HasInvitation Trait 单元测试
  */
-#[CoversClass(\App\Support\Traits\HasInvitation::class)]
+#[CoversClass(\App\Models\Traits\HasInvitation::class)]
 #[Group('models')]
 #[Group('invite')]
 class HasInvitationTest extends TestCase
