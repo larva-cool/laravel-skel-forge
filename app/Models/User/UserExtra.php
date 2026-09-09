@@ -14,13 +14,11 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 
 /**
  * 用户扩展信息
  *
  * @property int $user_id 用户ID
- * @property string $invite_code 邀请码
  * @property int $username_change_count 用户名修改次数
  * @property Carbon|null $email_verified_at 邮箱验证时间
  *
@@ -30,7 +28,7 @@ use Illuminate\Support\Str;
  * @author Tongle Xu <xutongle@msn.com>
  */
 #[Table('user_extras', 'user_id', null, false, false)]
-#[Fillable(['username_change_count', 'invite_code', 'email_verified_at'])]
+#[Fillable(['username_change_count', 'email_verified_at'])]
 #[Hidden(['user_id'])]
 class UserExtra extends Model
 {
@@ -52,21 +50,9 @@ class UserExtra extends Model
     {
         return [
             'user_id' => 'integer',
-            'invite_code' => 'string',
             'username_change_count' => 'integer',
             'email_verified_at' => 'datetime',
         ];
-    }
-
-    /**
-     * Perform any actions required after the model boots.
-     */
-    protected static function booted(): void
-    {
-        parent::booted();
-        static::creating(function (UserExtra $model) {
-            $model->invite_code = strtolower((string) Str::ulid());
-        });
     }
 
     /**

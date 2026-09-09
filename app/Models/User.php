@@ -26,6 +26,7 @@ use App\Models\User\UserProfile;
 use App\Models\UserSegment\Membership;
 use App\Observers\UserObserver;
 use App\Policies\UserPolicy;
+use App\Support\Traits\HasInvitation;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -111,6 +112,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, Searchable, SoftDeletes;
 
+    use HasInvitation;
     use HasWalletBalance;
 
     /**

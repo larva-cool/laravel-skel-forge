@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Register;
 
+use App\Models\Invite\InviteCode;
 use App\Models\User;
-use App\Models\User\UserExtra;
 use App\Rules\PhoneRule;
 use App\Rules\SmsCaptchaRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -36,7 +36,7 @@ class PhoneRegisterRequest extends FormRequest
             'phone' => ['required', new PhoneRule, Rule::unique(User::class, 'phone')],
             'verify_code' => ['required', 'min:4', 'max:6', new SmsCaptchaRule('phone', $this->ip())],
             'password' => ['nullable', Password::default()],
-            'invite_code' => ['nullable', 'string', Rule::exists(UserExtra::class, 'invite_code')],
+            'invite_code' => ['nullable', 'string', Rule::exists(InviteCode::class, 'code')],
         ];
     }
 }

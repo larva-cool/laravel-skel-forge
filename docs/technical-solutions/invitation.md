@@ -17,7 +17,52 @@
 
 ## 2. 数据模型
 
-### 2.1 数据表：invite_records
+### 2.1 数据表：invite_codes
+
+邀请码表，每条记录代表一个主体（User、Admin 等）持有的唯一邀请码。邀请码通过多态关联归属主体，从原 `user_extras.invite_code` 字段抽取独立建模。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | BIGINT UNSIGNED PK | 主键 |
+| `code` | VARCHAR(26) | 邀请码（小写 ULID，全局唯一） |
+| `owner_id` | BIGINT UNSIGNED | 所属主体 ID |
+| `owner_type` | VARCHAR(64) | 所属主体类型（多态类型别名，如 `user`、`admin`） |
+| `created_at` | TIMESTAMP NULL | 创建时间 |
+| `updated_at` | TIMESTAMP NULL | 更新时间 |
+
+#### 索引
+
+| 索引名 | 字段 | 类型 | 说明 |
+|--------|------|------|------|
+| `uniq_code` | `code` | 唯一索引 | 邀请码全局唯一 |
+| `uniq_owner` | `owner_id, owner_type` | 唯一索引 | 一个主体仅持有一个邀请码 |
+
+---
+
+### 2.2 模型：InviteCode
+
+**命名空间**：`App\Models\Invite\InviteCode`
+**表名**：`invite_codes`
+
+#### 关联
+
+```php
+/**
+ * 所属主体（多态）
+ */
+public function owner(): MorphTo
+```
+
+#### Model 结构
+
+- 使用 `#[Table]`、`#[Fillable]` 等属性注解（对齐项目现有风格）
+- `code`、`owner_id`、`owner_type` 为 fillable
+- `creating` 钩子在未显式指定 `code` 时自动生成小写 ULID；`generateUniqueCode()` 应用层查重 + DB 唯一索引双重兜底
+- 用户创建时由 `UserObserver` 自动为其创建邀请码；用户硬删除时一并清理
+
+---
+
+### 2.3 数据表：invite_records
 
 邀请记录表，每条记录代表一个邀请关系。
 
@@ -40,7 +85,7 @@
 
 ---
 
-### 2.2 模型：InviteRecord
+### 2.4 模型：InviteRecord
 
 **命名空间**：`App\Models\Invite\InviteRecord`
 **表名**：`invite_records`
@@ -67,7 +112,7 @@ public function invitee(): MorphTo
 
 ---
 
-### 2.3 多态映射
+### 2.5 多态映射
 
 在 `config/morph_maps.php` 中已注册的类型均可作为邀请方/被邀请方：
 
@@ -85,9 +130,9 @@ public function invitee(): MorphTo
 ```
 用户注册携带 invite_code
         ↓
-校验邀请码是否存在（user_extras.invite_code）
+校验邀请码是否存在（invite_codes.code）
         ↓
-通过邀请码反查邀请人 user_id
+通过邀请码反查所属主体 owner（多态，即邀请人）
         ↓
 创建 InviteRecord 记录（inviter=邀请人, invitee=新用户）
         ↓
@@ -144,25 +189,31 @@ public function invitee(): MorphTo
 
 ### 6.1 User 模型
 
-通过 trait（如 `HasInvitation`）为 User 模型追加：
+通过 trait（如 `HasInvitation`）为 User、Admin 等模型追加：
 
 ```php
+// 我的邀请码（多态归属，morph 名 owner，一个主体一个码）
+$this->inviteCode(): MorphOne
+
 // 我邀请的人
 $this->invitees(): MorphMany  // 通过 InviteRecord 的 inviter 反向关联
 
 // 我的邀请人
-$this->inviter(): MorphOne    // 通过 InviteRecord 的 invitee 反向关联
+$this->inviterRelation(): MorphOne    // 通过 InviteRecord 的 invitee 反向关联
 
 // 快捷方法
 $this->hasInviter(): bool
 $this->getInviteCode(): string
 ```
 
+用户创建时 `UserObserver` 自动创建 InviteCode，用户硬删除时一并清理；UserExtra 不再承载邀请码。
+
 ### 6.2 注册流程
 
 在 `RegisterController` 中，收到 `invite_code` 后：
-1. 现有逻辑：触发 `InviteRegistered` 事件
-2. 新增逻辑：通过邀请码找到邀请人，创建 `InviteRecord`，触发 `InviteRelationshipCreated` 事件
+1. 表单校验：`Rule::exists(InviteCode::class, 'code')` 校验邀请码有效
+2. 新增逻辑：`InviteService` 通过邀请码反查 owner（邀请人），创建 `InviteRecord`，触发 `InviteRelationshipCreated` 事件
+3. 邀请码无效、自邀或已存在邀请关系时静默跳过，不影响注册主流程
 
 ### 6.3 奖励系统（暂缓）
 
@@ -174,8 +225,8 @@ $this->getInviteCode(): string
 
 | 阶段 | 内容 | 交付物 |
 |------|------|--------|
-| **Phase 1 数据模型** | `invite_records` 表迁移 + `InviteRecord` 模型 + 多态映射 + 工厂 + 单元测试 | 可查询、可写入的邀请记录数据层 |
-| **Phase 2 关系建立** | 注册流程集成（创建邀请关系）+ `InviteRelationshipCreated` 事件 + 功能测试 | 邀请关系可正常建立 |
+| **Phase 1 数据模型** | `invite_codes` / `invite_records` 表迁移 + `InviteCode`、`InviteRecord` 模型 + 多态映射 + 工厂 + 单元测试 | 邀请码与邀请关系数据层 |
+| **Phase 2 关系建立** | 用户创建自动发放邀请码 + 注册流程集成（创建邀请关系）+ `InviteRelationshipCreated` 事件 + 功能测试 | 邀请码自动生成、邀请关系可正常建立 |
 | **Phase 3 查询接口** | 前台「我的邀请码/邀请列表/统计」+ 后台邀请记录管理 + 权限菜单 | 前后端查询能力完整 |
 | **Phase 4 文档与发布** | Apifox 全量发布 + README 更新 + 测试覆盖率达标 | 生产可用 |
 
@@ -194,6 +245,7 @@ app/
 │       └── InviteType.php          # 邀请类型枚举（预留，本期可空）
 ├── Models/
 │   └── Invite/
+│       ├── InviteCode.php          # 邀请码模型（多态归属 owner）
 │       └── InviteRecord.php        # 邀请记录模型
 ├── Events/
 │   └── Invite/
@@ -216,11 +268,20 @@ app/
 │       └── Api/V1/Invite/
 database/
 ├── migrations/
+│   ├── xxxx_create_invite_codes_table.php
 │   └── xxxx_create_invite_records_table.php
 └── factories/
     └── Invite/
+        ├── InviteCodeFactory.php
         └── InviteRecordFactory.php
 tests/
+├── Unit/
+│   ├── Models/Invite/
+│   │   ├── InviteCodeTest.php
+│   │   └── InviteRecordTest.php
+│   ├── Models/User/HasInvitationTest.php
+│   ├── Observers/UserObserverTest.php
+│   └── Services/InviteServiceTest.php
 └── Feature/
     ├── Invite/
     │   ├── InviteRelationshipTest.php

@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Observers;
 
 use App\Enums\SocialProvider;
+use App\Models\Invite\InviteCode;
 use App\Models\System\LoginHistory;
 use App\Models\System\Social;
 use App\Models\User;
@@ -40,36 +41,46 @@ class UserObserverTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('created 事件创建 UserExtra 和 UserProfile 记录')]
-    public function created_creates_user_extra_and_profile(): void
+    #[TestDox('created 事件创建 UserExtra、UserProfile 和邀请码记录')]
+    public function created_creates_user_extra_profile_and_invite_code(): void
     {
         $user = User::factory()->create();
 
-        // UserObserver 已通过 Laravel 自动注册，验证 extra 和 profile 已创建
+        // UserObserver 已通过 Laravel 自动注册，验证 extra、profile 和邀请码已创建
         $this->assertDatabaseHas('user_extras', ['user_id' => $user->id]);
         $this->assertInstanceOf(UserExtra::class, $user->extra);
         $this->assertDatabaseHas('user_profiles', ['user_id' => $user->id]);
         $this->assertInstanceOf(UserProfile::class, $user->profile);
+        $this->assertDatabaseHas('invite_codes', [
+            'owner_id' => $user->id,
+            'owner_type' => $user->getMorphClass(),
+        ]);
+        $this->assertInstanceOf(InviteCode::class, $user->inviteCode);
     }
 
     #[Test]
-    #[TestDox('created 手动调用也创建 UserExtra 和 UserProfile')]
-    public function created_manual_call_creates_extra_and_profile(): void
+    #[TestDox('created 手动调用也创建 UserExtra、UserProfile 和邀请码')]
+    public function created_manual_call_creates_extra_profile_and_invite_code(): void
     {
         $user = User::factory()->create();
-        // 删除 extra 和 profile 后手动调用
+        // 删除 extra、profile 和邀请码后手动调用
         $user->extra?->delete();
         $user->profile?->delete();
+        $user->inviteCode?->delete();
 
         $this->observer->created($user);
 
         $this->assertDatabaseHas('user_extras', ['user_id' => $user->id]);
         $this->assertDatabaseHas('user_profiles', ['user_id' => $user->id]);
+        $this->assertDatabaseHas('invite_codes', [
+            'owner_id' => $user->id,
+            'owner_type' => $user->getMorphClass(),
+        ]);
     }
 
     #[Test]
-    #[TestDox('forceDeleted 删除 UserExtra、UserProfile、登录历史和社交账号记录')]
-    public function force_deleted_deletes_user_extra_profile_login_histories_and_socials(): void
+    #[TestDox('forceDeleted 删除 UserExtra、UserProfile、邀请码、登录历史和社交账号记录')]
+    public function force_deleted_deletes_user_extra_profile_invite_code_login_histories_and_socials(): void
     {
         $user = User::factory()->create();
         $extra = $user->extra;
@@ -102,6 +113,10 @@ class UserObserverTest extends TestCase
 
         $this->assertDatabaseMissing('user_extras', ['user_id' => $user->id]);
         $this->assertDatabaseMissing('user_profiles', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('invite_codes', [
+            'owner_id' => $user->id,
+            'owner_type' => $user->getMorphClass(),
+        ]);
         $this->assertDatabaseMissing('login_histories', ['user_id' => $user->id]);
         $this->assertDatabaseMissing('socials', ['user_id' => $user->id]);
     }

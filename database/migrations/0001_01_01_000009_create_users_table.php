@@ -58,7 +58,6 @@ return new class extends Migration
 
         Schema::create('user_extras', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id')->primary()->comment('用户ID');
-            $table->string('invite_code')->unique()->comment('邀请码');
             $table->unsignedTinyInteger('username_change_count')->default(0)->nullable()->comment('用户名修改次数');
             $table->timestamp('email_verified_at')->nullable()->comment('邮件验证时间');
 

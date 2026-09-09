@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Events\User\InviteRegistered;
 use App\Events\User\LoginSucceeded;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Register\CheckAccountRequest;
@@ -15,6 +14,7 @@ use App\Http\Requests\Api\V1\Register\MailRegisterRequest;
 use App\Http\Requests\Api\V1\Register\PhoneRegisterRequest;
 use App\Http\Resources\Api\V1\UserInfoResource;
 use App\Models\User;
+use App\Services\InviteService;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
@@ -75,7 +75,7 @@ class RegisterController extends Controller
         $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Registered($user));
         if ($request->invite_code) {
-            Event::dispatch(new InviteRegistered($user, $request->invite_code));
+            app(InviteService::class)->createRelationshipByCode($user, $request->invite_code, '通过邀请码注册');
         }
         Event::dispatch(new Login('sanctum', $user, false));
         Event::dispatch(new LoginSucceeded($user, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
@@ -103,7 +103,7 @@ class RegisterController extends Controller
         $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Registered($user));
         if ($request->invite_code) {
-            Event::dispatch(new InviteRegistered($user, $request->invite_code));
+            app(InviteService::class)->createRelationshipByCode($user, $request->invite_code, '通过邀请码注册');
         }
         Event::dispatch(new Login('sanctum', $user, false));
         Event::dispatch(new LoginSucceeded($user, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
