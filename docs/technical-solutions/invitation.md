@@ -176,24 +176,60 @@ InviteRegisteredListener（队列异步）
 
 ---
 
-## 5. API 设计（规划中）
-
-> 本节为后续接口规划，本期仅实现数据模型。
+## 5. API 设计
 
 ### 5.1 前台用户端 API
 
+需 `auth:sanctum` 认证，响应为 Laravel 标准分页结构（`data` / `links` / `meta`）。
+
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/v1/invite/my-code` | 获取我的邀请码 |
-| GET | `/api/v1/invite/records` | 我的邀请记录列表（分页） |
-| GET | `/api/v1/invite/stats` | 邀请统计（邀请人数、累计奖励等） |
+| GET | `/api/v1/invite/records` | 我的邀请记录列表（分页，支持 `per_page`） |
+| GET | `/api/v1/invite/stats` | 邀请统计（`invitee_count`、`has_inviter`） |
+
+> 邀请码不单独提供接口，已包含在 `UserResource` 的 `invite_code` 字段中。
+
+**邀请记录列表响应字段**：
+
+| 字段 | 说明 |
+|------|------|
+| `id` | 记录 ID |
+| `invitee.id` / `.name` / `.username` / `.avatar` | 被邀请人信息 |
+| `description` | 描述/备注 |
+| `created_at` | 邀请时间 |
 
 ### 5.2 后台管理 API
 
-| 方法 | 路径 | 说明 |
+需 `auth:admin` 认证 + 对应权限。
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/admin/invite-records` | `invite-records.index` | 邀请记录分页列表 |
+| GET | `/admin/invite-records/{id}` | `invite-records.show` | 邀请记录详情 |
+
+**列表筛选参数**（由 `InviteRecordIndexRequest` 校验，`InviteRecord::scopeFilter` 执行）：
+
+| 参数 | 类型 | 说明 |
 |------|------|------|
-| GET | `/admin/invite-records/data` | 邀请记录分页列表 |
-| GET | `/admin/invite-records/{id}` | 邀请记录详情 |
+| `inviter_type` | string | 邀请人类型（`user` / `admin`） |
+| `inviter_id` | int | 邀请人 ID |
+| `invitee_type` | string | 被邀请人类型（`user` / `admin`） |
+| `invitee_id` | int | 被邀请人 ID |
+| `description` | string | 描述模糊匹配 |
+| `created_start` | date | 邀请时间起始 |
+| `created_end` | date | 邀请时间截止（须 ≥ `created_start`） |
+| `per_page` | int | 每页条数（1-100） |
+
+**响应字段**：`id`、`inviter_type`、`inviter_id`、`inviter_name`、`invitee_type`、`invitee_id`、`invitee_name`、`description`、`created_at`
+
+### 5.3 后台菜单与权限
+
+菜单挂在「用户管理」目录下（`user.invite-record`，sort 4），权限由迁移文件自动生成：
+
+| 权限 key | 说明 |
+|----------|------|
+| `invite-records.index` | 邀请记录列表（菜单权限） |
+| `invite-records.show` | 查看详情（按钮权限） |
 
 ---
 
@@ -239,7 +275,7 @@ $this->getInviteCode(): string
 |------|------|--------|------|
 | **Phase 1 数据模型** | `invite_codes` / `invite_records` 表迁移 + `InviteCode`、`InviteRecord` 模型 + 多态映射 + 工厂 + 单元测试 | 邀请码与邀请关系数据层 | ✅ 已完成 |
 | **Phase 2 关系建立** | 用户创建自动发放邀请码 + 注册流程集成（创建邀请关系）+ `InviteRelationshipCreated` 事件 + 功能测试 | 邀请码自动生成、邀请关系可正常建立 | ✅ 已完成 |
-| **Phase 3 查询接口** | 前台「我的邀请码/邀请列表/统计」+ 后台邀请记录管理 + 权限菜单 | 前后端查询能力完整 | ⏳ 待启动 |
+| **Phase 3 查询接口** | 前台「我的邀请列表/统计」+ 后台邀请记录列表与详情 + 筛选作用域 + 权限菜单 | 前后端查询能力完整 | ✅ 已完成 |
 | **Phase 4 文档与发布** | Apifox 全量发布 + README 更新 + 测试覆盖率达标 | 生产可用 | ⏳ 待启动 |
 
 > **暂缓项**（后续按需启动）：
@@ -248,43 +284,49 @@ $this->getInviteCode(): string
 
 ---
 
-## 8. 代码结构（规划）
+## 8. 代码结构
 
 ```
 app/
-├── Enums/
-│   └── Invite/
-│       └── InviteType.php          # 邀请类型枚举（预留，本期可空）
 ├── Models/
 │   └── Invite/
-│       ├── InviteCode.php          # 邀请码模型（多态归属 owner）
-│       └── InviteRecord.php        # 邀请记录模型
+│       ├── InviteCode.php                    # 邀请码模型（多态归属 owner）
+│       └── InviteRecord.php                  # 邀请记录模型（含 scopeFilter）
 ├── Events/
-│   └── Invite/
-│       └── InviteRelationshipCreated.php
+│   ├── Invite/
+│   │   └── InviteRelationshipCreated.php     # 数据落地事件
+│   └── User/
+│       └── InviteRegistered.php              # 业务入口事件
 ├── Listeners/
 │   └── User/
-│       └── InviteRegisteredListener.php  # 邀请注册监听器（队列异步）
+│       └── InviteRegisteredListener.php      # 邀请注册监听器（队列异步）
 ├── Services/
-│   └── InviteService.php           # 邀请关系建立编排
+│   └── InviteService.php                     # 邀请关系建立编排
 ├── Support/
 │   └── Traits/
-│       └── HasInvitation.php       # User 模型的邀请关联 trait
+│       └── HasInvitation.php                 # 邀请关联 trait
+├── Observers/
+│   └── UserObserver.php                      # 用户创建时自动发放邀请码
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Api/V1/
-│   │   │   └── InviteController.php
-│   │   └── Admin/
-│   │       └── InviteRecordController.php
+│   │   ├── Api/V1/InviteController.php       # 前台：records / stats
+│   │   └── Admin/InviteRecordController.php  # 后台：index / show
 │   ├── Requests/
 │   │   └── Admin/Invite/
+│   │       └── InviteRecordIndexRequest.php  # 后台列表筛选校验
 │   └── Resources/
-│       ├── Admin/Invite/
-│       └── Api/V1/Invite/
+│       ├── Api/V1/InviteRecordResource.php   # 前台资源
+│       └── Admin/InviteRecordResource.php    # 后台资源
+config/
+└── morph_maps.php                            # invite_code / invite_record 别名
+routes/
+├── api_v1.php                                # /api/v1/invite/*
+└── admin.php                                 # /admin/invite-records/*
 database/
 ├── migrations/
-│   ├── xxxx_create_invite_codes_table.php
-│   └── xxxx_create_invite_records_table.php
+│   ├── 0001_01_01_000018_create_invite_codes_table.php
+│   ├── 0001_01_01_000019_create_invite_records_table.php
+│   └── 2026_10_31_111934_seed_initial_admin_data.php  # 菜单与权限
 └── factories/
     └── Invite/
         ├── InviteCodeFactory.php
@@ -295,12 +337,10 @@ tests/
 │   │   ├── InviteCodeTest.php
 │   │   └── InviteRecordTest.php
 │   ├── Models/User/HasInvitationTest.php
+│   ├── Listeners/InviteRegisteredListenerTest.php
 │   ├── Observers/UserObserverTest.php
 │   └── Services/InviteServiceTest.php
 └── Feature/
-    ├── Invite/
-    │   ├── InviteRelationshipTest.php
-    │   └── InviteRewardTest.php
-    └── Admin/
-        └── InviteRecordControllerTest.php
+    ├── Api/V1/InviteControllerTest.php
+    └── Admin/InviteRecordControllerTest.php
 ```
