@@ -28,7 +28,7 @@ app/
 │   └── Wallet/
 │       ├── WalletTrade.php             # 钱包流水（morphTo owner + morphTo source）
 │       ├── Recharge.php           # 充值订单（morphTo owner）
-│       └── WithdrawOrder.php           # 提现申请（morphTo owner）
+│       └── Withdraw.php                # 提现申请（morphTo owner）
 ├── Support/
 │   └── WalletHelper.php                # 余额引擎（incr/decr/freeze/unfreeze）
 ├── Services/
@@ -38,36 +38,42 @@ app/
 │   ├── BalanceChanged.php              # 余额变动事件
 │   ├── RechargeSucceeded.php           # 充值成功事件
 │   ├── WithdrawApproved.php            # 提现审核通过事件
-│   └── WithdrawRejected.php            # 提现驳回事件
+│   ├── WithdrawRejected.php            # 提现驳回事件
+│   ├── WithdrawTransferred.php         # 提现打款成功事件
+│   └── WithdrawFailed.php              # 提现打款失败事件
 ├── Notifications/Wallet/
 │   ├── RechargeSucceededNotification.php
 │   ├── WithdrawApprovedNotification.php
 │   ├── WithdrawRejectedNotification.php
-│   └── WithdrawTransferredNotification.php
+│   ├── WithdrawTransferredNotification.php
+│   └── WithdrawFailedNotification.php
 ├── Jobs/Wallet/
 │   └── CloseExpiredRechargesJob.php   # 关闭超时未支付订单
 ├── Policies/
 │   ├── RechargePolicy.php
-│   └── WithdrawOrderPolicy.php
+│   └── WithdrawPolicy.php
 ├── Exports/Admin/
 │   ├── WalletTradeExport.php
-│   ├── WithdrawOrderExport.php
+│   ├── WithdrawExport.php
 │   └── RechargeExport.php
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Admin/
 │   │   │   ├── WalletController.php            # 流水列表/详情/统计/调账
-│   │   │   ├── WithdrawOrderController.php     # 提现审核
+│   │   │   ├── WithdrawController.php          # 提现审核
 │   │   │   └── RechargeController.php     # 充值订单查看
-│   │   ├── Api/V1/User/
-│   │   │   └── WalletController.php            # 前台钱包概览/流水/充值/提现
+│   │   ├── Api/V1/Wallet/
+│   │   │   ├── WalletController.php            # 前台钱包概览/流水/充值
+│   │   │   └── WithdrawController.php          # 前台提现提交/列表/详情
 │   │   └── PayCallbackController.php           # 支付渠道异步回调
 │   ├── Requests/
 │   │   ├── Admin/Wallet/
 │   │   │   ├── WalletTradeIndexRequest.php
 │   │   │   ├── WalletAdjustRequest.php
 │   │   │   ├── WithdrawIndexRequest.php
-│   │   │   └── WithdrawRejectRequest.php
+│   │   │   ├── WithdrawRejectRequest.php
+│   │   │   ├── WithdrawFailRequest.php
+│   │   │   └── WithdrawRemarkRequest.php
 │   │   └── Api/V1/Wallet/
 │   │       ├── CreateRechargeRequest.php
 │   │       └── CreateWithdrawRequest.php
@@ -75,34 +81,36 @@ app/
 │       ├── Admin/
 │       │   ├── WalletTradeResource.php
 │       │   ├── WalletStatResource.php
-│       │   ├── WithdrawOrderResource.php
+│       │   ├── WithdrawResource.php
 │       │   └── RechargeResource.php
 │       └── Api/V1/
 │           ├── WalletResource.php
 │           ├── WalletTradeResource.php
-│           ├── WithdrawOrderResource.php
+│           ├── WithdrawResource.php
 │           └── RechargeResource.php
 database/
 ├── migrations/
 │   ├── xxxx_add_balance_to_users_table.php     # users 表加 balance/frozen_balance
 │   ├── xxxx_create_wallet_trades_table.php
 │   ├── xxxx_create_recharges_table.php
-│   └── xxxx_create_withdraw_orders_table.php
+│   └── xxxx_create_withdraws_table.php
 └── factories/Wallet/
     ├── WalletTradeFactory.php
     ├── RechargeFactory.php
-    └── WithdrawOrderFactory.php
+    └── WithdrawFactory.php
 tests/Feature/
 ├── Admin/
 │   ├── WalletControllerTest.php
-│   ├── WithdrawOrderControllerTest.php
+│   ├── WithdrawAdminControllerTest.php
 │   └── RechargeAdminControllerTest.php
 ├── Api/V1/
 │   ├── WalletControllerTest.php
-│   └── RechargeControllerTest.php
+│   ├── RechargeControllerTest.php
+│   └── WithdrawControllerTest.php
 └── Wallet/
     ├── WalletHelperTest.php
-    └── RechargeServiceTest.php
+    ├── RechargeServiceTest.php
+    └── WithdrawServiceTest.php
 ```
 
 ## 3. HasWalletBalance Trait
@@ -113,7 +121,7 @@ tests/Feature/
 |------|------|
 | `walletTrades(): MorphMany` | 钱包流水（作为 owner） |
 | `recharges(): MorphMany` | 充值订单（作为 owner） |
-| `withdrawOrders(): MorphMany` | 提现申请（作为 owner） |
+| `withdraws(): MorphMany` | 提现申请（作为 owner） |
 | `hasBalance(float $amount): bool` | 判定可用余额是否充足 |
 | `totalBalance(): float` | 总资产（可用 + 冻结） |
 
@@ -181,34 +189,44 @@ POST /callback/pay/{channel}
 ## 6. 提现链路
 
 ```
-POST /api/v1/wallet/withdraw
-  → CreateWithdrawRequest 校验金额、限额、当日次数
+POST /api/v1/user/wallet/withdraws
+  → CreateWithdrawRequest 校验开关/金额区间/当日次数/待审核单
   → WithdrawService::submit()
-      → 事务内校验可用余额
-      → 计算手续费与实际到账金额
-      → WalletHelper::freeze() 冻结申请金额
-      → 创建 WithdrawOrder(status=pending)
+      → 事务内按 owner 行锁查最新余额
+      → 计算手续费（wallet.withdraw_fee_rate）与实际到账金额
+      → WalletHelper::freeze() 冻结申请金额（source = Withdraw 本身）
+      → 创建 Withdraw(status=pending)
+      → 返回 201（无 data 包裹）
 
 POST /admin/wallet/withdraws/{id}/approve
   → WithdrawService::approve()
-      → 校验当前状态非终态（参照 IdentityVerificationController::authorizeAction）
+      → 校验 status=pending（非终态）
       → 置 status=approved、reviewed_by、reviewed_at
-      → 派发 WithdrawApproved 事件 → 通知用户
+      → 派发 WithdrawApproved 事件 → 队列发站内信
 
 POST /admin/wallet/withdraws/{id}/reject
   → WithdrawService::reject()
+      → 校验 status=pending，reason 必填
       → 置 status=rejected、reject_reason
       → WalletHelper::unfreeze() 解冻退回可用余额
-      → 派发 WithdrawRejected 事件 → 通知用户
+      → 派发 WithdrawRejected 事件 → 队列发站内信（含原因）
 
 POST /admin/wallet/withdraws/{id}/transfer
   → WithdrawService::markTransferred()
+      → 校验 status=approved
       → 置 status=success、transfer_at
-      → WalletHelper::settleFrozen() 扣减冻结余额（资金真正流出）
-      → 通知用户到账
+      → WalletHelper::settleFrozen() 扣减冻结余额（资金真正流出，WalletTradeType::WITHDRAW）
+      → 派发 WithdrawTransferred 事件 → 队列发站内信
+
+POST /admin/wallet/withdraws/{id}/fail
+  → WithdrawService::markFailed()
+      → 校验 status=approved，reason 必填
+      → 置 status=failed、fail_reason
+      → WalletHelper::unfreeze() 解冻退回可用余额
+      → 派发 WithdrawFailed 事件 → 队列发站内信（含原因）
 ```
 
-打款失败置 `failed` 并同样执行 `unfreeze()` 退回余额。
+打款失败置 `failed` 并执行 `unfreeze()` 退回余额；所有状态变更均幂等（重复调用已终态记录直接返回）。
 
 ## 7. 权限与菜单
 
@@ -232,7 +250,7 @@ POST /admin/wallet/withdraws/{id}/transfer
 | operation.withdraw | withdraw | /operation/withdraw | 提现审核 | wallet.withdraws |
 | operation.recharge | recharge | /operation/recharge | 充值订单 | wallet.orders |
 
-按钮权限：钱包流水页挂「调账」（`wallet.adjust`）、「导出」（`wallet.export`）；提现审核页挂「审核」（`wallet.withdraws`）、「导出」（`wallet.export`）。
+按钮权限：钱包流水页挂「调账」（`wallet.adjust`）、「导出」（`wallet.export`）；提现审核页挂「审核通过」「审核驳回」「标记打款」「标记失败」（均为 `wallet.withdraws`）、「导出提现申请」（`wallet.export`）。
 
 `wallet.adjust` 属高风险操作，后续接入敏感操作二次验证时需纳入覆盖范围。
 
@@ -252,7 +270,7 @@ POST /admin/wallet/withdraws/{id}/transfer
 | wallet.max_withdraw_amount | 50000 | int | 单笔最高提现金额（元） |
 | wallet.withdraw_fee_rate | 0 | float | 提现手续费率（%） |
 | wallet.daily_withdraw_limit | 3 | int | 每日提现申请次数上限 |
-| wallet.withdraw_throttle | 3,1 | string | 提现接口限流（次数,分钟） |
+| wallet.withdraw_throttle | 5,1 | string | 提现接口限流（次数,分钟） |
 
 ## 9. 多态别名
 
@@ -261,7 +279,7 @@ POST /admin/wallet/withdraws/{id}/transfer
 ```php
 'wallet_trade'   => \App\Models\Wallet\WalletTrade::class,
 'recharge' => \App\Models\Wallet\Recharge::class,
-'withdraw_order' => \App\Models\Wallet\WithdrawOrder::class,
+'withdraw' => \App\Models\Wallet\Withdraw::class,
 ```
 
 `owner_type` 直接复用已注册的 `user` / `admin` 别名，无需额外注册。
@@ -294,7 +312,7 @@ POST /admin/wallet/withdraws/{id}/transfer
 |------|------|--------|------|
 | **Phase 1 基础账本** | `users` 表加字段；`wallet_trades` 表；`WalletTradeType` / `WalletTradeStatus` 枚举；`HasWalletBalance` trait；`WalletHelper` 四个核心方法 + 结算方法；后台流水列表/详情/统计/调账；前台钱包概览与流水接口；PHPUnit 覆盖并发扣减与余额不足场景 | 可查询、可调账的完整账本 | ✅ **已完成**（35 用例 / 137 断言全绿） |
 | **Phase 2 充值订单** | `recharges` 表 + 模型 + Policy；`PayChannel` / `RechargeStatus` 枚举；`RechargeService`（下单 + 管理员手动确认到账 + 幂等 + 超时关单）；超时关单 Job + 定时任务注册；后台充值订单管理（列表/详情/统计/确认/导出）；前台充值下单与订单查询接口；`RechargeSucceededNotification` | 订单生命周期完整，管理员可手动确认到账 | 🔄 进行中 |
-| **Phase 3 提现审核** | `withdraw_orders` 表 + 模型 + Policy；`WithdrawStatus` / `WithdrawAccountType` 枚举；`WithdrawService` 完整状态流转；冻结/解冻/结算联动；后台提现审核页面；前台提现接口 + 限流；三个提现通知类；导出类 | 提现申请到打款全流程闭环 | 未开始 |
+| **Phase 3 提现审核** | `withdraws` 表 + 模型 + Policy；`WithdrawStatus` / `WithdrawAccountType` 枚举；`WithdrawService` 完整状态流转（submit/approve/reject/markTransferred/markFailed）；冻结/解冻/结算联动（流水 source_type=withdraw）；后台提现审核页面（列表/详情/统计/审核/打款/失败/导出）；前台提现提交（限流 `wallet.withdraw_throttle`）+ 列表 + 详情接口；4 个事件（ShouldBroadcast + ShouldQueue）与 4 个站内信通知；导出类（阈值 2000）；收款账号响应脱敏 | 提现申请到打款全流程闭环 | ✅ **已完成** 2026-09-09（42 用例全绿） |
 | **Phase 4 集成与验收** | 订单/优惠券等业务侧接入冻结与结算；钱包指标并入业务数据看板；Apifox 按 Admin/Api 模块规范全量发布；补齐测试至项目 70% 覆盖率要求；README 与文档同步 | 生产可用 | 未开始 |
 
 ### 前置依赖

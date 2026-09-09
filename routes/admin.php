@@ -106,6 +106,16 @@ Route::group(['prefix' => 'wallet', 'as' => 'wallet.'], function (Registrar $reg
     $registrar->get('recharges/{recharge}', [\App\Http\Controllers\Admin\RechargeController::class, 'show'])->name('recharges.show'); // 充值订单详情
     $registrar->post('recharges/{recharge}/confirm', [\App\Http\Controllers\Admin\RechargeController::class, 'confirm'])->name('recharges.confirm'); // 手动确认到账
     $registrar->post('recharges/{recharge}/close', [\App\Http\Controllers\Admin\RechargeController::class, 'close'])->name('recharges.close'); // 关闭订单
+
+    // 提现申请
+    $registrar->get('withdraws/stats', [\App\Http\Controllers\Admin\WithdrawController::class, 'stats'])->name('withdraws.stats'); // 提现统计
+    $registrar->get('withdraws/export', [\App\Http\Controllers\Admin\WithdrawController::class, 'export'])->name('withdraws.export'); // 导出提现申请
+    $registrar->get('withdraws', [\App\Http\Controllers\Admin\WithdrawController::class, 'index'])->name('withdraws.index'); // 提现申请列表
+    $registrar->get('withdraws/{withdraw}', [\App\Http\Controllers\Admin\WithdrawController::class, 'show'])->name('withdraws.show'); // 提现申请详情
+    $registrar->post('withdraws/{withdraw}/approve', [\App\Http\Controllers\Admin\WithdrawController::class, 'approve'])->name('withdraws.approve'); // 审核通过
+    $registrar->post('withdraws/{withdraw}/reject', [\App\Http\Controllers\Admin\WithdrawController::class, 'reject'])->name('withdraws.reject'); // 审核驳回
+    $registrar->post('withdraws/{withdraw}/transfer', [\App\Http\Controllers\Admin\WithdrawController::class, 'transfer'])->name('withdraws.transfer'); // 标记已打款
+    $registrar->post('withdraws/{withdraw}/fail', [\App\Http\Controllers\Admin\WithdrawController::class, 'fail'])->name('withdraws.fail'); // 标记打款失败
 });
 
 // 配置管理

@@ -295,15 +295,16 @@
 
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
-| GET | `/admin/wallet/withdraws/stats` | 提现统计（总量/待审/今日新增/已打款/已驳回） | wallet.withdraws |
-| GET | `/admin/wallet/withdraws` | 提现申请列表（分页，支持 `owner_type`/`owner_id`/`status`/`account_type`/时间范围筛选） | wallet.withdraws |
-| GET | `/admin/wallet/withdraws/{withdraw}` | 提现申请详情（收款账户信息脱敏展示） | wallet.withdraws |
-| POST | `/admin/wallet/withdraws/{withdraw}/approve` | 审核通过（状态转 `approved`，保持冻结待打款） | wallet.withdraws |
-| POST | `/admin/wallet/withdraws/{withdraw}/reject` | 审核驳回（必填 `reason`，自动解冻并通知用户） | wallet.withdraws |
-| POST | `/admin/wallet/withdraws/{withdraw}/transfer` | 标记已打款（状态转 `success`，扣减冻结余额并通知用户） | wallet.withdraws |
-| GET | `/admin/wallet/withdraws/export` | 导出提现记录（xlsx） | wallet.export |
+| GET | `/admin/wallet/withdraws/stats` | 提现统计（总量/待审/今日新增/已通过/已驳回/打款成功/打款失败） | wallet.withdraws |
+| GET | `/admin/wallet/withdraws` | 提现申请列表（分页，支持 `owner_type`/`owner_id`/`status`/`account_type`/`order_no`/`start_date`/`end_date` 筛选） | wallet.withdraws |
+| GET | `/admin/wallet/withdraws/{withdraw}` | 提现申请详情（含 `owner` 关联、收款账户脱敏展示） | wallet.withdraws |
+| POST | `/admin/wallet/withdraws/{withdraw}/approve` | 审核通过（可选 `remark`，状态转 `approved`，保持冻结待打款） | wallet.withdraws |
+| POST | `/admin/wallet/withdraws/{withdraw}/reject` | 审核驳回（必填 `reason`、可选 `remark`，自动解冻并通知用户） | wallet.withdraws |
+| POST | `/admin/wallet/withdraws/{withdraw}/transfer` | 标记已打款（可选 `remark`，状态转 `success`，扣减冻结余额并通知用户） | wallet.withdraws |
+| POST | `/admin/wallet/withdraws/{withdraw}/fail` | 标记打款失败（必填 `reason`、可选 `remark`，自动解冻并通知用户） | wallet.withdraws |
+| GET | `/admin/wallet/withdraws/export` | 导出提现申请（xlsx，阈值 2000 条同步导出） | wallet.export |
 
-> 提现状态流转：`pending` →（approve）`approved` →（transfer）`success`；`pending` →（reject）`rejected`（自动解冻）；打款失败置 `failed` 同样自动解冻。已进入终态（`success`/`rejected`）的记录不可重复操作。
+> 提现状态流转：`pending` →（approve）`approved` →（transfer）`success`；`pending` →（reject）`rejected`（自动解冻退回）；`approved` →（fail）`failed`（自动解冻退回）。已进入终态（`success`/`rejected`/`failed`）的记录不可重复操作，接口幂等返回。响应使用 `Admin\WithdrawResource`，收款账号通过 `maskedAccountInfo()` 脱敏（前 2 + `****` + 后 4）。
 
 ## 25. 充值订单（/admin/wallet/recharges）
 

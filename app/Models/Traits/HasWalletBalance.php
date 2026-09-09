@@ -9,6 +9,7 @@ namespace App\Models\Traits;
 
 use App\Models\Wallet\Recharge;
 use App\Models\Wallet\WalletTrade;
+use App\Models\Wallet\Withdraw;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
@@ -41,6 +42,14 @@ trait HasWalletBalance
     public function recharges(): MorphMany
     {
         return $this->morphMany(Recharge::class, 'owner');
+    }
+
+    /**
+     * 提现申请（作为持有者）
+     */
+    public function withdraws(): MorphMany
+    {
+        return $this->morphMany(Withdraw::class, 'owner');
     }
 
     /**

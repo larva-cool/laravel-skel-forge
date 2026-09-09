@@ -90,6 +90,7 @@ use Laravel\Scout\Searchable;
  * @property Collection<int,CoinTrade> $coins 金币交易明细
  * @property Collection<int,\App\Models\Wallet\WalletTrade> $walletTrades 钱包流水明细
  * @property Collection<int,\App\Models\Wallet\Recharge> $recharges 充值订单
+ * @property Collection<int,\App\Models\Wallet\Withdraw> $withdraws 提现申请
  * @property Collection<int,LoginHistory> $loginHistories 登录历史
  * @property Collection<int,Social> $socials 社交账号
  * @property Collection<int,IdentityVerification> $identityVerifications 实名认证记录

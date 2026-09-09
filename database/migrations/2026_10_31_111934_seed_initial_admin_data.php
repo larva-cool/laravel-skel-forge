@@ -612,6 +612,13 @@ return new class extends Migration
                         'sort' => 6,
                         'keep_alive' => true,
                         'permission' => 'wallet.withdraws',
+                        'buttons' => [
+                            ['title' => '审核通过', 'permission' => 'wallet.withdraws'],
+                            ['title' => '审核驳回', 'permission' => 'wallet.withdraws'],
+                            ['title' => '标记打款', 'permission' => 'wallet.withdraws'],
+                            ['title' => '标记失败', 'permission' => 'wallet.withdraws'],
+                            ['title' => '导出提现申请', 'permission' => 'wallet.export'],
+                        ],
                     ],
                     [
                         'key' => 'operation.recharge',

@@ -105,17 +105,18 @@
 | POST | `/api/v1/user/wallet/recharges` | 创建充值订单（返回 `order_no`，成功返回 201） | ✅ 已交付 |
 | GET | `/api/v1/user/wallet/recharges` | 我的充值订单列表（分页，可按 `pay_status` 过滤） | ✅ 已交付 |
 | GET | `/api/v1/user/wallet/recharges/{recharge}` | 充值订单详情（用于轮询到账状态） | ✅ 已交付 |
-| POST | `/api/v1/user/wallet/withdraw` | 提交提现申请（校验限额与频次，成功后冻结对应金额） | Phase 3 |
-| GET | `/api/v1/user/wallet/withdraws` | 我的提现记录列表（分页） | Phase 3 |
-| GET | `/api/v1/user/wallet/withdraws/{withdraw}` | 提现详情 | Phase 3 |
+| POST | `/api/v1/user/wallet/withdraws` | 提交提现申请（`amount`、`account_type`∈wechat/alipay/bank、`account_info:{account,real_name}`，成功返回 201，冻结对应金额） | ✅ 已交付 |
+| GET | `/api/v1/user/wallet/withdraws` | 我的提现列表（分页，可按 `status` 过滤，收款账号脱敏） | ✅ 已交付 |
+| GET | `/api/v1/user/wallet/withdraws/{withdraw}` | 提现详情（Policy 校验归属，收款账号脱敏） | ✅ 已交付 |
 
 ### 钱包接口约定
 
 - 全部接口需 Sanctum 认证，内部统一取 `auth()->user()` 作为 owner，前台无需感知多态
-- 充值下单与提现提交均通过独立 `throttle` 限流（可配 `wallet.recharge_throttle`），防止刷单
-- 越权访问他人订单返回 `403`，由 `RechargePolicy` / `WithdrawOrderPolicy` 校验
+- 充值下单走 `wallet.recharge_throttle` 限流，提现提交走 `wallet.withdraw_throttle`（默认 5 次/分钟），防止刷单
+- 越权访问他人订单返回 `403`，由 `RechargePolicy` / `WithdrawPolicy` 校验
+- 提现提交需校验：开关（`wallet.enable_withdraw`）、金额区间（`wallet.min_withdraw_amount`/`wallet.max_withdraw_amount`）、当日次数（`wallet.daily_withdraw_limit`）、不存在待审核单；余额不足返回 `422`
 - 金额字段统一以元为单位、`decimal(16,2)` 精度返回字符串，避免前端浮点精度丢失
-- 前台端不返回 `owner`、`client_ip`、`confirmed_by`、`callback_payload` 等内部字段
+- 前台提现响应使用 `Api\V1\WithdrawResource`，脱敏展示，不返回 `owner`、`client_ip`、`reviewed_by`、`remark` 等内部字段
 - 支付渠道对接已挂起，`pay_channel` 当前仅接受 `manual`，到账由管理员在后台确认
 
 ## 10. 字典公开接口

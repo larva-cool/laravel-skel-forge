@@ -181,26 +181,31 @@
 
 **索引**：`order_no` 唯一索引、`transaction_id` 唯一索引、`(owner_type, owner_id, created_at)` 复合索引、`pay_status` 索引、`expired_at` 索引。
 
-### 5.3 提现申请表 (withdraw_orders)
+### 5.3 提现申请表 (withdraws)
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
-| id | BIGINT | 主键 |
-| owner_type / owner_id | VARCHAR(64) / BIGINT | 持有者（多态） |
-| order_no | VARCHAR(64) | 提现单号（唯一，前缀 `W`） |
+| id | BIGINT | 主键（从 10000000 起） |
+| owner_type / owner_id | VARCHAR(64) / BIGINT | 持有者（多态，别名 `user`） |
+| order_no | VARCHAR(64) | 提现单号（唯一，前缀 `W` + YmdHis + 6 位随机） |
 | amount | DECIMAL(16,2) | 申请提现金额 |
-| fee | DECIMAL(16,2) | 手续费（按 `wallet.withdraw_fee_rate` 计算） |
+| fee | DECIMAL(16,2) | 手续费（按 `wallet.withdraw_fee_rate` 百分比计算，默认 0） |
 | actual_amount | DECIMAL(16,2) | 实际到账金额（amount - fee） |
-| account_type | VARCHAR(32) | 收款账户类型（wechat/alipay/bank） |
-| account_info | JSON | 收款账户信息（脱敏展示） |
-| status | VARCHAR(20) | 状态（枚举 `WithdrawStatus`） |
-| reviewed_by | BIGINT | 审核管理员 ID |
-| reviewed_at | TIMESTAMP | 审核时间 |
-| reject_reason | VARCHAR(255) | 驳回原因 |
-| transfer_at | TIMESTAMP | 打款完成时间 |
+| account_type | VARCHAR(32) | 收款账户类型（枚举 `WithdrawAccountType`：wechat/alipay/bank） |
+| account_info | JSON | 收款账户信息（账号、姓名等，响应脱敏展示） |
+| status | VARCHAR(20) | 状态（枚举 `WithdrawStatus`，默认 pending） |
+| reviewed_by | BIGINT | 审核管理员 ID（nullable） |
+| reviewed_at | TIMESTAMP | 审核时间（nullable） |
+| reject_reason | VARCHAR(255) | 驳回原因（nullable） |
+| transfer_at | TIMESTAMP | 打款完成时间（nullable） |
+| fail_reason | VARCHAR(255) | 打款失败原因（nullable） |
+| remark | VARCHAR(255) | 管理员备注（nullable） |
+| client_ip | VARCHAR(45) | 下单 IP（nullable） |
 | created_at / updated_at | TIMESTAMP | 时间戳 |
 
-**索引**：`order_no` 唯一索引、`(owner_type, owner_id)` 复合索引、`status` 索引。
+**索引**：`order_no` 唯一索引、`idx_withdraw_owner_at (owner_type, owner_id, created_at)` 复合索引、`idx_withdraw_status (status)`。
+
+**状态流转**：`pending` →（审核通过）`approved` →（打款成功）`success`；`pending` →（审核驳回）`rejected`（自动解冻）；`approved` →（打款失败）`failed`（自动解冻）。`rejected`/`success`/`failed` 为终态。
 
 ### 5.4 钱包相关枚举
 
@@ -222,12 +227,18 @@
 | 值 | 说明 |
 |----|------|
 | pending | 待审核 |
-| review | 需复审 |
 | approved | 审核通过，待打款 |
-| rejected | 已驳回（自动解冻） |
-| transferring | 打款中 |
-| success | 打款成功 |
-| failed | 打款失败（自动解冻） |
+| rejected | 已驳回（自动解冻退回） |
+| success | 打款成功（结算冻结，资金流出） |
+| failed | 打款失败（自动解冻退回） |
+
+**WithdrawAccountType（收款账户类型）**：
+
+| 值 | 说明 |
+|----|------|
+| wechat | 微信 |
+| alipay | 支付宝 |
+| bank | 银行卡 |
 
 **与现有积分/金币体系的关系**：钱包是独立的**真实货币**账本，与现有 `available_points`（积分）、`available_coins`（金币）两套虚拟资产体系**并行且互不影响**，本期不做迁移或合并。
 

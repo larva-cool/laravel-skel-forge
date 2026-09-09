@@ -138,6 +138,11 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
             $registrar->post('recharges', [\App\Http\Controllers\Api\V1\Wallet\RechargeController::class, 'store'])->name('recharges.store'); // 创建充值订单
             $registrar->get('recharges', [\App\Http\Controllers\Api\V1\Wallet\RechargeController::class, 'index'])->name('recharges.index'); // 我的充值订单
             $registrar->get('recharges/{recharge}', [\App\Http\Controllers\Api\V1\Wallet\RechargeController::class, 'show'])->name('recharges.show'); // 充值订单详情
+
+            // 提现
+            $registrar->post('withdraws', [\App\Http\Controllers\Api\V1\Wallet\WithdrawController::class, 'store'])->name('withdraws.store'); // 提交提现申请
+            $registrar->get('withdraws', [\App\Http\Controllers\Api\V1\Wallet\WithdrawController::class, 'index'])->name('withdraws.index'); // 我的提现列表
+            $registrar->get('withdraws/{withdraw}', [\App\Http\Controllers\Api\V1\Wallet\WithdrawController::class, 'show'])->name('withdraws.show'); // 提现详情
         });
 
         /**

@@ -12,4 +12,5 @@ return [
     'comment' => \App\Models\Content\Comment::class,
     'wallet_trade' => \App\Models\Wallet\WalletTrade::class,
     'recharge' => \App\Models\Wallet\Recharge::class,
+    'withdraw' => \App\Models\Wallet\Withdraw::class,
 ];
