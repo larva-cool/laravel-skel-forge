@@ -42,7 +42,9 @@ class UserController extends Controller
      */
     public function baseProfile(Request $request): UserResource
     {
-        return new UserResource($request->user());
+        $user = $request->user();
+        $user->load('inviteCode');
+        return new UserResource($user);
     }
 
     /**
