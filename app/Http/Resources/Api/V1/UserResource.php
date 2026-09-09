@@ -41,7 +41,7 @@ class UserResource extends JsonResource
             'available_coins' => $this->available_coins,
             'gender' => $this->profile->gender,
             'birthday' => $this->profile->birthday?->toDateString(),
-            'invite_code' => $this->inviteCode->code,
+            'invite_code' => $this->getInviteCode(),
             'province_id' => $this->profile->province_id,
             'city_id' => $this->profile->city_id,
             'district_id' => $this->profile->district_id,

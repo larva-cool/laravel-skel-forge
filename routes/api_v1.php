@@ -85,7 +85,6 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
      * 邀请
      */
     Route::group(['prefix' => 'invite', 'as' => 'invite.'], function (Registrar $registrar) {
-        $registrar->get('my-code', [\App\Http\Controllers\Api\V1\InviteController::class, 'myCode'])->name('my_code'); // 我的邀请码
         $registrar->get('records', [\App\Http\Controllers\Api\V1\InviteController::class, 'records'])->name('records'); // 我的邀请记录
         $registrar->get('stats', [\App\Http\Controllers\Api\V1\InviteController::class, 'stats'])->name('stats'); // 邀请统计
     });
@@ -94,7 +93,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
      * Banner / 轮播图（公开，无需认证）
      */
     Route::get('banners', [\App\Http\Controllers\Api\V1\BannerController::class, 'index'])->name('banners.index');
-    
+
     /**
      * 公告（公开，无需认证）
      */

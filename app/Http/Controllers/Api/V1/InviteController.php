@@ -12,7 +12,6 @@ use App\Http\Resources\Api\V1\InviteRecordResource;
 use App\Models\Invite\InviteRecord;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * 邀请管理（前台）
@@ -30,19 +29,6 @@ class InviteController extends Controller
     }
 
     /**
-     * 获取我的邀请码
-     */
-    public function myCode(Request $request): array
-    {
-        /** @var \App\Models\User $user */
-        $user = $request->user();
-
-        return [
-            'code' => $user->getInviteCode(),
-        ];
-    }
-
-    /**
      * 我的邀请记录（分页）
      */
     public function records(Request $request): AnonymousResourceCollection
@@ -50,7 +36,8 @@ class InviteController extends Controller
         /** @var \App\Models\User $user */
         $user = $request->user();
 
-        $records = InviteRecord::where('inviter_id', $user->getKey())
+        $records = InviteRecord::query()
+            ->where('inviter_id', $user->getKey())
             ->where('inviter_type', $user->getMorphClass())
             ->with('invitee')
             ->orderByDesc('id')
@@ -67,11 +54,13 @@ class InviteController extends Controller
         /** @var \App\Models\User $user */
         $user = $request->user();
 
-        $total = InviteRecord::where('inviter_id', $user->getKey())
+        $total = InviteRecord::query()
+            ->where('inviter_id', $user->getKey())
             ->where('inviter_type', $user->getMorphClass())
             ->count();
 
-        $hasInviter = InviteRecord::where('invitee_id', $user->getKey())
+        $hasInviter = InviteRecord::query()
+            ->where('invitee_id', $user->getKey())
             ->where('invitee_type', $user->getMorphClass())
             ->exists();
 
