@@ -68,6 +68,7 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 | 用户状态管理 | 启用、禁用、冻结用户 |
 | VIP会员系统 | 支持VIP会员延期功能 |
 | 积分/金币系统 | 用户积分和金币流水管理（调整余额、查询流水） |
+| 钱包系统 | 真实货币余额管理（余额查询、流水明细、充值、提现、冻结/解冻），记录层多态设计支持未来扩展至其他主体 |
 | 第三方绑定 | 查询用户社交账号绑定记录 |
 | 登录历史 | 记录用户登录历史 |
 
@@ -117,6 +118,9 @@ Laravel Skel Forge 是一个基于 Laravel 13.x 的企业级 API 骨架项目，
 | 邮件验证码记录 | 查看邮件验证码发送记录（只读） |
 | 上传服务 | 文件/图片/视频/APK 上传接口，生成直传 Token（兼容 S3 协议云存储） |
 | 通知管理 | 站内通知列表、未读数、标记已读、批量已读、清理已读 |
+| 钱包管理 | 钱包流水列表（全局，可按持有者/类型/时间筛选）、流水详情、后台调账（充正/扣减）、钱包统计（总余额/总充值/总提现） |
+| 提现审核 | 提现申请列表与统计、提现详情（含脱敏收款账户）、审核通过/驳回（驳回自动解冻）、标记已打款、导出提现记录 |
+| 充值订单 | 充值订单列表（按支付状态/渠道/时间筛选）、订单详情、超时订单自动关闭 |
 
 #### 3.3.3 公共选项接口
 | 功能 | 说明 |
@@ -270,9 +274,10 @@ laravel-skel-forge/
 │   │   ├── App/             # 应用版本模型（AppRelease、AppVersion）
 │   │   ├── Coin/            # 金币模型（CoinTrade）
 │   │   ├── Point/           # 积分模型（PointRecord、PointTrade）
+│   │   ├── Wallet/          # 钱包模型（WalletTrade、RechargeOrder、WithdrawOrder，均为多态 owner）
 │   │   ├── System/          # 系统模型（Area、Attachment、AuditLog、Dict、DictItem、Setting、Role、Permission、Notification、MailCode、PhoneCode、ScheduleLog 等）
 │   │   ├── User/            # 用户扩展模型（UserExtra、UserProfile、UserStat）
-│   │   ├── Traits/          # 模型 Trait（DateTimeFormatter、HasSettingsProperty、HasUser）
+│   │   ├── Traits/          # 模型 Trait（DateTimeFormatter、HasSettingsProperty、HasUser、HasWalletBalance）
 │   │   ├── Model.php        # 模型基类
 │   │   └── User.php         # 前台用户模型
 │   ├── Observers/           # 模型观察者（UserObserver）
@@ -281,7 +286,7 @@ laravel-skel-forge/
 │   ├── Rules/               # 自定义验证规则（PhoneRule、MailCaptchaRule 等）
 │   ├── Services/            # 业务服务（AttachmentService、SmsCaptchaService、WechatService 等）
 │   ├── Sms/                 # 短信消息类（VerifyCodeMessage）
-│   └── Support/             # 辅助类（CoinHelper、PointHelper、UserHelper）
+│   └── Support/             # 辅助类（CoinHelper、PointHelper、UserHelper、WalletHelper）
 ├── bootstrap/
 │   └── helpers.php          # 全局辅助函数
 ├── config/                  # 配置文件
@@ -308,7 +313,7 @@ laravel-skel-forge/
 #### 4.3.1 DDD 分层
 项目采用领域驱动设计思想，按业务领域组织代码：
 
-- **Models Layer**：数据模型和业务逻辑，按领域分子目录（Admin/System/User/Coin/Point）
+- **Models Layer**：数据模型和业务逻辑，按领域分子目录（Admin/System/User/Coin/Point/Wallet）
 - **Services Layer**：业务服务封装，处理跨模型事务逻辑（如附件台账+Storage一致性）
 - **Controllers Layer**：HTTP 请求编排，调用 Service 和 Resource
 - **Resources Layer**：API 响应格式化
@@ -653,7 +658,111 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 - 计数列由模型事件自动维护，接入前须确认目标表已有对应字段
 - **评论楼层回复约定**：当 `source_type = 'comment'` 时表示本条为对另一条评论的回复，`source_id` 即父评论 ID；顶级评论的 `source_type` 指向业务实体（如 `user`、`post`）。后台判定回复关系与查询回复链均基于此约定，无需额外 `parent_id` 字段
 
-#### 5.1.18 其他核心表
+#### 5.1.18 钱包相关表（真实货币）
+
+> 设计原则：**余额热数据落在持有者主表字段上（查询零 Join），记录层全部多态**。
+> 未来其他模型（如 `admin_users`、未来的 `merchants`）需要支持钱包时，只需在其表追加 `balance` / `frozen_balance` 两个字段并 `use HasWalletBalance`，记录层无需任何改动。
+
+**持有者表新增字段（本期落在 `users` 表）**
+
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| balance | DECIMAL(16,2) | 0.00 | 可用余额（元） |
+| frozen_balance | DECIMAL(16,2) | 0.00 | 冻结余额（元，下单预授权锁定） |
+
+**钱包流水表 (wallet_trades)**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | BIGINT | 主键（从 10000000 起） |
+| owner_type | VARCHAR(64) | 持有者类型（多态，取 `config/morph_maps.php` 别名，如 `user`） |
+| owner_id | BIGINT | 持有者 ID |
+| amount | DECIMAL(16,2) | 本次变动金额（正增负减） |
+| before_balance | DECIMAL(16,2) | 变动前可用余额快照 |
+| after_balance | DECIMAL(16,2) | 变动后可用余额快照 |
+| before_frozen | DECIMAL(16,2) | 变动前冻结余额快照 |
+| after_frozen | DECIMAL(16,2) | 变动后冻结余额快照 |
+| type | VARCHAR(32) | 交易类型（枚举 `WalletTradeType`） |
+| source_type | VARCHAR(64) | 业务来源类型（多态，如订单、提现单） |
+| source_id | BIGINT | 业务来源 ID |
+| status | VARCHAR(20) | 流水状态（pending/success/failed） |
+| description | VARCHAR(255) | 交易描述 |
+| created_at | TIMESTAMP | 交易时间 |
+
+索引：`(owner_type, owner_id, created_at)` 复合索引、`(source_type, source_id)` 复合索引、`type` 索引。
+
+> 冻结/解冻操作只变动冻结余额而不动可用余额，因此必须同时保留 `before_frozen` / `after_frozen` 快照，否则无法完整审计对账。
+
+**充值订单表 (recharge_orders)**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | BIGINT | 主键 |
+| owner_type / owner_id | VARCHAR(64) / BIGINT | 持有者（多态） |
+| order_no | VARCHAR(64) | 订单号（唯一，前缀 `R` + 日期 + 随机串） |
+| amount | DECIMAL(16,2) | 充值金额 |
+| bonus_amount | DECIMAL(16,2) | 赠送金额（按 `wallet.recharge_bonus_rate` 计算） |
+| pay_channel | VARCHAR(32) | 支付渠道（wechat/alipay/apple） |
+| pay_status | VARCHAR(20) | 支付状态（pending/success/failed/expired） |
+| paid_at | TIMESTAMP | 支付完成时间 |
+| expired_at | TIMESTAMP | 订单过期时间（默认创建后 30 分钟） |
+| created_at / updated_at | TIMESTAMP | 时间戳 |
+
+索引：`order_no` 唯一索引、`(owner_type, owner_id)` 复合索引、`pay_status` 索引。
+
+**提现申请表 (withdraw_orders)**
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | BIGINT | 主键 |
+| owner_type / owner_id | VARCHAR(64) / BIGINT | 持有者（多态） |
+| order_no | VARCHAR(64) | 提现单号（唯一，前缀 `W`） |
+| amount | DECIMAL(16,2) | 申请提现金额 |
+| fee | DECIMAL(16,2) | 手续费（按 `wallet.withdraw_fee_rate` 计算） |
+| actual_amount | DECIMAL(16,2) | 实际到账金额（amount - fee） |
+| account_type | VARCHAR(32) | 收款账户类型（wechat/alipay/bank） |
+| account_info | JSON | 收款账户信息（脱敏展示） |
+| status | VARCHAR(20) | 状态（枚举 `WithdrawStatus`） |
+| reviewed_by | BIGINT | 审核管理员 ID |
+| reviewed_at | TIMESTAMP | 审核时间 |
+| reject_reason | VARCHAR(255) | 驳回原因 |
+| transfer_at | TIMESTAMP | 打款完成时间 |
+| created_at / updated_at | TIMESTAMP | 时间戳 |
+
+索引：`order_no` 唯一索引、`(owner_type, owner_id)` 复合索引、`status` 索引。
+
+**枚举定义**
+
+`WalletTradeType`（钱包交易类型）：
+
+| 值 | 说明 |
+|----|------|
+| recharge | 充值 |
+| withdraw | 提现 |
+| freeze | 冻结 |
+| unfreeze | 解冻 |
+| payment | 消费 |
+| refund | 退款 |
+| admin_recharge | 后台充正 |
+| admin_deduct | 后台扣减 |
+
+`WithdrawStatus`（提现状态）：
+
+| 值 | 说明 |
+|----|------|
+| pending | 待审核 |
+| review | 需复审 |
+| approved | 审核通过，待打款 |
+| rejected | 已驳回（自动解冻） |
+| transferring | 打款中 |
+| success | 打款成功 |
+| failed | 打款失败（自动解冻） |
+
+**与现有积分/金币体系的关系**
+
+钱包是独立的**真实货币**账本，与现有 `available_points`（积分）、`available_coins`（金币）两套虚拟资产体系**并行且互不影响**，本期不做迁移或合并。
+
+#### 5.1.19 其他核心表
 | 表名 | 说明 |
 |------|------|
 | personal_access_tokens | Sanctum 个人访问令牌 |
@@ -663,6 +772,9 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | coin_trades | 金币流水记录 |
 | point_records | 积分记录 |
 | point_trades | 积分流水记录 |
+| wallet_trades | 钱包流水记录（真实货币，多态 owner） |
+| recharge_orders | 充值订单（多态 owner） |
+| withdraw_orders | 提现申请（多态 owner） |
 | dicts | 数据字典类型 |
 | dict_items | 字典数据项 |
 | likes | 点赞记录（多态） |
@@ -1001,12 +1113,43 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/schedule-logs` | 调度日志列表（分页，支持任务名/状态/时间范围筛选） | schedule-logs.index |
 | GET | `/admin/schedule-logs/{id}` | 调度日志详情 | schedule-logs.index |
 
-#### 6.3.22 数据概览（/admin/dashboard）
+#### 6.3.22 钱包管理（/admin/wallet）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/wallet/stats` | 钱包统计（总余额、总冻结、累计充值、累计提现、待审提现数） | wallet.index |
+| GET | `/admin/wallet/trades` | 全局钱包流水列表（分页，支持 `owner_type`/`owner_id`/`type`/`status`/关键词/时间范围筛选） | wallet.index |
+| GET | `/admin/wallet/trades/{trade}` | 钱包流水详情（含持有者摘要、业务来源摘要、前后余额快照） | wallet.index |
+| GET | `/admin/wallet/trades/export` | 导出钱包流水（xlsx，支持同步下载/异步入队双模式） | wallet.export |
+| GET | `/admin/users/{user}/wallet` | 指定用户钱包概览（余额、冻结余额、累计收支） | users.index |
+| GET | `/admin/users/{user}/wallet-trades` | 指定用户钱包流水（分页） | users.index |
+| PUT | `/admin/users/{user}/adjust-wallet` | 后台调整用户余额（正数充正，负数扣减，必填 `description`） | wallet.adjust |
+
+#### 6.3.23 提现审核（/admin/wallet/withdraws）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/wallet/withdraws/stats` | 提现统计（总量/待审/今日新增/已打款/已驳回） | wallet.withdraws |
+| GET | `/admin/wallet/withdraws` | 提现申请列表（分页，支持 `owner_type`/`owner_id`/`status`/`account_type`/时间范围筛选） | wallet.withdraws |
+| GET | `/admin/wallet/withdraws/{withdraw}` | 提现申请详情（收款账户信息脱敏展示） | wallet.withdraws |
+| POST | `/admin/wallet/withdraws/{withdraw}/approve` | 审核通过（状态转 `approved`，保持冻结待打款） | wallet.withdraws |
+| POST | `/admin/wallet/withdraws/{withdraw}/reject` | 审核驳回（必填 `reason`，自动解冻并通知用户） | wallet.withdraws |
+| POST | `/admin/wallet/withdraws/{withdraw}/transfer` | 标记已打款（状态转 `success`，扣减冻结余额并通知用户） | wallet.withdraws |
+| GET | `/admin/wallet/withdraws/export` | 导出提现记录（xlsx） | wallet.export |
+
+> 提现状态流转：`pending` →（approve）`approved` →（transfer）`success`；`pending` →（reject）`rejected`（自动解冻）；打款失败置 `failed` 同样自动解冻。已进入终态（`success`/`rejected`）的记录不可重复操作，参照 `IdentityVerificationController::authorizeAction()` 范式返回 422。
+
+#### 6.3.24 充值订单（/admin/wallet/recharge-orders）
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/admin/wallet/recharge-orders` | 充值订单列表（分页，支持 `owner_type`/`owner_id`/`pay_status`/`pay_channel`/时间范围筛选） | wallet.orders |
+| GET | `/admin/wallet/recharge-orders/{order}` | 充值订单详情 | wallet.orders |
+| GET | `/admin/wallet/recharge-orders/export` | 导出充值订单（xlsx） | wallet.export |
+
+#### 6.3.25 数据概览（/admin/dashboard）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | GET | `/admin/dashboard/stats` | 仪表盘统计数据 | 是 |
 
-#### 6.3.23 监控接口（/admin/monitor，读取 Pulse 数据）
+#### 6.3.26 监控接口（/admin/monitor，读取 Pulse 数据）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/monitor/servers` | 服务器性能指标 |
@@ -1021,7 +1164,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | GET | `/admin/monitor/slow-outgoing-requests` | 慢外部请求 |
 | GET | `/admin/monitor/usage` | 使用情况 |
 
-#### 6.3.24 调试接口（/admin/debug，仅 local 环境，读取 Telescope）
+#### 6.3.27 调试接口（/admin/debug，仅 local 环境，读取 Telescope）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/debug/tags` | 获取标签列表 |
@@ -1033,7 +1176,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | PUT | `/admin/debug/entries/{id}/resolve` | 标记已解决 |
 | DELETE | `/admin/debug/entries` | 删除条目 |
 
-#### 6.3.25 队列管理（/admin/queue，代理 Horizon 数据）
+#### 6.3.28 队列管理（/admin/queue，代理 Horizon 数据）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/admin/queue/stats` | 队列总体统计 |
@@ -1058,7 +1201,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | POST | `/admin/queue/jobs/failed/{id}/retry` | 重试失败任务 |
 | GET | `/admin/queue/jobs/{id}` | 任务详情 |
 
-#### 6.3.26 AI 聊天（/admin/chat，SSE 流式）
+#### 6.3.29 AI 聊天（/admin/chat，SSE 流式）
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
 | GET | `/admin/chat/conversations` | 会话列表 | 是 |
@@ -1120,6 +1263,35 @@ SSE 流式响应通过 `text/event-stream` 逐行推送以下事件类型：
 - 越权删除他人记录返回 `403`，由 `LikePolicy` / `CollectionPolicy` / `CommentPolicy` 校验
 - 响应中的 `user_id` 通过模型 `#[Hidden]` 隐藏
 - 列表接口使用 Laravel 标准分页，支持 `page` / `per_page`（1-100，默认 15）
+
+#### 6.4.2 钱包接口（/api/v1/wallet）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/wallet` | 我的钱包概览（可用余额、冻结余额、累计收入、累计支出） |
+| GET | `/api/v1/wallet/trades` | 我的钱包流水（分页，可按 `type`/时间范围过滤） |
+| POST | `/api/v1/wallet/recharge` | 创建充值订单（返回 `order_no` 与支付参数，供客户端调起支付 SDK） |
+| GET | `/api/v1/wallet/recharge-orders` | 我的充值订单列表（分页） |
+| GET | `/api/v1/wallet/recharge-orders/{order}` | 充值订单详情（用于轮询支付状态） |
+| POST | `/api/v1/wallet/withdraw` | 提交提现申请（校验限额与频次，成功后冻结对应金额） |
+| GET | `/api/v1/wallet/withdraws` | 我的提现记录列表（分页） |
+| GET | `/api/v1/wallet/withdraws/{withdraw}` | 提现详情 |
+
+**约定说明**
+
+- 全部接口需 Sanctum 认证，内部统一取 `auth()->user()` 作为 owner，前台无需感知多态
+- 提现提交需通过独立 `throttle` 限流，防止刷单
+- 越权访问他人订单返回 `403`，由 `RechargeOrderPolicy` / `WithdrawOrderPolicy` 校验
+- 金额字段统一以元为单位、`decimal(16,2)` 精度返回字符串，避免前端浮点精度丢失
+
+#### 6.4.3 支付回调（/callback）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/callback/pay/wechat` | 微信支付异步回调（验签后置订单成功并入账） |
+| POST | `/callback/pay/alipay` | 支付宝异步回调（验签后置订单成功并入账） |
+
+回调接口豁免 CSRF 与认证中间件，必须完成渠道验签；处理逻辑幂等（同一 `order_no` 重复回调只入账一次）。
 
 ## 7. 附件管理技术方案
 
@@ -1202,16 +1374,298 @@ tests/Feature/Admin/
 | upload.temporary_url_minutes | 10 | 临时签名 URL 有效期（分钟） |
 | upload.prune_orphan_days | 0 | 孤儿附件自动清理天数，0 表示不清理 |
 
-## 8. 非功能性需求
+## 8. 钱包技术方案
 
-### 8.1 性能要求
+### 8.1 设计原则
+
+- **余额热数据落在持有者主表，记录层全部多态**：余额是最高频读取的字段，直接作为 `users` 表列存储可做到查询零 Join；而流水、充值单、提现单三张记录表统一使用 `owner_type` + `owner_id` 多态关联，业务逻辑不与 `User` 耦合。
+- **可扩展但不过度设计**：未来其他主体（如 `admin_users` 平台账户、未来的 `merchants` 商户）需要钱包时，只需在其表追加 `balance` / `frozen_balance` 两个字段并 `use HasWalletBalance`，记录层与 `WalletHelper` 无需改动。本期不引入独立 `wallets` 表和多币种，避免为假想需求付出复杂度。
+- **增量更新而非流水汇总**：与现有 `CoinHelper`（每次 `SUM` 全表重算）不同，钱包余额采用事务内行锁 + 增量更新（`balance + amount`），流水表保存前后余额快照用于对账。真实货币场景对一致性与性能要求都更高，`SUM` 全表在数据量增长后不可接受。
+- **冻结与可用余额分离**：`balance` 为可用余额，`frozen_balance` 为冻结余额，两者互不重叠。下单冻结即 `balance -= n; frozen_balance += n`，成交扣款即 `frozen_balance -= n`，取消解冻即反向操作。
+- **金额精度**：统一 `decimal(16,2)`，以元为单位；PHP 侧用字符串/`decimal` cast 传递，禁止使用 `float` 参与金额运算。
+- **与虚拟资产完全隔离**：钱包是真实货币账本，与 `available_points`（积分）、`available_coins`（金币）并行独立，不做迁移合并。
+
+### 8.2 代码结构
+
+```
+app/
+├── Enums/
+│   ├── WalletTradeType.php             # 钱包交易类型枚举（实现 HasLabel）
+│   ├── WalletTradeStatus.php           # 流水状态枚举（pending/success/failed）
+│   ├── WithdrawStatus.php              # 提现状态枚举（实现 HasLabel）
+│   ├── PayChannel.php                  # 支付渠道枚举（wechat/alipay/apple）
+│   └── WithdrawAccountType.php         # 收款账户类型枚举（wechat/alipay/bank）
+├── Exceptions/
+│   ├── InsufficientBalanceException.php    # 余额不足
+│   └── InsufficientFrozenBalanceException.php # 冻结余额不足
+├── Models/
+│   ├── Traits/
+│   │   └── HasWalletBalance.php        # 钱包能力 trait（多态关系 + 余额判定）
+│   └── Wallet/
+│       ├── WalletTrade.php             # 钱包流水（morphTo owner + morphTo source）
+│       ├── RechargeOrder.php           # 充值订单（morphTo owner）
+│       └── WithdrawOrder.php           # 提现申请（morphTo owner）
+├── Support/
+│   └── WalletHelper.php                # 余额引擎（incr/decr/freeze/unfreeze）
+├── Services/
+│   ├── RechargeService.php             # 充值下单与回调入账编排
+│   └── WithdrawService.php             # 提现申请与审核流转编排
+├── Events/Wallet/
+│   ├── BalanceChanged.php              # 余额变动事件
+│   ├── RechargeSucceeded.php           # 充值成功事件
+│   ├── WithdrawApproved.php            # 提现审核通过事件
+│   └── WithdrawRejected.php            # 提现驳回事件
+├── Notifications/Wallet/
+│   ├── RechargeSucceededNotification.php
+│   ├── WithdrawApprovedNotification.php
+│   ├── WithdrawRejectedNotification.php
+│   └── WithdrawTransferredNotification.php
+├── Jobs/Wallet/
+│   └── CloseExpiredRechargeOrdersJob.php   # 关闭超时未支付订单
+├── Policies/
+│   ├── RechargeOrderPolicy.php
+│   └── WithdrawOrderPolicy.php
+├── Exports/Admin/
+│   ├── WalletTradeExport.php
+│   ├── WithdrawOrderExport.php
+│   └── RechargeOrderExport.php
+├── Http/
+│   ├── Controllers/
+│   │   ├── Admin/
+│   │   │   ├── WalletController.php            # 流水列表/详情/统计/调账
+│   │   │   ├── WithdrawOrderController.php     # 提现审核
+│   │   │   └── RechargeOrderController.php     # 充值订单查看
+│   │   ├── Api/V1/User/
+│   │   │   └── WalletController.php            # 前台钱包概览/流水/充值/提现
+│   │   └── PayCallbackController.php           # 支付渠道异步回调
+│   ├── Requests/
+│   │   ├── Admin/Wallet/
+│   │   │   ├── WalletTradeIndexRequest.php
+│   │   │   ├── WalletAdjustRequest.php
+│   │   │   ├── WithdrawIndexRequest.php
+│   │   │   └── WithdrawRejectRequest.php
+│   │   └── Api/V1/Wallet/
+│   │       ├── CreateRechargeRequest.php
+│   │       └── CreateWithdrawRequest.php
+│   └── Resources/
+│       ├── Admin/
+│       │   ├── WalletTradeResource.php
+│       │   ├── WalletStatResource.php
+│       │   ├── WithdrawOrderResource.php
+│       │   └── RechargeOrderResource.php
+│       └── Api/V1/
+│           ├── WalletResource.php
+│           ├── WalletTradeResource.php
+│           ├── WithdrawOrderResource.php
+│           └── RechargeOrderResource.php
+database/
+├── migrations/
+│   ├── xxxx_add_balance_to_users_table.php     # users 表加 balance/frozen_balance
+│   ├── xxxx_create_wallet_trades_table.php
+│   ├── xxxx_create_recharge_orders_table.php
+│   └── xxxx_create_withdraw_orders_table.php
+└── factories/Wallet/
+    ├── WalletTradeFactory.php
+    ├── RechargeOrderFactory.php
+    └── WithdrawOrderFactory.php
+tests/Feature/
+├── Admin/
+│   ├── WalletControllerTest.php
+│   ├── WithdrawOrderControllerTest.php
+│   └── RechargeOrderControllerTest.php
+└── Api/V1/
+    └── WalletControllerTest.php
+```
+
+### 8.3 HasWalletBalance Trait
+
+任何主表含 `balance` / `frozen_balance` 两列的模型 `use HasWalletBalance` 即获得完整钱包能力：
+
+| 方法 | 职责 |
+|------|------|
+| `walletTrades(): MorphMany` | 钱包流水（作为 owner） |
+| `rechargeOrders(): MorphMany` | 充值订单（作为 owner） |
+| `withdrawOrders(): MorphMany` | 提现申请（作为 owner） |
+| `hasBalance(float $amount): bool` | 判定可用余额是否充足 |
+| `totalBalance(): float` | 总资产（可用 + 冻结） |
+
+本期仅 `User` 接入。
+
+### 8.4 WalletHelper 关键方法
+
+| 方法 | 职责 | 余额变动 |
+|------|------|---------|
+| `incr($owner, $amount, $source, $type, $desc)` | 增加可用余额（充值到账、退款、后台充正） | `balance += n` |
+| `decr($owner, $amount, $source, $type, $desc)` | 扣减可用余额（直接消费、后台扣减） | `balance -= n` |
+| `freeze($owner, $amount, $source, $desc)` | 冻结（下单预授权、提现申请） | `balance -= n; frozen_balance += n` |
+| `unfreeze($owner, $amount, $source, $desc)` | 解冻（订单取消、提现驳回） | `frozen_balance -= n; balance += n` |
+| `settleFrozen($owner, $amount, $source, $type, $desc)` | 结算冻结（订单成交、提现打款成功） | `frozen_balance -= n` |
+| `getBalance($owner): float` | 读取可用余额 | — |
+| `getFrozenBalance($owner): float` | 读取冻结余额 | — |
+
+**并发安全实现要点**：
+
+- 所有写方法包裹在 `DB::transaction()` 中，进入事务后先对持有者主表行执行 `lockForUpdate()` 取最新余额
+- 校验余额充足性使用锁内读到的值，不使用传入模型的过期属性
+- 余额更新使用增量表达式（`increment` / `decrement`）而非先读后写的赋值，避免丢失更新
+- 流水记录写入 `before_balance` / `after_balance` / `before_frozen` / `after_frozen` 四个快照字段，供财务对账与差异排查
+- 余额不足抛 `InsufficientBalanceException`，控制器层捕获后 `abort(422, ...)`，与现有 `InsufficientCoinsException` 处理方式一致
+
+### 8.5 充值链路
+
+```
+POST /api/v1/wallet/recharge
+  → CreateRechargeRequest 校验金额区间
+  → RechargeService::create()
+      → 计算赠送金额（wallet.recharge_bonus_rate）
+      → 生成 order_no（R + 日期 + 随机串）
+      → 创建 RechargeOrder(pay_status=pending, expired_at=now+30min)
+      → 调用支付渠道预下单，返回客户端支付参数
+
+POST /callback/pay/{channel}
+  → PayCallbackController 完成渠道验签
+  → RechargeService::handleCallback()
+      → 事务内按 order_no 加锁查单，已 success 直接返回（幂等）
+      → 置 pay_status=success、paid_at
+      → WalletHelper::incr() 入账（amount + bonus_amount）
+      → 派发 RechargeSucceeded 事件 → 队列发站内信
+```
+
+超时未支付订单由 `CloseExpiredRechargeOrdersJob` 定时置为 `expired`，注册到 `routes/console.php`。
+
+### 8.6 提现链路
+
+```
+POST /api/v1/wallet/withdraw
+  → CreateWithdrawRequest 校验金额、限额、当日次数
+  → WithdrawService::submit()
+      → 事务内校验可用余额
+      → 计算手续费与实际到账金额
+      → WalletHelper::freeze() 冻结申请金额
+      → 创建 WithdrawOrder(status=pending)
+
+POST /admin/wallet/withdraws/{id}/approve
+  → WithdrawService::approve()
+      → 校验当前状态非终态（参照 IdentityVerificationController::authorizeAction）
+      → 置 status=approved、reviewed_by、reviewed_at
+      → 派发 WithdrawApproved 事件 → 通知用户
+
+POST /admin/wallet/withdraws/{id}/reject
+  → WithdrawService::reject()
+      → 置 status=rejected、reject_reason
+      → WalletHelper::unfreeze() 解冻退回可用余额
+      → 派发 WithdrawRejected 事件 → 通知用户
+
+POST /admin/wallet/withdraws/{id}/transfer
+  → WithdrawService::markTransferred()
+      → 置 status=success、transfer_at
+      → WalletHelper::settleFrozen() 扣减冻结余额（资金真正流出）
+      → 通知用户到账
+```
+
+打款失败置 `failed` 并同样执行 `unfreeze()` 退回余额。
+
+### 8.7 权限与菜单
+
+**新增权限**：
+
+| 权限标识 | 说明 |
+|---------|------|
+| wallet.index | 查看钱包流水与统计 |
+| wallet.withdraws | 提现审核管理（列表/详情/审核/打款） |
+| wallet.orders | 充值订单查看 |
+| wallet.adjust | 后台调整余额（高风险操作） |
+| wallet.export | 导出钱包流水/提现记录/充值订单 |
+
+**新增菜单**（挂在「运营管理」目录下，通过编辑 `2026_10_31_111934_seed_initial_admin_data.php` 迁移追加）：
+
+| 菜单 key | path | component | title | permission |
+|----------|------|-----------|-------|------------|
+| operation.wallet | wallet | /operation/wallet | 钱包流水 | wallet.index |
+| operation.withdraw | withdraw | /operation/withdraw | 提现审核 | wallet.withdraws |
+| operation.recharge | recharge | /operation/recharge | 充值订单 | wallet.orders |
+
+按钮权限：钱包流水页挂「调账」（`wallet.adjust`）、「导出」（`wallet.export`）；提现审核页挂「审核」（`wallet.withdraws`）、「导出」（`wallet.export`）。
+
+`wallet.adjust` 属高风险操作，后续接入 PRD 14.2.5「敏感操作二次验证」时需纳入覆盖范围。
+
+### 8.8 配置项
+
+新增 `wallet.*` 分组系统设置（写入 settings 表种子）：
+
+| 配置键 | 默认值 | 类型 | 说明 |
+|--------|--------|------|------|
+| wallet.enable_recharge | true | bool | 是否开放充值 |
+| wallet.enable_withdraw | true | bool | 是否开放提现 |
+| wallet.min_recharge_amount | 1 | int | 单笔最低充值金额（元） |
+| wallet.max_recharge_amount | 50000 | int | 单笔最高充值金额（元） |
+| wallet.recharge_bonus_rate | 0 | float | 充值赠送比例（%） |
+| wallet.recharge_order_expire_minutes | 30 | int | 充值订单超时时长（分钟） |
+| wallet.min_withdraw_amount | 100 | int | 单笔最低提现金额（元） |
+| wallet.max_withdraw_amount | 50000 | int | 单笔最高提现金额（元） |
+| wallet.withdraw_fee_rate | 0 | float | 提现手续费率（%） |
+| wallet.daily_withdraw_limit | 3 | int | 每日提现申请次数上限 |
+| wallet.withdraw_throttle | 3,1 | string | 提现接口限流（次数,分钟） |
+
+### 8.9 多态别名
+
+`config/morph_maps.php` 新增：
+
+```php
+'wallet_trade'   => \App\Models\Wallet\WalletTrade::class,
+'recharge_order' => \App\Models\Wallet\RechargeOrder::class,
+'withdraw_order' => \App\Models\Wallet\WithdrawOrder::class,
+```
+
+`owner_type` 直接复用已注册的 `user` / `admin` 别名，无需额外注册。
+
+### 8.10 前端落地清单（laravel-skel-admin）
+
+| 文件 | 说明 |
+|------|------|
+| `src/api/wallet-manage.ts` | 钱包流水、提现审核、充值订单全部 API 函数 |
+| `src/types/api/api.d.ts` | 新增 `Api.WalletManage` 命名空间类型定义 |
+| `src/views/operation/wallet/index.vue` | 钱包流水列表（统计卡片 + 表格） |
+| `src/views/operation/wallet/modules/wallet-search.vue` | 流水搜索栏 |
+| `src/views/operation/wallet/modules/wallet-trade-detail-dialog.vue` | 流水详情弹窗（含前后余额快照） |
+| `src/views/operation/wallet/modules/wallet-adjust-dialog.vue` | 后台调账弹窗 |
+| `src/views/operation/withdraw/index.vue` | 提现审核列表 |
+| `src/views/operation/withdraw/modules/withdraw-search.vue` | 提现搜索栏 |
+| `src/views/operation/withdraw/modules/withdraw-stats.vue` | 提现统计卡片 |
+| `src/views/operation/withdraw/modules/withdraw-detail-drawer.vue` | 提现详情抽屉 |
+| `src/views/operation/withdraw/modules/withdraw-reject-dialog.vue` | 驳回弹窗 |
+| `src/views/operation/recharge/index.vue` | 充值订单列表 |
+| `src/views/operation/recharge/modules/recharge-search.vue` | 充值订单搜索栏 |
+| `src/views/operation/recharge/modules/recharge-detail-dialog.vue` | 充值订单详情弹窗 |
+| `src/views/user/list/modules/user-detail-dialog.vue` | 现有文件追加「钱包」Tab（余额 + 流水 + 导出） |
+
+页面路由由后端菜单动态注册，前端无需手写路由配置。
+
+### 8.11 实施阶段
+
+| 阶段 | 内容 | 交付物 |
+|------|------|--------|
+| **Phase 1 基础账本** | `users` 表加字段；`wallet_trades` 表；`WalletTradeType` / `WalletTradeStatus` 枚举；`HasWalletBalance` trait；`WalletHelper` 四个核心方法 + 结算方法；后台流水列表/详情/统计/调账；用户详情弹窗钱包 Tab；前台钱包概览与流水接口；PHPUnit 覆盖并发扣减与余额不足场景 | 可查询、可调账的完整账本 |
+| **Phase 2 充值闭环** | `recharge_orders` 表 + 模型 + Policy；`PayChannel` 枚举；`RechargeService`；微信支付渠道对接与回调验签；幂等入账；超时关单 Job + 定时任务注册；后台充值订单管理；前台充值接口；`RechargeSucceededNotification` | 用户可充值到账 |
+| **Phase 3 提现审核** | `withdraw_orders` 表 + 模型 + Policy；`WithdrawStatus` / `WithdrawAccountType` 枚举；`WithdrawService` 完整状态流转；冻结/解冻/结算联动；后台提现审核页面；前台提现接口 + 限流；三个提现通知类；导出类 | 提现申请到打款全流程闭环 |
+| **Phase 4 集成与验收** | 订单/优惠券等业务侧接入冻结与结算；钱包指标并入业务数据看板；Apifox 按 Admin/Api 模块规范全量发布；补齐测试至项目 70% 覆盖率要求；README 与本 PRD 同步 | 生产可用 |
+
+**前置依赖**：
+
+- Phase 2 需先在 `config/services.php` 配置微信支付/支付宝商户参数与证书
+- Phase 4 的冻结链路需 PRD 14.3 P2「支付与订单」模块先落地，否则冻结无实际业务场景
+- `wallet.adjust` 高风险操作建议与 PRD 14.2.5「敏感操作二次验证」协同推进
+
+## 9. 非功能性需求
+
+### 9.1 性能要求
 - API 响应时间：< 200ms（95% 请求）
 - 支持并发用户数：1000+（Octane 模式可进一步提升）
 - 数据库查询优化：预加载防止 N+1 查询
 - 缓存策略：热点数据使用 Redis 缓存
 - 队列异步处理：耗时操作（统计、AI 工具等）走队列
 
-### 8.2 安全要求
+### 9.2 安全要求
 - 密码使用 Bcrypt 加密（rounds = 12）
 - API 接口使用 Sanctum Token 认证
 - 敏感接口使用权限验证（permission/role 中间件）
@@ -1223,29 +1677,29 @@ tests/Feature/Admin/
 - CSP 内容安全策略
 - Telescope 在生产环境默认禁用
 
-### 8.3 可扩展性
+### 9.3 可扩展性
 - 模块化设计：功能独立封装
 - 微服务友好：API 化设计，易于拆分
 - 支持水平扩展：无状态设计（Token 认证）
 - 队列系统：异步任务处理
 - AI Tool 可插拔：新工具只需实现 Tool 契约即可接入
 
-### 8.4 可维护性
+### 9.4 可维护性
 - 代码规范：遵循 PSR-12 标准，Laravel Pint 自动格式化
 - 类型安全：PHP 8.4 严格类型（`declare(strict_types=1)`），所有方法参数和返回值类型声明
 - 注释完整：关键逻辑使用 PHPDoc，复杂处加内联注释
 - 测试覆盖：单元测试 + 功能测试，PHPUnit 12 属性语法
 - 枚举统一：使用 PHP 8 Enum + HasLabel trait
 
-### 8.5 可靠性
+### 9.5 可靠性
 - 错误处理：统一的异常处理机制
 - 日志记录：完整的日志记录（Monolog 多通道）
 - 数据备份：支持数据库备份
 - 故障恢复：队列失败重试、调度任务自动记录失败状态
 
-## 9. 开发流程
+## 10. 开发流程
 
-### 9.1 环境要求
+### 10.1 环境要求
 - PHP >= 8.4
 - PHP 扩展：`pdo`、`mbstring`、`openssl`、`redis`、`bcmath`、`ctype`、`json`、`fileinfo`、`tokenizer`、`xml`
 - Composer >= 2.x
@@ -1254,7 +1708,7 @@ tests/Feature/Admin/
 - Node.js >= 20.x（前端资源构建）
 - 推荐使用 [Laravel Herd](https://herd.laravel.com/) 作为本地开发环境
 
-### 9.2 快速开始
+### 10.2 快速开始
 
 ```bash
 # 一键安装（推荐）
@@ -1279,7 +1733,7 @@ npm run build
 
 本地访问地址：`http://laravel-skel-forge.test`（Herd 自动提供）。
 
-### 9.3 开发命令
+### 10.3 开发命令
 
 | 命令 | 说明 |
 |------|------|
@@ -1294,7 +1748,7 @@ npm run build
 | `php artisan pail` | 查看实时日志 |
 | `php artisan schedule:work` | 本地运行调度器 |
 
-### 9.4 代码规范
+### 10.4 代码规范
 - 遵循 PSR-12 编码标准
 - 使用 PHP 8.4 特性：构造器属性提升、命名参数、枚举、match 表达式
 - 所有 PHP 文件强制 `declare(strict_types=1)` 和文件头 License 注释
@@ -1304,7 +1758,7 @@ npm run build
 - 使用 `php artisan make:` 命令创建文件，传递 `--no-interaction` 参数
 - AI Agent 使用 `php artisan make:agent` / `php artisan make:tool`（自定义 stub 在 stubs/）
 
-### 9.5 全局辅助函数（bootstrap/helpers.php）
+### 10.5 全局辅助函数（bootstrap/helpers.php）
 | 函数 | 说明 |
 |------|------|
 | `cpu_count(): int` | 获取 CPU 核心数 |
@@ -1313,9 +1767,9 @@ npm run build
 | `settings(string $key, $default): mixed` | 快捷读取系统设置 |
 | `validation_exception($field, $message): void` | 快速抛出表单验证异常 |
 
-## 10. 部署方案
+## 11. 部署方案
 
-### 10.1 生产环境配置
+### 11.1 生产环境配置
 
 ```bash
 APP_ENV=production
@@ -1347,14 +1801,14 @@ php artisan event:cache
 php artisan storage:link
 ```
 
-### 10.2 部署方式
+### 11.2 部署方式
 
 | 方式 | 说明 |
 |------|------|
 | Octane + Swoole/RoadRunner | 高性能常驻内存模式 |
 | Nginx + PHP-FPM | 传统部署方式 |
 
-### 10.3 服务配置
+### 11.3 服务配置
 
 | 服务 | 建议配置 |
 |------|----------|
@@ -1364,15 +1818,15 @@ php artisan storage:link
 | Pulse | 访问控制保护（Gate 鉴权） |
 | Telescope | 生产环境禁用或仅限管理员访问 |
 
-### 10.4 备份策略
+### 11.4 备份策略
 - 数据库每日备份
 - 重要配置备份
 - 上传文件备份（如使用 S3 可开启版本控制）
 - 备份保留 30 天
 
-## 11. 监控与维护
+## 12. 监控与维护
 
-### 11.1 监控工具
+### 12.1 监控工具
 | 工具 | 用途 | 访问路径 |
 |------|------|----------|
 | Laravel Pulse | 应用性能监控 | `/pulse` |
@@ -1381,14 +1835,14 @@ php artisan storage:link
 | Laravel Reverb | WebSocket 统计 | `/api/laravel-reverb` 或后台 Monitor |
 | Laravel Pail | 实时日志 | 命令行 `php artisan pail` |
 
-### 11.2 日常维护
+### 12.2 日常维护
 - 定期清理过期验证码（`auth:clear-resets`、phone_codes/mail_codes 自动过期）
 - 定期清理 Telescope 记录（`telescope:prune --hours=48`）
 - 定期清理审计日志和调度日志（通过 `model:prune` 按配置保留天数）
 - 数据库优化（索引维护、慢查询优化）
 - 依赖安全更新检查（`composer audit`）
 
-## 12. 定时任务
+## 13. 定时任务
 
 在 `routes/console.php` 中定义：
 
@@ -1399,39 +1853,40 @@ php artisan storage:link
 | `stats:user` | 每日 01:10 | 统计昨日用户数据 |
 | `telescope:prune --hours=48 --keep-exceptions` | 每日 01:15 | 清理 Telescope 记录 |
 | `horizon:snapshot` | 每 5 分钟 | 记录应用状态快照 |
+| `wallet:close-expired-recharge` | 每 5 分钟 | 关闭超时未支付的充值订单（钱包 Phase 2 交付） |
 
 调度任务执行情况自动记录到 `schedule_logs` 表，可在后台"监控管理-调度日志"查看。
 
-## 13. 待建设需求（Roadmap）
+## 14. 待建设需求（Roadmap）
 
 > 本章记录作为"系统应用起点"仍需补齐的能力清单。优先级定义：
 > **P0** = 上线前必备（缺失将阻塞生产发布）；**P1** = 强烈建议（影响运营闭环）；
 > **P2** = 典型业务扩展（按业务形态选做）；**P3** = 体验与性能优化。
 
-### 13.1 P0 上线前必备
+### 14.1 P0 上线前必备
 
 > 状态：P0 共 7 项，已完成 3 项、进行中 1 项、未开始 3 项。
 
-#### 13.1.1 Banner / 轮播图管理 ✅
+#### 14.1.1 Banner / 轮播图管理 ✅
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 启动页、首页轮播是 App/H5 的标准运营位，是最高频的运营配置需求 |
-| 状态 | **已完成**（见 13.5 变更记录 2026-08-27）。后端 7 个管理端点 + 1 个前台公开端点全部交付：CRUD、启用/禁用切换、拖拽排序（同广告位内上移/下移）、按广告位/关键词/状态筛选、生效时间区间控制；前台公开接口自动过滤禁用/未开始/已过期 Banner。前端 `views/operation/banner/` 完整页面（列表+搜索+编辑弹窗），Apifox 8 个接口全部按 Admin/Api 模块规范发布并通过 PHPUnit 38 个用例验证 |
+| 状态 | **已完成**（见 14.5 变更记录 2026-08-27）。后端 7 个管理端点 + 1 个前台公开端点全部交付：CRUD、启用/禁用切换、拖拽排序（同广告位内上移/下移）、按广告位/关键词/状态筛选、生效时间区间控制；前台公开接口自动过滤禁用/未开始/已过期 Banner。前端 `views/operation/banner/` 完整页面（列表+搜索+编辑弹窗），Apifox 8 个接口全部按 Admin/Api 模块规范发布并通过 PHPUnit 38 个用例验证 |
 | 验收标准 | ✅ 广告位可配置（基于字典 banner_positions，无需改代码即可扩展）；✅ 过期/未开始的 Banner 前台不可见；✅ 排序可移动并保存（上移/下移方式）；✅ 字段安全：前台接口仅返回 6 个公开字段；✅ 跨平台字段安全：Admin 端用 EloquentPaginate `x-apifox-refs` 引用 #/definitions/304922372，Api 端独立 PublicBanner Schema #/definitions/308708084，零跨模块引用 |
 
-#### 13.1.2 管理员登录日志 ✅
+#### 14.1.2 管理员登录日志 ✅
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 安全合规必备。已有用户侧登录历史，管理员侧缺失审计能力 |
-| 状态 | **已完成**（见 13.5 变更记录 2026-08-27）。管理员与前台用户复用多态表 `login_histories`，`result` 字段区分成功/失败；单管理员视角 `GET /admin/admins/{id}/login-histories`、单用户视角 `GET /admin/users/{user}/login-histories` 均支持 `result` 过滤；全局视角 `GET /admin/login-histories`（跨管理员与前台用户，支持按 guard、用户ID、IP、结果、关键字、时间范围过滤）已提供 |
+| 状态 | **已完成**（见 14.5 变更记录 2026-08-27）。管理员与前台用户复用多态表 `login_histories`，`result` 字段区分成功/失败；单管理员视角 `GET /admin/admins/{id}/login-histories`、单用户视角 `GET /admin/users/{user}/login-histories` 均支持 `result` 过滤；全局视角 `GET /admin/login-histories`（跨管理员与前台用户，支持按 guard、用户ID、IP、结果、关键字、时间范围过滤）已提供 |
 | 前端页面 | `views/monitor/login-history/index.vue`，展示登录时间、归属主体、IP、归属地、设备、浏览器、结果（成功/失败） |
 | 验收标准 | ~~登录成功与失败均落库~~（已完成）；~~可按管理员和时间范围检索~~（已完成）；~~全局列表可跨主体检索~~（已完成，前端页面 `views/monitor/login-history/index.vue` 已实现），超级管理员可见全部 |
 
-#### 13.1.3 系统公告 / 站内信群发
+#### 14.1.3 系统公告 / 站内信群发
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 当前通知仅由业务事件被动触发，缺少主动运营触达能力 |
-| 状态 | **进行中**——已具备的前置能力：① 分群能力（13.2.4）已就绪，可按分群圈定目标用户；② 批量打标/解标异步化（步骤 13）已就绪，可支撑百万级用户场景；③ `UserSegmentController::options` 已暴露手动分群下拉。**待补**：公告主模块（CRUD + 发布/撤回 + 发送范围预览 + 发送进度查询） |
+| 状态 | **进行中**——已具备的前置能力：① 分群能力（14.2.4）已就绪，可按分群圈定目标用户；② 批量打标/解标异步化（步骤 13）已就绪，可支撑百万级用户场景；③ `UserSegmentController::options` 已暴露手动分群下拉。**待补**：公告主模块（CRUD + 发布/撤回 + 发送范围预览 + 发送进度查询） |
 | 数据表 | `announcements`：id、title、content、type、target_type（全体/指定用户/用户分群）、target_value、publish_at、status |
 | 后台接口 | 公告 CRUD、发布/撤回、发送范围预览、发送进度查询 |
 | 实现要点 | 群发通过队列分批投递（避免大批量同步写入）；复用现有 `notifications` 通知体系；目标范围支持"全体 / 手动分群 / 规则分群 / 指定用户"四类，分群选项直接复用 `GET /admin/user-segments/options` |
@@ -1440,7 +1895,7 @@ php artisan storage:link
 | 验收标准 | 支持定时发布；群发通过队列异步执行；用户端可查看未读公告数；分群圈选体验与分群管理一致 |
 | 排期建议 | **P0 优先级第一**（P0 仅剩 2 个未开始项，公告群发是上线后运营触达最关键能力） |
 
-#### 13.1.4 敏感词过滤
+#### 14.1.4 敏感词过滤
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | UGC 内容（评论、反馈、昵称）合规底线要求 |
@@ -1452,31 +1907,31 @@ php artisan storage:link
 | 前端页面 | `views/system/sensitive-word/index.vue`，支持分类管理与批量导入 |
 | 验收标准 | 命中拦截级内容无法提交；命中警告级自动进入待审核队列；词库变更后缓存自动刷新 |
 
-#### 13.1.5 列表数据导出 ✅
+#### 14.1.5 列表数据导出 ✅
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 运营/财务对账的刚性需求；前端已有 `ArtExcelExport` 组件，后端接口层已补齐 |
-| 状态 | **已完成**（后端 + 前端，见 13.5 变更记录 2026-08-27）。后端：`maatwebsite/excel` 4.0.2 已集成，发布 `config/excel.php`；新增 `App\Support\Export\AbstractExport` 基类（实现 `FromQuery`/`WithHeadings`/`WithMapping`/`WithTitle`/`WithColumnFormatting`，自动追加主键避免 chunk 漏行）与 `HandlesExports` 共享 trait；5 个 Export 类（用户/评论/反馈/审计日志/用户积分/金币流水），所有 .xlsx 导出；同步/异步双通道：≤ `SYNC_THRESHOLD`（用户/评论/反馈/审计日志 1000 行、流水 2000 行）走 `BinaryFileResponse` 直接下载（`Content-Disposition: attachment; filename*=UTF-8''...`），超阈值走 `PerformExportJob` 队列生成文件并通过 `ExportCompletedNotification` 推送站内信下载链接，失败推 `ExportFailedNotification`；控制器与路由：用户 `users/export`、`users/{user}/point-trades/export` 与 `coin-trades/export`、评论 `comments/export`、反馈 `feedbacks/export`、审计日志 `audit-logs/export`（共 6 个端点）；权限点：`users.export`/`comments.export`/`feedbacks.export`/`audit-logs.export`。前端（laravel-skel-admin）：HTTP 层 `request()` 新增 `returnRawResponse` 选项（返回完整 AxiosResponse，保留 `Content-Disposition` 响应头用于读文件名）；新增 `src/utils/file/download.ts` 提供 `parseFilenameFromDisposition()`（RFC 5987 UTF-8 文件名解析 + plain 回退）与 `downloadBlob()`（Blob → ObjectURL → `<a download>` 下载链路）；新增 `src/hooks/core/useExport.ts` 通用导出 Hook，封装「全屏 loading → blob 请求 → 按 status/contentType 分流处理」：200 + xlsx → 解析文件名并触发下载；202 + JSON → 读取 Blob 为 JSON 并 `ElMessage.success` 提示「导出任务已提交，完成后将通过站内信通知您」；200 + JSON → 警告提示；新增 6 个 `fetchExport*` API 函数（`responseType: 'blob'` + `returnRawResponse: true` + `showErrorMessage: true`）；`Api.Common.ExportTaskResponse` 类型入 `api.d.ts`；4 个列表页（用户/评论/反馈/审计日志）在 `ArtTableHeader` #left 插槽新增「导出」按钮（带 `v-auth` 权限指令、`isExporting` loading 状态），复用 `useTable.searchParams` 自动携带当前筛选条件（剔除 `page`/`per_page`）；用户详情弹窗（`user-detail-dialog.vue`）积分/金币两个 Tab 的筛选栏各加一个独立 loading 的「导出」按钮，复用各自的 `keyword` + `dateRange` 状态作为筛选参数；ESLint / vue-tsc / vite 生产构建均通过 |
+| 状态 | **已完成**（后端 + 前端，见 14.5 变更记录 2026-08-27）。后端：`maatwebsite/excel` 4.0.2 已集成，发布 `config/excel.php`；新增 `App\Support\Export\AbstractExport` 基类（实现 `FromQuery`/`WithHeadings`/`WithMapping`/`WithTitle`/`WithColumnFormatting`，自动追加主键避免 chunk 漏行）与 `HandlesExports` 共享 trait；5 个 Export 类（用户/评论/反馈/审计日志/用户积分/金币流水），所有 .xlsx 导出；同步/异步双通道：≤ `SYNC_THRESHOLD`（用户/评论/反馈/审计日志 1000 行、流水 2000 行）走 `BinaryFileResponse` 直接下载（`Content-Disposition: attachment; filename*=UTF-8''...`），超阈值走 `PerformExportJob` 队列生成文件并通过 `ExportCompletedNotification` 推送站内信下载链接，失败推 `ExportFailedNotification`；控制器与路由：用户 `users/export`、`users/{user}/point-trades/export` 与 `coin-trades/export`、评论 `comments/export`、反馈 `feedbacks/export`、审计日志 `audit-logs/export`（共 6 个端点）；权限点：`users.export`/`comments.export`/`feedbacks.export`/`audit-logs.export`。前端（laravel-skel-admin）：HTTP 层 `request()` 新增 `returnRawResponse` 选项（返回完整 AxiosResponse，保留 `Content-Disposition` 响应头用于读文件名）；新增 `src/utils/file/download.ts` 提供 `parseFilenameFromDisposition()`（RFC 5987 UTF-8 文件名解析 + plain 回退）与 `downloadBlob()`（Blob → ObjectURL → `<a download>` 下载链路）；新增 `src/hooks/core/useExport.ts` 通用导出 Hook，封装「全屏 loading → blob 请求 → 按 status/contentType 分流处理」：200 + xlsx → 解析文件名并触发下载；202 + JSON → 读取 Blob 为 JSON 并 `ElMessage.success` 提示「导出任务已提交，完成后将通过站内信通知您」；200 + JSON → 警告提示；新增 6 个 `fetchExport*` API 函数（`responseType: 'blob'` + `returnRawResponse: true` + `showErrorMessage: true`）；`Api.Common.ExportTaskResponse` 类型入 `api.d.ts`；4 个列表页（用户/评论/反馈/审计日志）在 `ArtTableHeader` #left 插槽新增「导出」按钮（带 `v-auth` 权限指令、`isExporting` loading 状态），复用 `useTable.searchParams` 自动携带当前筛选条件（剔除 `page`/`per_page`）；用户详情弹窗（`user-detail-dialog.vue`）积分/金币两个 Tab 的筛选栏各加一个独立 loading 的「导出」按钮，复用各自的 `keyword` + `dateRange` 状态作为筛选参数；ESLint / vue-tsc / vite 生产构建均通过 |
 | 实现要点 | 统一导出基类，接收当前列表筛选条件；大数据量走队列异步生成后推送下载链接（结合通知）；前端统一走 `useExport()` Hook，同步下载/异步通知自动分流 |
 | 覆盖模块 | 用户列表、评论管理、反馈管理、审计日志、用户详情内积分流水/金币流水 |
 | 前端交互 | 导出按钮挂载在表格工具栏左侧；点击后全屏 loading 遮罩防止重复点击；同步场景自动触发浏览器下载，文件名形如 `users_20260827_153045.xlsx`；异步场景弹出成功提示，用户稍后在站内信中心下载；导出参数自动与当前表格搜索/筛选条件联动 |
 | 验收标准 | ✅ 导出结果与当前筛选条件一致；✅ 超过阈值走异步并通过站内信推送下载链接；✅ 中文文件名正确解析（RFC 5987）；✅ 导出按钮受权限指令控制；✅ ESLint / vue-tsc / 生产构建零错误 |
 
-#### 13.1.6 安全基线加固（部分完成）
+#### 14.1.6 安全基线加固（部分完成）
 | 项目 | 说明 |
 |------|------|
-| 状态 | **部分完成**——登录限流（`admin.login_throttle`）与失败日志（13.1.2）已交付。**待补**：验证码限流、密码重置限流、CORS 白名单收敛、安全响应头 |
+| 状态 | **部分完成**——登录限流（`admin.login_throttle`）与失败日志（14.1.2）已交付。**待补**：验证码限流、密码重置限流、CORS 白名单收敛、安全响应头 |
 | CORS 配置 | 确认 `config/cors.php` 生产环境白名单收敛（不使用 `*`） |
 | 接口限流 | ~~登录~~（已完成：`/api/v1` 侧 `user.login_throttle`、`/admin` 侧 `admin.login_throttle`）、注册、验证码发送、密码重置等敏感接口配置独立 `throttle` 规则 |
 | 安全响应头 | 补充 `X-Frame-Options`、`X-Content-Type-Options`、`Referrer-Policy`、CSP |
 | 验收标准 | 生产环境安全扫描无高危项；敏感接口具备防爆破限流 |
-| 排期建议 | 与 13.1.4 敏感词过滤并行推进，作为上线前最后一轮安全加固 |
+| 排期建议 | 与 14.1.4 敏感词过滤并行推进，作为上线前最后一轮安全加固 |
 
-### 13.2 P1 强烈建议
+### 14.2 P1 强烈建议
 
-> 状态：P1 共 7 项，已完成 1 项、未开始 6 项。优先顺序：内容/帖子（13.2.1）→ 举报（13.2.2）→ 业务通知联动（13.2.3）→ 业务数据看板（13.2.6）→ 敏感操作二次验证（13.2.5）→ 业务定时任务管理（13.2.7）。
+> 状态：P1 共 7 项，已完成 1 项、未开始 6 项。优先顺序：内容/帖子（14.2.1）→ 举报（14.2.2）→ 业务通知联动（14.2.3）→ 业务数据看板（14.2.6）→ 敏感操作二次验证（14.2.5）→ 业务定时任务管理（14.2.7）。
 
-#### 13.2.1 内容 / 帖子管理
+#### 14.2.1 内容 / 帖子管理
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 评论模块已按多态（morphTo）设计，但缺少"内容主体"。补齐后评论体系才形成闭环 |
@@ -1485,9 +1940,9 @@ php artisan storage:link
 | 后台接口 | 内容 CRUD、审核（复用 `ReviewStatus` 枚举）、置顶、推荐、批量操作 |
 | 前台接口 | 内容列表/详情/发布/删除，复用现有点赞、收藏、评论多态能力 |
 | 验收标准 | 内容可作为 `source_type` 被评论、点赞、收藏正确关联；审核流程与评论一致 |
-| 排期建议 | **P1 优先级第一**——补齐"内容"主体是评论/举报/通知联动的根，缺它则 13.2.2/13.2.3/13.2.4 都只能空转 |
+| 排期建议 | **P1 优先级第一**——补齐"内容"主体是评论/举报/通知联动的根，缺它则 14.2.2/14.2.3/14.2.4 都只能空转 |
 
-#### 13.2.2 举报管理
+#### 14.2.2 举报管理
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | UGC 平台合规必备，与内容/评论管理配套 |
@@ -1497,9 +1952,9 @@ php artisan storage:link
 | 前台接口 | `POST /api/v1/reports` 提交举报 |
 | 前端页面 | `views/operation/report/index.vue`，处理弹窗内可直接跳转查看被举报内容 |
 | 验收标准 | 举报成立后自动联动处置被举报对象；同一用户对同一对象不可重复举报 |
-| 排期建议 | 紧随 13.2.1；举报是合规最敏感一环，须在内容上线后立即补齐 |
+| 排期建议 | 紧随 14.2.1；举报是合规最敏感一环，须在内容上线后立即补齐 |
 
-#### 13.2.3 业务通知联动
+#### 14.2.3 业务通知联动
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 当前评论审核、反馈处理完成后未通知用户，运营闭环断裂 |
@@ -1508,14 +1963,14 @@ php artisan storage:link
 | 实现要点 | 通过模型事件/领域事件触发，走队列异步发送，通知内容直接在代码中定义 |
 | 验收标准 | 各场景通知准确送达；不阻塞主流程 |
 
-#### 13.2.4 用户标签与分群 ✅
+#### 14.2.4 用户标签与分群 ✅
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 精细化运营基础，是公告群发指定范围、定向推送的前置能力 |
-| 状态 | **已完成**（见 13.5 变更记录 2026-08-27 + 2026-08-28）。交付内容：① `user_segments` + `user_segment_memberships` 双表 + 4 个二级索引；② 手动/规则两种分群类型 + JSON 规则评估器（11 种操作符 + 7 字段）；③ 14 个 Admin 端点 + 异步化（>1000 ID 入队）+ 进度查询；④ 前端 5 个页面（分群管理 + 搜索 + 规则构建器 + 编辑弹窗 + 成员弹窗 + 预览弹窗 + 异步任务列表页）；⑤ Apifox 全量发布到 Admin 模块；⑥ PHPUnit 85 个用例 / 263 断言全绿 |
-| 验收标准 | ✅ 用户列表可按分群筛选（AND 语义）；✅ 公告群发可选择分群作为目标范围（13.1.3 待集成）；✅ 批量打标支持 1000 同步 / 超限异步，站内信通知；✅ 任务列表权限隔离，仅本人可见 |
+| 状态 | **已完成**（见 14.5 变更记录 2026-08-27 + 2026-08-28）。交付内容：① `user_segments` + `user_segment_memberships` 双表 + 4 个二级索引；② 手动/规则两种分群类型 + JSON 规则评估器（11 种操作符 + 7 字段）；③ 14 个 Admin 端点 + 异步化（>1000 ID 入队）+ 进度查询；④ 前端 5 个页面（分群管理 + 搜索 + 规则构建器 + 编辑弹窗 + 成员弹窗 + 预览弹窗 + 异步任务列表页）；⑤ Apifox 全量发布到 Admin 模块；⑥ PHPUnit 85 个用例 / 263 断言全绿 |
+| 验收标准 | ✅ 用户列表可按分群筛选（AND 语义）；✅ 公告群发可选择分群作为目标范围（14.1.3 待集成）；✅ 批量打标支持 1000 同步 / 超限异步，站内信通知；✅ 任务列表权限隔离，仅本人可见 |
 
-#### 13.2.5 敏感操作二次验证
+#### 14.2.5 敏感操作二次验证
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 高风险操作防误操作与防越权 |
@@ -1525,7 +1980,7 @@ php artisan storage:link
 | 验收标准 | 未确认密码时高风险接口返回 423；确认后在有效期内不重复要求 |
 | 排期建议 | **P1 第二批**——优先级低于内容/举报/通知闭环，是治理型而非业务型需求 |
 
-#### 13.2.6 业务数据看板
+#### 14.2.6 业务数据看板
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 精细化运营必备，是 P2 业务扩展后做决策的核心入口 |
@@ -1534,9 +1989,9 @@ php artisan storage:link
 | 待补指标 | DAU/MAU、次日/7日/30日留存、内容与评论发布量趋势、评论审核通过率/驳回率、反馈处理时效（平均处理时长）、活跃用户排行、积分/金币发放与消耗对比 |
 | 实现要点 | 指标预聚合到统计表（扩展现有 `stats:user` 定时任务），看板只读聚合表，避免实时全表扫描 |
 | 验收标准 | 看板首屏加载 < 1s；支持时间范围切换；指标口径在文档中明确定义 |
-| 排期建议 | 紧随 13.2.1 内容上线后——内容数据是看板最关键的数据源之一 |
+| 排期建议 | 紧随 14.2.1 内容上线后——内容数据是看板最关键的数据源之一 |
 
-#### 13.2.7 业务定时任务管理
+#### 14.2.7 业务定时任务管理
 | 项目 | 说明 |
 |------|------|
 | 业务价值 | 业务侧需要可配置的定时任务（优惠券过期、积分清零、统计聚合等），不必每次都发版 |
@@ -1547,26 +2002,27 @@ php artisan storage:link
 | 验收标准 | Cron 表达式变更后无需发版即生效；手动执行结果可在调度日志查看 |
 | 排期建议 | **P1 末位**——P2 业务上线前必须有，否则每次新增优惠券/活动都要发版 |
 
-### 13.3 P2 业务扩展（按业务形态选做）
+### 14.3 P2 业务扩展（按业务形态选做）
 
-> 状态：P2 共 8 项，全部未开始。按"支付 > 营销 > 客服 > 前台 > 其他"排序：① 支付与订单 ② 优惠券/活动 ③ 签到与任务 ④ 邀请与分销 ⑤ 工单/客服 ⑥ 前台用户端 ⑦ 国际化 ⑧ 地区数据校验。
+> 状态：P2 共 9 项，全部未开始。按"资金 > 支付 > 营销 > 客服 > 前台 > 其他"排序：① 用户钱包 ② 支付与订单 ③ 优惠券/活动 ④ 签到与任务 ⑤ 邀请与分销 ⑥ 工单/客服 ⑦ 前台用户端 ⑧ 国际化 ⑨ 地区数据校验。
 >
 > 选做原则：选 P2 项时必须先确认 P0/P1 全部 ✅ + 至少 2 个 P2 排在前面的核心业务已交付。
 
 | # | 需求 | 说明 | 依赖 |
 |---|------|------|------|
-| 1 | 支付与订单 | 涉及交易场景的根基：订单、支付渠道（微信/支付宝/苹果内购）、退款、对账。**P2 优先级第一**——一切商业化业务都建立在它之上 | 13.2.7 业务定时任务（订单超时关闭）|
-| 2 | 优惠券 / 活动管理 | 积分体系已就绪，缺营销工具：优惠券模板、领取记录、核销、活动页配置 | 13.2.3 业务通知（核销成功通知）|
-| 3 | 签到与任务体系 | 配合积分体系：每日签到、连续签到奖励、成长任务、任务奖励发放 | 13.2.3 业务通知（任务完成通知）|
-| 4 | 邀请与分销 | 邀请码、邀请关系树、邀请奖励结算 | 13.2.4 分群（拉新统计）|
-| 5 | 工单 / 客服系统 | 现有反馈模块偏轻量，若需客服能力则需补：工单流转、分配、SLA 计时、多轮会话 | 无强依赖 |
-| 6 | 前台用户端 | 目前仅有管理后台，若产品需要则补 H5 / 小程序 / App 用户端 | 13.1.3 公告群发、国际化（如果海外）|
-| 7 | 国际化落地 | 海外市场扩张的下一前提；前端 vue-i18n 已安装但未落地语言包 | 13.1.3 公告群发（多语言公告）|
-| 8 | 地区数据校验 | 核对地区表是否符合最新国家标准，并与收货地址接口打通联动 | 仅在 P2 选做"商品/物流"时启动 |
+| 1 | 用户钱包 | 真实货币余额账本：余额/冻结余额、多态流水、充值、提现审核、冻结与结算。**P2 优先级第一**——是支付与订单、分销结算的资金底座。完整技术方案见第 8 章 | 14.2.7 业务定时任务（充值超时关单）、14.2.5 敏感操作二次验证（后台调账） |
+| 2 | 支付与订单 | 涉及交易场景的根基：订单、支付渠道（微信/支付宝/苹果内购）、退款、对账 | 用户钱包（余额支付与冻结）、14.2.7 业务定时任务（订单超时关闭）|
+| 3 | 优惠券 / 活动管理 | 积分体系已就绪，缺营销工具：优惠券模板、领取记录、核销、活动页配置 | 14.2.3 业务通知（核销成功通知）|
+| 4 | 签到与任务体系 | 配合积分体系：每日签到、连续签到奖励、成长任务、任务奖励发放 | 14.2.3 业务通知（任务完成通知）|
+| 5 | 邀请与分销 | 邀请码、邀请关系树、邀请奖励结算 | 用户钱包（佣金入账）、14.2.4 分群（拉新统计）|
+| 6 | 工单 / 客服系统 | 现有反馈模块偏轻量，若需客服能力则需补：工单流转、分配、SLA 计时、多轮会话 | 无强依赖 |
+| 7 | 前台用户端 | 目前仅有管理后台，若产品需要则补 H5 / 小程序 / App 用户端 | 14.1.3 公告群发、国际化（如果海外）|
+| 8 | 国际化落地 | 海外市场扩张的下一前提；前端 vue-i18n 已安装但未落地语言包 | 14.1.3 公告群发（多语言公告）|
+| 9 | 地区数据校验 | 核对地区表是否符合最新国家标准，并与收货地址接口打通联动 | 仅在 P2 选做"商品/物流"时启动 |
 
-### 13.4 P3 体验与性能优化
+### 14.4 P3 体验与性能优化
 
-> 状态：P3 共 7 项，部分已在 13.1.5 列表导出（13.4.5）中部分完成。P3 排期最末，仅在前述 P0/P1/P2 全部稳定后启动；每月迭代 1-2 项即可。
+> 状态：P3 共 7 项，部分已在 14.1.5 列表导出（14.4.5）中部分完成。P3 排期最末，仅在前述 P0/P1/P2 全部稳定后启动；每月迭代 1-2 项即可。
 
 | # | 需求 | 说明 | 状态 |
 |---|------|------|------|
@@ -1575,58 +2031,59 @@ php artisan storage:link
 | 3 | 前端错误边界 | 已有路由级 403/404/500，缺组件级错误捕获与降级渲染 | **未开始** |
 | 4 | 大列表性能 | 审计日志、Telescope 条目等大数据量列表需虚拟滚动 / 图片懒加载 | **未开始** |
 | 5 | 单元测试覆盖 | 持续补齐至 70%+ 覆盖率（项目规范要求） | **进行中**（当前 1209 tests / 2919 assertions 已绿，仍需补 70% 覆盖率指标）|
-| 6 | API 文档同步 | 新增接口同步发布至 Apifox，保持文档与代码一致 | **进行中**（13.1.1/13.2.5 已全量发布，沉淀发布规范）|
+| 6 | API 文档同步 | 新增接口同步发布至 Apifox，保持文档与代码一致 | **进行中**（14.1.1/14.2.5 已全量发布，沉淀发布规范）|
 | 7 | 性能基准测试 | 建立关键接口的基准测试与压测报告，为容量规划提供依据 | **未开始** |
 
 
 
-### 13.6 建议实施顺序
+### 14.6 建议实施顺序
 
-> 与 13.1-13.4 P 级别映射：P0 第一批 → P0 第二批 → P1 第一批 → P1 第二批 → P1 第三批 → P2 选做 → P3 长期。每个阶段开始前必须确认上一阶段所有 ✅ 项已上线稳定。
+> 与 14.1-14.4 P 级别映射：P0 第一批 → P0 第二批 → P1 第一批 → P1 第二批 → P1 第三批 → P2 选做 → P3 长期。每个阶段开始前必须确认上一阶段所有 ✅ 项已上线稳定。
 
 **第一阶段（P0 必达 · 上线前）**
-1. ~~Banner / 轮播图管理（13.1.1）~~ ✅ 2026-08-27
-2. ~~管理员登录日志（13.1.2）~~ ✅ 2026-08-27
-3. ~~列表数据导出（13.1.5）~~ ✅ 2026-08-27
-4. 系统公告 / 站内信群发（13.1.3）— **本阶段起点**
-5. 敏感词过滤（13.1.4）
-6. 安全基线加固（13.1.6 剩余项）
+1. ~~Banner / 轮播图管理（14.1.1）~~ ✅ 2026-08-27
+2. ~~管理员登录日志（14.1.2）~~ ✅ 2026-08-27
+3. ~~列表数据导出（14.1.5）~~ ✅ 2026-08-27
+4. 系统公告 / 站内信群发（14.1.3）— **本阶段起点**
+5. 敏感词过滤（14.1.4）
+6. 安全基线加固（14.1.6 剩余项）
 
 **第二阶段（P1 业务闭环）**
-7. ~~用户标签与分群（13.2.4）~~ ✅ 2026-08-28（含分群异步任务前端列表页）
-8. 内容 / 帖子管理（13.2.1）
-9. 举报管理（13.2.2）
-10. 业务通知联动（13.2.3）
-11. 业务数据看板（13.2.6）
-12. 敏感操作二次验证（13.2.5）
-13. 业务定时任务管理（13.2.7）
+7. ~~用户标签与分群（14.2.4）~~ ✅ 2026-08-28（含分群异步任务前端列表页）
+8. 内容 / 帖子管理（14.2.1）
+9. 举报管理（14.2.2）
+10. 业务通知联动（14.2.3）
+11. 业务数据看板（14.2.6）
+12. 敏感操作二次验证（14.2.5）
+13. 业务定时任务管理（14.2.7）
 
 **第三阶段（P2 业务扩展 · 按需选做）**
-14. 支付与订单
-15. 优惠券 / 活动管理
-16. 签到与任务体系
-17. 邀请与分销
-18. 工单 / 客服系统
-19. 前台用户端
-20. 国际化落地
-21. 地区数据校验
+14. 用户钱包（技术方案见第 8 章，分 4 个 Phase 交付）
+15. 支付与订单
+16. 优惠券 / 活动管理
+17. 签到与任务体系
+18. 邀请与分销
+19. 工单 / 客服系统
+20. 前台用户端
+21. 国际化落地
+22. 地区数据校验
 
 **第四阶段（P3 体验与性能 · 长期迭代）**
-22. 批量操作、暗黑模式完整度、前端错误边界、大列表性能、单元测试覆盖、API 文档同步、性能基准测试（每月迭代 1-2 项）
+23. 批量操作、暗黑模式完整度、前端错误边界、大列表性能、单元测试覆盖、API 文档同步、性能基准测试（每月迭代 1-2 项）
 
 ---
 
-### 13.6.1 P 级别优先级总览
+### 14.6.1 P 级别优先级总览
 
 | P 级别 | 总项 | 已完成 | 进行中 | 未开始 | 下一行动 |
 |--------|------|--------|--------|--------|----------|
-| **P0** | 6 | 3 ✅ | 1 🔄（13.1.3 公告群发，部分完成） | 2（13.1.4 敏感词 / 13.1.6 安全加固） | 启动 13.1.3 公告群发主模块 |
-| **P1** | 7 | 1 ✅ | 0 | 6 | 启动 13.2.1 内容/帖子管理 |
-| **P2** | 8 | 0 | 0 | 8 | 评估商业化需求，确认是否启动"支付与订单" |
-| **P3** | 7 | 0 | 2（13.4.5 测试覆盖 / 13.4.6 API 文档同步） | 5 | 持续推进，与每次新功能同步发布 |
-| **合计** | 28 | 4 | 3 | 21 | — |
+| **P0** | 6 | 3 ✅ | 1 🔄（14.1.3 公告群发，部分完成） | 2（14.1.4 敏感词 / 14.1.6 安全加固） | 启动 14.1.3 公告群发主模块 |
+| **P1** | 7 | 1 ✅ | 0 | 6 | 启动 14.2.1 内容/帖子管理 |
+| **P2** | 9 | 0 | 0 | 9 | 技术方案已就绪（第 8 章「用户钱包」），待 P0/P1 收口后启动 Phase 1 |
+| **P3** | 7 | 0 | 2（14.4.5 测试覆盖 / 14.4.6 API 文档同步） | 5 | 持续推进，与每次新功能同步发布 |
+| **合计** | 29 | 4 | 3 | 22 | — |
 
-### 13.7 技术演进方向（长期）
+### 14.7 技术演进方向（长期）
 
 - [ ] 更多认证方式（OAuth2 Server、Socialite 多平台社交登录）
 - [ ] GraphQL 支持（与现有 RESTful 并行）
@@ -1635,21 +2092,21 @@ php artisan storage:link
 - [ ] 多云部署支持
 - [ ] 可视化代码生成工具（CRUD 模块一键生成前后端代码）
 
-## 14. 附录
+## 15. 附录
 
-### 14.1 默认账号
+### 15.1 默认账号
 - 超级管理员：用户名 `admin`，密码 `12345678`（由迁移 `2026_07_31_111934_seed_initial_admin_data.php` 创建）
 
-### 14.2 相关文档
+### 15.2 相关文档
 - Laravel 官方文档：https://laravel.com/docs
 - Laravel Skel Forge README.md
 - 前端项目：laravel-skel-admin（Vue 3 SPA 管理后台）
 
-### 14.3 联系方式
+### 15.3 联系方式
 - 作者：Tongle Xu <xutongle@msn.com>
 
 ---
 
-**文档版本**：v2.7
-**最后更新**：2026-08-28
+**文档版本**：v2.8
+**最后更新**：2026-09-09
 **维护人员**：Tongle Xu
