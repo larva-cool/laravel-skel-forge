@@ -624,6 +624,10 @@ return new class extends Migration
                         'sort' => 7,
                         'keep_alive' => true,
                         'permission' => 'wallet.orders',
+                        'buttons' => [
+                            ['title' => '确认到账', 'permission' => 'wallet.orders'],
+                            ['title' => '导出充值订单', 'permission' => 'wallet.export'],
+                        ],
                     ],
                 ],
             ],

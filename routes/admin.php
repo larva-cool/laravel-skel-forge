@@ -98,6 +98,14 @@ Route::group(['prefix' => 'wallet', 'as' => 'wallet.'], function (Registrar $reg
     $registrar->get('stats', [\App\Http\Controllers\Admin\WalletController::class, 'stats'])->name('stats'); // 钱包统计
     $registrar->get('trades', [\App\Http\Controllers\Admin\WalletController::class, 'index'])->name('trades.index'); // 全局流水列表
     $registrar->get('trades/{trade}', [\App\Http\Controllers\Admin\WalletController::class, 'show'])->name('trades.show'); // 流水详情
+
+    // 充值订单
+    $registrar->get('recharge-orders/stats', [\App\Http\Controllers\Admin\RechargeOrderController::class, 'stats'])->name('recharge-orders.stats'); // 充值统计
+    $registrar->get('recharge-orders/export', [\App\Http\Controllers\Admin\RechargeOrderController::class, 'export'])->name('recharge-orders.export'); // 导出充值订单
+    $registrar->get('recharge-orders', [\App\Http\Controllers\Admin\RechargeOrderController::class, 'index'])->name('recharge-orders.index'); // 充值订单列表
+    $registrar->get('recharge-orders/{order}', [\App\Http\Controllers\Admin\RechargeOrderController::class, 'show'])->name('recharge-orders.show'); // 充值订单详情
+    $registrar->post('recharge-orders/{order}/confirm', [\App\Http\Controllers\Admin\RechargeOrderController::class, 'confirm'])->name('recharge-orders.confirm'); // 手动确认到账
+    $registrar->post('recharge-orders/{order}/close', [\App\Http\Controllers\Admin\RechargeOrderController::class, 'close'])->name('recharge-orders.close'); // 关闭订单
 });
 
 // 配置管理

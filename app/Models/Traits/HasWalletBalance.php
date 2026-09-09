@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Traits;
 
+use App\Models\Wallet\RechargeOrder;
 use App\Models\Wallet\WalletTrade;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -32,6 +33,14 @@ trait HasWalletBalance
     public function walletTrades(): MorphMany
     {
         return $this->morphMany(WalletTrade::class, 'owner');
+    }
+
+    /**
+     * 充值订单（作为持有者）
+     */
+    public function rechargeOrders(): MorphMany
+    {
+        return $this->morphMany(RechargeOrder::class, 'owner');
     }
 
     /**

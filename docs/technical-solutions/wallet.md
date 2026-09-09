@@ -137,22 +137,39 @@ tests/Feature/
 
 ## 5. 充值链路
 
+> **当前状态**：支付渠道对接已挂起（见第 12 章「挂起待办」）。Phase 2 只实现订单生命周期与管理员手动确认到账，下方渠道相关步骤为渠道接入后的目标形态。
+
+**Phase 2 实现的链路（管理员手动确认）**
+
 ```
-POST /api/v1/wallet/recharge
-  → CreateRechargeRequest 校验金额区间
+POST /api/v1/user/wallet/recharge
+  → CreateRechargeRequest 校验开关与金额区间
   → RechargeService::create()
       → 计算赠送金额（wallet.recharge_bonus_rate）
-      → 生成 order_no（R + 日期 + 随机串）
+      → 生成 order_no（R + YmdHis + 随机串）
       → 创建 RechargeOrder(pay_status=pending, expired_at=now+30min)
-      → 调用支付渠道预下单，返回客户端支付参数
+      → 返回订单信息（暂不返回渠道支付参数）
+
+POST /admin/wallet/recharge-orders/{order}/confirm
+  → RechargeService::confirmManually()
+      → 事务内按 order_no 加锁查单
+      → 幂等判定：已 success 直接返回
+      → 置 pay_status=success、paid_at、confirmed_by
+      → WalletHelper::incr() 入账（amount + bonus_amount）
+      → 派发 RechargeSucceeded 事件 → 队列发站内信
+```
+
+**渠道接入后的目标链路（挂起）**
+
+```
+POST /api/v1/user/wallet/recharge
+  → ... 同上 ...
+  → 调用支付渠道预下单，返回客户端支付参数
 
 POST /callback/pay/{channel}
   → PayCallbackController 完成渠道验签
   → RechargeService::handleCallback()
-      → 事务内按 order_no 加锁查单，已 success 直接返回（幂等）
-      → 置 pay_status=success、paid_at
-      → WalletHelper::incr() 入账（amount + bonus_amount）
-      → 派发 RechargeSucceeded 事件 → 队列发站内信
+      → 与 confirmManually() 复用同一入账内核（保证两条路径行为一致）
 ```
 
 超时未支付订单由 `CloseExpiredRechargeOrdersJob` 定时置为 `expired`，注册到 `routes/console.php`。
@@ -269,18 +286,39 @@ POST /admin/wallet/withdraws/{id}/transfer
 
 ## 11. 实施阶段
 
-| 阶段 | 内容 | 交付物 |
-|------|------|--------|
-| **Phase 1 基础账本** | `users` 表加字段；`wallet_trades` 表；`WalletTradeType` / `WalletTradeStatus` 枚举；`HasWalletBalance` trait；`WalletHelper` 四个核心方法 + 结算方法；后台流水列表/详情/统计/调账；用户详情弹窗钱包 Tab；前台钱包概览与流水接口；PHPUnit 覆盖并发扣减与余额不足场景 | 可查询、可调账的完整账本 |
-| **Phase 2 充值闭环** | `recharge_orders` 表 + 模型 + Policy；`PayChannel` 枚举；`RechargeService`；微信支付渠道对接与回调验签；幂等入账；超时关单 Job + 定时任务注册；后台充值订单管理；前台充值接口；`RechargeSucceededNotification` | 用户可充值到账 |
-| **Phase 3 提现审核** | `withdraw_orders` 表 + 模型 + Policy；`WithdrawStatus` / `WithdrawAccountType` 枚举；`WithdrawService` 完整状态流转；冻结/解冻/结算联动；后台提现审核页面；前台提现接口 + 限流；三个提现通知类；导出类 | 提现申请到打款全流程闭环 |
-| **Phase 4 集成与验收** | 订单/优惠券等业务侧接入冻结与结算；钱包指标并入业务数据看板；Apifox 按 Admin/Api 模块规范全量发布；补齐测试至项目 70% 覆盖率要求；README 与本 PRD 同步 | 生产可用 |
+| 阶段 | 内容 | 交付物 | 状态 |
+|------|------|--------|------|
+| **Phase 1 基础账本** | `users` 表加字段；`wallet_trades` 表；`WalletTradeType` / `WalletTradeStatus` 枚举；`HasWalletBalance` trait；`WalletHelper` 四个核心方法 + 结算方法；后台流水列表/详情/统计/调账；前台钱包概览与流水接口；PHPUnit 覆盖并发扣减与余额不足场景 | 可查询、可调账的完整账本 | ✅ **已完成**（35 用例 / 137 断言全绿） |
+| **Phase 2 充值订单** | `recharge_orders` 表 + 模型 + Policy；`PayChannel` / `RechargeStatus` 枚举；`RechargeService`（下单 + 管理员手动确认到账 + 幂等 + 超时关单）；超时关单 Job + 定时任务注册；后台充值订单管理（列表/详情/统计/确认/导出）；前台充值下单与订单查询接口；`RechargeSucceededNotification` | 订单生命周期完整，管理员可手动确认到账 | 🔄 进行中 |
+| **Phase 3 提现审核** | `withdraw_orders` 表 + 模型 + Policy；`WithdrawStatus` / `WithdrawAccountType` 枚举；`WithdrawService` 完整状态流转；冻结/解冻/结算联动；后台提现审核页面；前台提现接口 + 限流；三个提现通知类；导出类 | 提现申请到打款全流程闭环 | 未开始 |
+| **Phase 4 集成与验收** | 订单/优惠券等业务侧接入冻结与结算；钱包指标并入业务数据看板；Apifox 按 Admin/Api 模块规范全量发布；补齐测试至项目 70% 覆盖率要求；README 与文档同步 | 生产可用 | 未开始 |
 
 ### 前置依赖
 
-- Phase 2 需先在 `config/services.php` 配置微信支付/支付宝商户参数与证书
 - Phase 4 的冻结链路需支付与订单模块先落地，否则冻结无实际业务场景
 - `wallet.adjust` 高风险操作建议与敏感操作二次验证协同推进
+
+## 12. 挂起待办
+
+以下能力已从当前排期中挂起，待条件满足后启动。挂起不影响 Phase 2/3 交付，因为入账内核与订单状态机均已按可插拔方式设计。
+
+### 12.1 支付渠道对接（挂起）
+
+| 项目 | 说明 |
+|------|------|
+| 挂起原因 | 本地无商户号与支付证书，真实支付链路无法验证；强行实现会导致核心的幂等与入账逻辑缺乏可靠测试覆盖 |
+| 恢复条件 | 提供微信支付/支付宝商户号、API 密钥与证书，并配置到 `config/services.php` |
+| 待补内容 | ① `app/Payments/Contracts/PaymentGateway.php` 网关契约（`prepay` / `verifyCallback` / `queryOrder` 三个方法）；② `PaymentManager` 渠道路由；③ `WechatPayGateway`、`AlipayGateway` 实现类；④ `PayCallbackController` 统一回调入口（`POST /callback/pay/{channel}`，豁免认证与 CSRF）；⑤ `RechargeService::handleCallback()` 验签入账；⑥ `queryAndSync()` 主动查单补偿 |
+| 设计约束 | 渠道接入时**不得修改** `RechargeService` 的入账内核与 `RechargeOrder` 状态机，只允许新增网关实现类并在 `PaymentManager` 注册；回调入账必须复用 Phase 2 已验证的幂等逻辑 |
+| 数据准备 | `recharge_orders` 表在 Phase 2 已预留 `pay_channel`、`transaction_id`（唯一索引防重复入账）、`callback_payload` 三个字段，渠道接入无需再改表结构 |
+
+### 12.2 充值套餐配置（挂起）
+
+| 项目 | 说明 |
+|------|------|
+| 挂起原因 | 属运营增强功能，不阻塞资金链路 |
+| 待补内容 | `recharge_plans` 表（面额、赠送金额、排序、启用状态）+ 后台 CRUD + 前台套餐列表接口 |
+| 现状替代 | Phase 2 仅支持自定义金额，按 `wallet.min_recharge_amount` / `wallet.max_recharge_amount` 校验区间 |
 
 ---
 

@@ -25,6 +25,9 @@ Schedule::command('telescope:prune --hours=48 --keep-exceptions')->dailyAt('1:15
 // 每 5 分钟执行一次 Horizon snapshot 命令，用于记录当前应用的状态，包括数据库、缓存、队列等
 Schedule::command('horizon:snapshot')->everyFiveMinutes()->onOneServer();
 
+// 每 5 分钟关闭超时未支付的充值订单
+Schedule::job(new \App\Jobs\Wallet\CloseExpiredRechargeOrdersJob)->everyFiveMinutes()->onOneServer();
+
 if (! app()->isProduction()) {
     // 每天凌晨 1:20 清理 Telescope 日志
     Schedule::command('telescope:prune --hours=48')->dailyAt('1:20')->onOneServer();

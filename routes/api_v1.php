@@ -133,6 +133,11 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         Route::group(['prefix' => 'wallet', 'as' => 'wallet.'], function (Registrar $registrar) {
             $registrar->get('', [\App\Http\Controllers\Api\V1\Wallet\WalletController::class, 'index'])->name('index'); // 钱包概览
             $registrar->get('trades', [\App\Http\Controllers\Api\V1\Wallet\WalletController::class, 'trades'])->name('trades'); // 钱包流水
+
+            // 充值
+            $registrar->post('recharge', [\App\Http\Controllers\Api\V1\Wallet\RechargeController::class, 'store'])->name('recharge.store'); // 创建充值订单
+            $registrar->get('recharge-orders', [\App\Http\Controllers\Api\V1\Wallet\RechargeController::class, 'index'])->name('recharge.index'); // 我的充值订单
+            $registrar->get('recharge-orders/{order}', [\App\Http\Controllers\Api\V1\Wallet\RechargeController::class, 'show'])->name('recharge.show'); // 充值订单详情
         });
 
         /**
