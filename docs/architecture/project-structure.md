@@ -30,7 +30,7 @@ laravel-skel-forge/
 │   │   ├── App/             # 应用版本模型（AppRelease、AppVersion）
 │   │   ├── Coin/            # 金币模型（CoinTrade）
 │   │   ├── Point/           # 积分模型（PointRecord、PointTrade）
-│   │   ├── Wallet/          # 钱包模型（WalletTrade、RechargeOrder、WithdrawOrder，均为多态 owner）
+│   │   ├── Wallet/          # 钱包模型（WalletTrade、Recharge、WithdrawOrder，均为多态 owner）
 │   │   ├── System/          # 系统模型（Area、Attachment、AuditLog、Dict、DictItem、Setting、Role、Permission、Notification、MailCode、PhoneCode、ScheduleLog 等）
 │   │   ├── User/            # 用户扩展模型（UserExtra、UserProfile、UserStat）
 │   │   ├── Traits/          # 模型 Trait（DateTimeFormatter、HasSettingsProperty、HasUser、HasWalletBalance）

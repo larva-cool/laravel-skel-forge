@@ -8,14 +8,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\RechargeStatus;
-use App\Exports\Admin\RechargeOrderExport;
+use App\Exports\Admin\RechargeExport;
 use App\Exports\HandlesExports;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\Wallet\RechargeOrderConfirmRequest;
-use App\Http\Requests\Admin\Wallet\RechargeOrderIndexRequest;
-use App\Http\Resources\Admin\RechargeOrderResource;
+use App\Http\Requests\Admin\Wallet\RechargeConfirmRequest;
+use App\Http\Requests\Admin\Wallet\RechargeIndexRequest;
+use App\Http\Resources\Admin\RechargeResource;
 use App\Models\Admin\Admin;
-use App\Models\Wallet\RechargeOrder;
+use App\Models\Wallet\Recharge;
 use App\Services\RechargeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -27,7 +27,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-class RechargeOrderController extends Controller
+class RechargeController extends Controller
 {
     use HandlesExports;
 
@@ -45,23 +45,23 @@ class RechargeOrderController extends Controller
     /**
      * 充值订单列表（分页）
      */
-    public function index(RechargeOrderIndexRequest $request): AnonymousResourceCollection
+    public function index(RechargeIndexRequest $request): AnonymousResourceCollection
     {
-        $items = RechargeOrder::query()
+        $items = Recharge::query()
             ->filter($request->validated())
             ->with('owner')
             ->orderByDesc('id')
             ->paginate(per_page($request));
 
-        return RechargeOrderResource::collection($items);
+        return RechargeResource::collection($items);
     }
 
     /**
      * 充值订单详情
      */
-    public function show(RechargeOrder $order): RechargeOrderResource
+    public function show(Recharge $recharge): RechargeResource
     {
-        return new RechargeOrderResource($order->load('owner'));
+        return new RechargeResource($recharge->load('owner'));
     }
 
     /**
@@ -69,13 +69,13 @@ class RechargeOrderController extends Controller
      */
     public function stats(): JsonResponse
     {
-        $successQuery = fn () => RechargeOrder::query()->where('pay_status', RechargeStatus::SUCCESS->value);
+        $successQuery = fn () => Recharge::query()->where('pay_status', RechargeStatus::SUCCESS->value);
 
         $totalAmount = (float) $successQuery()->sum('amount');
         $totalBonus = (float) $successQuery()->sum('bonus_amount');
         $todayAmount = (float) $successQuery()->whereDate('paid_at', Carbon::today())->sum('amount');
 
-        $totalCount = RechargeOrder::query()->count();
+        $totalCount = Recharge::query()->count();
         $successCount = $successQuery()->count();
 
         return response()->json([
@@ -84,7 +84,7 @@ class RechargeOrderController extends Controller
             'today_amount' => round($todayAmount, 2),
             'total_count' => $totalCount,
             'success_count' => $successCount,
-            'pending_count' => RechargeOrder::query()->where('pay_status', RechargeStatus::PENDING->value)->count(),
+            'pending_count' => Recharge::query()->where('pay_status', RechargeStatus::PENDING->value)->count(),
             // 成功率保留两位小数，无订单时返回 0 而非除零
             'success_rate' => $totalCount > 0 ? round($successCount / $totalCount * 100, 2) : 0.0,
         ]);
@@ -93,37 +93,37 @@ class RechargeOrderController extends Controller
     /**
      * 手动确认到账
      */
-    public function confirm(RechargeOrderConfirmRequest $request, RechargeOrder $order): RechargeOrderResource
+    public function confirm(RechargeConfirmRequest $request, Recharge $recharge): RechargeResource
     {
         /** @var Admin $admin */
         $admin = $request->user();
 
-        $order = $this->rechargeService->confirmManually($order, $admin, $request->validated()['remark'] ?? null);
+        $recharge = $this->rechargeService->confirmManually($recharge, $admin, $request->validated()['remark'] ?? null);
 
-        return new RechargeOrderResource($order->load('owner'));
+        return new RechargeResource($recharge->load('owner'));
     }
 
     /**
      * 关闭订单
      */
-    public function close(RechargeOrderConfirmRequest $request, RechargeOrder $order): RechargeOrderResource
+    public function close(RechargeConfirmRequest $request, Recharge $recharge): RechargeResource
     {
-        $order = $this->rechargeService->close($order, $request->validated()['remark'] ?? null);
+        $recharge = $this->rechargeService->close($recharge, $request->validated()['remark'] ?? null);
 
-        return new RechargeOrderResource($order->load('owner'));
+        return new RechargeResource($recharge->load('owner'));
     }
 
     /**
      * 导出充值订单
      */
-    public function export(RechargeOrderIndexRequest $request): BinaryFileResponse|JsonResponse
+    public function export(RechargeIndexRequest $request): BinaryFileResponse|JsonResponse
     {
         return $this->exportDispatch(
             $request,
-            RechargeOrderExport::class,
+            RechargeExport::class,
             [$request->validated()],
-            $this->exportFileName('recharge_orders'),
-            RechargeOrderExport::SYNC_THRESHOLD,
+            $this->exportFileName('recharges'),
+            RechargeExport::SYNC_THRESHOLD,
         );
     }
 }

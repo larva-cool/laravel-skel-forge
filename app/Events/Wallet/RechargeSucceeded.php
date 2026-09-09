@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace App\Events\Wallet;
 
 use App\Models\User;
-use App\Models\Wallet\RechargeOrder;
+use App\Models\Wallet\Recharge;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -33,7 +33,7 @@ class RechargeSucceeded implements ShouldBroadcast, ShouldHandleEventsAfterCommi
      */
     public function __construct(
         public User $user,
-        public RechargeOrder $order,
+        public Recharge $order,
     ) {}
 
     /**

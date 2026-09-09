@@ -10,8 +10,8 @@ namespace App\Models\Wallet;
 use App\Enums\PayChannel;
 use App\Enums\RechargeStatus;
 use App\Models\Model;
-use App\Policies\RechargeOrderPolicy;
-use Database\Factories\Wallet\RechargeOrderFactory;
+use App\Policies\RechargePolicy;
+use Database\Factories\Wallet\RechargeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
@@ -48,17 +48,17 @@ use Illuminate\Support\Str;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-#[Table('recharge_orders')]
+#[Table('recharges')]
 #[Fillable([
     'owner_type', 'owner_id', 'order_no', 'amount', 'bonus_amount',
     'pay_channel', 'pay_status', 'transaction_id', 'confirmed_by',
     'paid_at', 'expired_at', 'client_ip', 'remark', 'callback_payload',
 ])]
 #[Hidden(['owner_type', 'owner_id'])]
-#[UsePolicy(RechargeOrderPolicy::class)]
-class RechargeOrder extends Model
+#[UsePolicy(RechargePolicy::class)]
+class Recharge extends Model
 {
-    /** @use HasFactory<RechargeOrderFactory> */
+    /** @use HasFactory<RechargeFactory> */
     use HasFactory;
 
     /**

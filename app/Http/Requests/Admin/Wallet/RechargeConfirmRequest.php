@@ -16,7 +16,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-class RechargeOrderConfirmRequest extends FormRequest
+class RechargeConfirmRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

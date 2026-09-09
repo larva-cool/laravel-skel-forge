@@ -10,9 +10,9 @@ namespace App\Http\Controllers\Api\V1\Wallet;
 use App\Enums\PayChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Wallet\CreateRechargeRequest;
-use App\Http\Resources\Api\V1\RechargeOrderResource;
+use App\Http\Resources\Api\V1\RechargeResource;
 use App\Models\User;
-use App\Models\Wallet\RechargeOrder;
+use App\Models\Wallet\Recharge;
 use App\Services\RechargeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,7 +44,7 @@ class RechargeController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $query = $user->rechargeOrders();
+        $query = $user->recharges();
 
         if ($status = $request->query('pay_status')) {
             $query->where('pay_status', $status);
@@ -52,7 +52,7 @@ class RechargeController extends Controller
 
         $items = $query->orderByDesc('id')->paginate(per_page($request));
 
-        return RechargeOrderResource::collection($items);
+        return RechargeResource::collection($items);
     }
 
     /**
@@ -64,7 +64,7 @@ class RechargeController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
-        $order = $this->rechargeService->create(
+        $recharge = $this->rechargeService->create(
             $user,
             (float) $data['amount'],
             PayChannel::from($data['pay_channel']),
@@ -72,7 +72,7 @@ class RechargeController extends Controller
         );
 
         // 不使用 additional()，避免响应被强制包裹 data，破坏项目「无 data 包裹」约定
-        return (new RechargeOrderResource($order))
+        return (new RechargeResource($recharge))
             ->response()
             ->setStatusCode(201);
     }
@@ -80,10 +80,10 @@ class RechargeController extends Controller
     /**
      * 充值订单详情（供轮询支付状态）
      */
-    public function show(RechargeOrder $order): RechargeOrderResource
+    public function show(Recharge $recharge): RechargeResource
     {
-        $this->authorize('view', $order);
+        $this->authorize('view', $recharge);
 
-        return new RechargeOrderResource($order);
+        return new RechargeResource($recharge);
     }
 }

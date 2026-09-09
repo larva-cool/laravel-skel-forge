@@ -11,7 +11,7 @@
 | `stats:user` | 每日 01:10 | 统计昨日用户数据 |
 | `telescope:prune --hours=48 --keep-exceptions` | 每日 01:15 | 清理 Telescope 记录 |
 | `horizon:snapshot` | 每 5 分钟 | 记录应用状态快照 |
-| `wallet:close-expired-recharge` | 每 5 分钟 | 关闭超时未支付的充值订单（钱包 Phase 2 交付） |
+| `CloseExpiredRechargesJob` | 每 5 分钟 | 关闭超时未支付的充值订单（钱包 Phase 2 交付） |
 
 ## 调度日志
 

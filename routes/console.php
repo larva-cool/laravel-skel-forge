@@ -26,7 +26,7 @@ Schedule::command('telescope:prune --hours=48 --keep-exceptions')->dailyAt('1:15
 Schedule::command('horizon:snapshot')->everyFiveMinutes()->onOneServer();
 
 // 每 5 分钟关闭超时未支付的充值订单
-Schedule::job(new \App\Jobs\Wallet\CloseExpiredRechargeOrdersJob)->everyFiveMinutes()->onOneServer();
+Schedule::job(new \App\Jobs\Wallet\CloseExpiredRechargesJob)->everyFiveMinutes()->onOneServer();
 
 if (! app()->isProduction()) {
     // 每天凌晨 1:20 清理 Telescope 日志

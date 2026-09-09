@@ -15,7 +15,7 @@ use App\Models\Admin\Admin;
 use App\Models\System\Setting;
 use App\Models\User;
 use App\Services\RechargeService;
-use Database\Factories\Wallet\RechargeOrderFactory;
+use Database\Factories\Wallet\RechargeFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
@@ -157,7 +157,7 @@ class RechargeServiceTest extends TestCase
         $this->assertSame('300.00', $trade->amount);
         $this->assertSame('0.00', $trade->before_balance);
         $this->assertSame('300.00', $trade->after_balance);
-        $this->assertSame('recharge_order', $trade->source_type);
+        $this->assertSame('recharge', $trade->source_type);
         $this->assertSame($order->id, $trade->source_id);
     }
 
@@ -194,7 +194,7 @@ class RechargeServiceTest extends TestCase
     #[TestDox('确认到账：已过期订单拒绝入账')]
     public function confirm_rejects_expired_order(): void
     {
-        $order = RechargeOrderFactory::new()->forUser($this->user)->overdue()->create(['amount' => 100]);
+        $order = RechargeFactory::new()->forUser($this->user)->overdue()->create(['amount' => 100]);
 
         try {
             $this->service->confirmManually($order, $this->admin);
@@ -265,13 +265,13 @@ class RechargeServiceTest extends TestCase
     public function close_expired_only_targets_overdue_pending_orders(): void
     {
         // 已超时待支付 —— 应被关闭
-        $overdue = RechargeOrderFactory::new()->forUser($this->user)->overdue()->create();
+        $overdue = RechargeFactory::new()->forUser($this->user)->overdue()->create();
         // 未超时待支付 —— 不应被动
-        $pending = RechargeOrderFactory::new()->forUser($this->user)->create([
+        $pending = RechargeFactory::new()->forUser($this->user)->create([
             'expired_at' => Carbon::now()->addMinutes(20),
         ]);
         // 已到账 —— 不应被动
-        $paid = RechargeOrderFactory::new()->forUser($this->user)->success()->create([
+        $paid = RechargeFactory::new()->forUser($this->user)->success()->create([
             'expired_at' => Carbon::now()->subMinutes(5),
         ]);
 
@@ -287,7 +287,7 @@ class RechargeServiceTest extends TestCase
     #[TestDox('超时关单：不影响用户余额')]
     public function close_expired_does_not_touch_balance(): void
     {
-        RechargeOrderFactory::new()->forUser($this->user)->overdue()->create(['amount' => 500]);
+        RechargeFactory::new()->forUser($this->user)->overdue()->create(['amount' => 500]);
 
         $this->service->closeExpired();
 

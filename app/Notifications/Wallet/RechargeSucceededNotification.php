@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Notifications\Wallet;
 
-use App\Models\Wallet\RechargeOrder;
+use App\Models\Wallet\Recharge;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\DatabaseMessage;
 use Illuminate\Notifications\Notification;
@@ -25,7 +25,7 @@ class RechargeSucceededNotification extends Notification
      * Create a new notification instance.
      */
     public function __construct(
-        public readonly RechargeOrder $order,
+        public readonly Recharge $order,
     ) {}
 
     /**

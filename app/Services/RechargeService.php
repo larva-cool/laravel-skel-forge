@@ -13,7 +13,7 @@ use App\Enums\WalletTradeType;
 use App\Events\Wallet\RechargeSucceeded;
 use App\Models\Admin\Admin;
 use App\Models\User;
-use App\Models\Wallet\RechargeOrder;
+use App\Models\Wallet\Recharge;
 use App\Notifications\Wallet\RechargeSucceededNotification;
 use App\Support\WalletHelper;
 use Illuminate\Support\Carbon;
@@ -43,7 +43,7 @@ class RechargeService
      *
      * @throws ValidationException 充值关闭或金额越界时抛出
      */
-    public function create(User $user, float $amount, PayChannel $channel, ?string $clientIp = null): RechargeOrder
+    public function create(User $user, float $amount, PayChannel $channel, ?string $clientIp = null): Recharge
     {
         // 校验充值开关
         $this->assertRechargeEnabled();
@@ -52,12 +52,12 @@ class RechargeService
         // 校验支付渠道是否可用
         $this->assertChannelAvailable($channel);
 
-        $expireMinutes = (int) settings('wallet.recharge_order_expire_minutes', 30);
+        $expireMinutes = (int) settings('wallet.recharge_expire_minutes', 30);
 
-        return RechargeOrder::create([
+        return Recharge::create([
             'owner_type' => $user->getMorphClass(),
             'owner_id' => $user->id,
-            'order_no' => RechargeOrder::generateOrderNo(),
+            'order_no' => Recharge::generateOrderNo(),
             'amount' => $amount,
             'bonus_amount' => $this->calculateBonus($amount),
             'pay_channel' => $channel,
@@ -70,13 +70,13 @@ class RechargeService
     /**
      * 管理员手动确认到账
      *
-     * @param  RechargeOrder  $order  充值订单
+     * @param  Recharge  $order  充值订单
      * @param  Admin  $admin  操作管理员
      * @param  string|null  $remark  确认备注
      *
      * @throws ValidationException 订单已过期时抛出
      */
-    public function confirmManually(RechargeOrder $order, Admin $admin, ?string $remark = null): RechargeOrder
+    public function confirmManually(Recharge $order, Admin $admin, ?string $remark = null): Recharge
     {
         return $this->markAsPaid($order, [
             'confirmed_by' => $admin->getKey(),
@@ -92,18 +92,18 @@ class RechargeService
      *   2. 已到账（success）直接返回，不重复入账
      *   3. transaction_id 唯一索引作为数据库层兜底
      *
-     * @param  RechargeOrder  $order  充值订单
+     * @param  Recharge  $order  充值订单
      * @param  array<string, mixed>  $extra  额外写入字段（如 transaction_id、callback_payload）
      *
      * @throws ValidationException 订单已过期或处于其他终态时抛出
      */
-    public function markAsPaid(RechargeOrder $order, array $extra = []): RechargeOrder
+    public function markAsPaid(Recharge $order, array $extra = []): Recharge
     {
-        $conn = RechargeOrder::query()->getConnection();
+        $conn = Recharge::query()->getConnection();
 
         return $conn->transaction(function () use ($order, $extra) {
-            /** @var RechargeOrder|null $locked */
-            $locked = RechargeOrder::query()->where('id', $order->id)->lockForUpdate()->first();
+            /** @var Recharge|null $locked */
+            $locked = Recharge::query()->where('id', $order->id)->lockForUpdate()->first();
 
             if (! $locked) {
                 throw ValidationException::withMessages(['order' => '充值订单不存在']);
@@ -154,7 +154,7 @@ class RechargeService
      *
      * @throws ValidationException 订单已处于终态时抛出
      */
-    public function close(RechargeOrder $order, ?string $remark = null): RechargeOrder
+    public function close(Recharge $order, ?string $remark = null): Recharge
     {
         if ($order->pay_status->isFinal()) {
             throw ValidationException::withMessages([
@@ -178,7 +178,7 @@ class RechargeService
      */
     public function closeExpired(int $limit = 500): int
     {
-        return RechargeOrder::query()
+        return Recharge::query()
             ->where('pay_status', RechargeStatus::PENDING->value)
             ->whereNotNull('expired_at')
             ->where('expired_at', '<=', Carbon::now())
@@ -206,7 +206,7 @@ class RechargeService
     /**
      * 构造流水描述
      */
-    protected function buildTradeDescription(RechargeOrder $order): string
+    protected function buildTradeDescription(Recharge $order): string
     {
         $bonus = (float) $order->bonus_amount;
         $description = "充值订单 {$order->order_no}";

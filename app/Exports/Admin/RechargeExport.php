@@ -8,13 +8,13 @@ declare(strict_types=1);
 namespace App\Exports\Admin;
 
 use App\Exports\AbstractExport;
-use App\Models\Wallet\RechargeOrder;
+use App\Models\Wallet\Recharge;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
  * 充值订单导出
  */
-class RechargeOrderExport extends AbstractExport
+class RechargeExport extends AbstractExport
 {
     public const SYNC_THRESHOLD = 2000;
 
@@ -47,7 +47,7 @@ class RechargeOrderExport extends AbstractExport
 
     protected function buildQuery(): Builder
     {
-        return RechargeOrder::query()->filter($this->filters)->orderByDesc('id');
+        return Recharge::query()->filter($this->filters)->orderByDesc('id');
     }
 
     protected function sheetTitle(): string

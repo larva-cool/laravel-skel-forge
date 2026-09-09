@@ -159,7 +159,7 @@
 
 > 冻结/解冻操作只变动冻结余额而不动可用余额，因此必须同时保留 `before_frozen` / `after_frozen` 快照，否则无法完整审计对账。
 
-### 5.2 充值订单表 (recharge_orders)
+### 5.2 充值订单表 (recharges)
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -168,13 +168,18 @@
 | order_no | VARCHAR(64) | 订单号（唯一，前缀 `R` + 日期 + 随机串） |
 | amount | DECIMAL(16,2) | 充值金额 |
 | bonus_amount | DECIMAL(16,2) | 赠送金额（按 `wallet.recharge_bonus_rate` 计算） |
-| pay_channel | VARCHAR(32) | 支付渠道（wechat/alipay/apple） |
-| pay_status | VARCHAR(20) | 支付状态（pending/success/failed/expired） |
+| pay_channel | VARCHAR(32) | 支付渠道（manual/wechat/alipay/apple，当前仅 manual 可用） |
+| pay_status | VARCHAR(20) | 支付状态（pending/success/failed/expired/closed） |
+| transaction_id | VARCHAR(128) | 渠道流水号（唯一，防重复入账；手动确认为空） |
+| confirmed_by | BIGINT | 手动确认到账的管理员 ID |
 | paid_at | TIMESTAMP | 支付完成时间 |
 | expired_at | TIMESTAMP | 订单过期时间（默认创建后 30 分钟） |
+| client_ip | VARCHAR(45) | 下单 IP |
+| remark | VARCHAR(255) | 备注 |
+| callback_payload | JSON | 渠道原始回调报文（渠道接入后使用） |
 | created_at / updated_at | TIMESTAMP | 时间戳 |
 
-**索引**：`order_no` 唯一索引、`(owner_type, owner_id)` 复合索引、`pay_status` 索引。
+**索引**：`order_no` 唯一索引、`transaction_id` 唯一索引、`(owner_type, owner_id, created_at)` 复合索引、`pay_status` 索引、`expired_at` 索引。
 
 ### 5.3 提现申请表 (withdraw_orders)
 

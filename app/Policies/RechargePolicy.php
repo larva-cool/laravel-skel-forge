@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\Wallet\RechargeOrder;
+use App\Models\Wallet\Recharge;
 
 /**
  * 充值订单策略
@@ -17,7 +17,7 @@ use App\Models\Wallet\RechargeOrder;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-class RechargeOrderPolicy
+class RechargePolicy
 {
     /**
      * Determine whether the user can view any models.
@@ -30,7 +30,7 @@ class RechargeOrderPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, RechargeOrder $order): bool
+    public function view(User $user, Recharge $order): bool
     {
         return $order->owner_type === $user->getMorphClass() && $order->owner_id === $user->id;
     }

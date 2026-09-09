@@ -11,7 +11,7 @@ use App\Enums\PayChannel;
 use App\Http\Controllers\Api\V1\Wallet\RechargeController;
 use App\Models\User;
 use App\Services\RechargeService;
-use Database\Factories\Wallet\RechargeOrderFactory;
+use Database\Factories\Wallet\RechargeFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -42,7 +42,7 @@ class RechargeControllerTest extends TestCase
     #[TestDox('未登录创建订单返回 401')]
     public function guest_cannot_create_order(): void
     {
-        $this->postJson('/api/v1/user/wallet/recharge', [
+        $this->postJson('/api/v1/user/wallet/recharges', [
             'amount' => 100,
             'pay_channel' => 'manual',
         ])->assertUnauthorized();
@@ -52,7 +52,7 @@ class RechargeControllerTest extends TestCase
     #[TestDox('未登录查看订单列表返回 401')]
     public function guest_cannot_list_orders(): void
     {
-        $this->getJson('/api/v1/user/wallet/recharge-orders')->assertUnauthorized();
+        $this->getJson('/api/v1/user/wallet/recharges')->assertUnauthorized();
     }
 
     #[Test]
@@ -60,7 +60,7 @@ class RechargeControllerTest extends TestCase
     public function user_can_create_order(): void
     {
         $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/v1/user/wallet/recharge', [
+            ->postJson('/api/v1/user/wallet/recharges', [
                 'amount' => 199.99,
                 'pay_channel' => 'manual',
             ])
@@ -71,7 +71,7 @@ class RechargeControllerTest extends TestCase
 
         // 下单不应立即改变余额
         $this->assertSame('0.00', $this->user->fresh()->balance);
-        $this->assertSame(1, $this->user->rechargeOrders()->count());
+        $this->assertSame(1, $this->user->recharges()->count());
     }
 
     #[Test]
@@ -79,7 +79,7 @@ class RechargeControllerTest extends TestCase
     public function create_with_zero_amount_returns_422(): void
     {
         $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/v1/user/wallet/recharge', [
+            ->postJson('/api/v1/user/wallet/recharges', [
                 'amount' => 0,
                 'pay_channel' => 'manual',
             ])
@@ -92,7 +92,7 @@ class RechargeControllerTest extends TestCase
     public function create_with_negative_amount_returns_422(): void
     {
         $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/v1/user/wallet/recharge', [
+            ->postJson('/api/v1/user/wallet/recharges', [
                 'amount' => -100,
                 'pay_channel' => 'manual',
             ])
@@ -105,7 +105,7 @@ class RechargeControllerTest extends TestCase
     public function create_with_unavailable_channel_returns_422(): void
     {
         $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/v1/user/wallet/recharge', [
+            ->postJson('/api/v1/user/wallet/recharges', [
                 'amount' => 100,
                 'pay_channel' => 'wechat',
             ])
@@ -118,7 +118,7 @@ class RechargeControllerTest extends TestCase
     public function create_without_channel_returns_422(): void
     {
         $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/v1/user/wallet/recharge', ['amount' => 100])
+            ->postJson('/api/v1/user/wallet/recharges', ['amount' => 100])
             ->assertStatus(422)
             ->assertJsonValidationErrors('pay_channel');
     }
@@ -128,11 +128,11 @@ class RechargeControllerTest extends TestCase
     public function order_list_is_scoped_to_current_user(): void
     {
         $other = User::factory()->create();
-        RechargeOrderFactory::new()->forUser($this->user)->create(['amount' => 100]);
-        RechargeOrderFactory::new()->forUser($other)->count(3)->create();
+        RechargeFactory::new()->forUser($this->user)->create(['amount' => 100]);
+        RechargeFactory::new()->forUser($other)->count(3)->create();
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson('/api/v1/user/wallet/recharge-orders')
+            ->getJson('/api/v1/user/wallet/recharges')
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.amount', '100.00');
@@ -148,11 +148,11 @@ class RechargeControllerTest extends TestCase
     #[TestDox('订单列表按支付状态筛选')]
     public function order_list_can_be_filtered_by_status(): void
     {
-        RechargeOrderFactory::new()->forUser($this->user)->create();
-        RechargeOrderFactory::new()->forUser($this->user)->success()->create();
+        RechargeFactory::new()->forUser($this->user)->create();
+        RechargeFactory::new()->forUser($this->user)->success()->create();
 
         $this->actingAs($this->user, 'sanctum')
-            ->getJson('/api/v1/user/wallet/recharge-orders?pay_status=success')
+            ->getJson('/api/v1/user/wallet/recharges?pay_status=success')
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.pay_status.value', 'success');
@@ -165,7 +165,7 @@ class RechargeControllerTest extends TestCase
         $order = app(RechargeService::class)->create($this->user, 150, PayChannel::MANUAL);
 
         $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/user/wallet/recharge-orders/{$order->id}")
+            ->getJson("/api/v1/user/wallet/recharges/{$order->id}")
             ->assertOk()
             ->assertJsonPath('id', $order->id)
             ->assertJsonPath('amount', '150.00');
@@ -176,10 +176,10 @@ class RechargeControllerTest extends TestCase
     public function user_cannot_view_others_order(): void
     {
         $other = User::factory()->create();
-        $order = RechargeOrderFactory::new()->forUser($other)->create();
+        $order = RechargeFactory::new()->forUser($other)->create();
 
         $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/user/wallet/recharge-orders/{$order->id}")
+            ->getJson("/api/v1/user/wallet/recharges/{$order->id}")
             ->assertForbidden();
     }
 
@@ -192,7 +192,7 @@ class RechargeControllerTest extends TestCase
         app(RechargeService::class)->confirmManually($order, $admin);
 
         $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/user/wallet/recharge-orders/{$order->id}")
+            ->getJson("/api/v1/user/wallet/recharges/{$order->id}")
             ->assertOk()
             ->assertJsonPath('pay_status.value', 'success');
 

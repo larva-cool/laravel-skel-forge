@@ -406,7 +406,7 @@ return new class extends Migration
             ],
             [
                 'name' => '充值订单超时时长',
-                'key' => 'wallet.recharge_order_expire_minutes',
+                'key' => 'wallet.recharge_expire_minutes',
                 'value' => 30,
                 'cast_type' => SettingType::CAST_TYPE_INT,
                 'input_type' => SettingType::CAST_TYPE_INT,

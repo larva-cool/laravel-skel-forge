@@ -305,16 +305,16 @@
 
 > 提现状态流转：`pending` →（approve）`approved` →（transfer）`success`；`pending` →（reject）`rejected`（自动解冻）；打款失败置 `failed` 同样自动解冻。已进入终态（`success`/`rejected`）的记录不可重复操作。
 
-## 25. 充值订单（/admin/wallet/recharge-orders）
+## 25. 充值订单（/admin/wallet/recharges）
 
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
-| GET | `/admin/wallet/recharge-orders` | 充值订单列表（分页，支持 `owner_type`/`owner_id`/`pay_status`/`pay_channel`/`order_no`/时间范围筛选） | wallet.orders |
-| GET | `/admin/wallet/recharge-orders/stats` | 充值统计（累计/今日金额、赠送总额、订单数、成功率） | wallet.orders |
-| GET | `/admin/wallet/recharge-orders/{order}` | 充值订单详情（含渠道原始回调报文） | wallet.orders |
-| POST | `/admin/wallet/recharge-orders/{order}/confirm` | 手动确认到账（幂等，入账并发站内信通知） | wallet.orders |
-| POST | `/admin/wallet/recharge-orders/{order}/close` | 关闭订单（仅待支付可关闭） | wallet.orders |
-| GET | `/admin/wallet/recharge-orders/export` | 导出充值订单（xlsx） | wallet.export |
+| GET | `/admin/wallet/recharges` | 充值订单列表（分页，支持 `owner_type`/`owner_id`/`pay_status`/`pay_channel`/`order_no`/时间范围筛选） | wallet.orders |
+| GET | `/admin/wallet/recharges/stats` | 充值统计（累计/今日金额、赠送总额、订单数、成功率） | wallet.orders |
+| GET | `/admin/wallet/recharges/{recharge}` | 充值订单详情（含渠道原始回调报文） | wallet.orders |
+| POST | `/admin/wallet/recharges/{recharge}/confirm` | 手动确认到账（幂等，入账并发站内信通知） | wallet.orders |
+| POST | `/admin/wallet/recharges/{recharge}/close` | 关闭订单（仅待支付可关闭） | wallet.orders |
+| GET | `/admin/wallet/recharges/export` | 导出充值订单（xlsx） | wallet.export |
 
 > 支付渠道对接已挂起，当前到账依赖管理员手动确认。确认接口具备三重幂等保障（行锁 + 状态判定 + `transaction_id` 唯一索引），重复调用不会重复入账。详见 `docs/technical-solutions/wallet.md` 第 12.1 节。
 

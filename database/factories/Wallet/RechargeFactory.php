@@ -10,18 +10,18 @@ namespace Database\Factories\Wallet;
 use App\Enums\PayChannel;
 use App\Enums\RechargeStatus;
 use App\Models\User;
-use App\Models\Wallet\RechargeOrder;
+use App\Models\Wallet\Recharge;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
 /**
  * 充值订单模型工厂
  *
- * @extends Factory<RechargeOrder>
+ * @extends Factory<Recharge>
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-class RechargeOrderFactory extends Factory
+class RechargeFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -33,7 +33,7 @@ class RechargeOrderFactory extends Factory
         return [
             'owner_type' => 'user',
             'owner_id' => User::factory(),
-            'order_no' => RechargeOrder::generateOrderNo(),
+            'order_no' => Recharge::generateOrderNo(),
             'amount' => fake()->randomFloat(2, 10, 1000),
             'bonus_amount' => 0,
             'pay_channel' => PayChannel::MANUAL,

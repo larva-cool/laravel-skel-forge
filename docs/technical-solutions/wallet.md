@@ -27,7 +27,7 @@ app/
 │   │   └── HasWalletBalance.php        # 钱包能力 trait（多态关系 + 余额判定）
 │   └── Wallet/
 │       ├── WalletTrade.php             # 钱包流水（morphTo owner + morphTo source）
-│       ├── RechargeOrder.php           # 充值订单（morphTo owner）
+│       ├── Recharge.php           # 充值订单（morphTo owner）
 │       └── WithdrawOrder.php           # 提现申请（morphTo owner）
 ├── Support/
 │   └── WalletHelper.php                # 余额引擎（incr/decr/freeze/unfreeze）
@@ -45,20 +45,20 @@ app/
 │   ├── WithdrawRejectedNotification.php
 │   └── WithdrawTransferredNotification.php
 ├── Jobs/Wallet/
-│   └── CloseExpiredRechargeOrdersJob.php   # 关闭超时未支付订单
+│   └── CloseExpiredRechargesJob.php   # 关闭超时未支付订单
 ├── Policies/
-│   ├── RechargeOrderPolicy.php
+│   ├── RechargePolicy.php
 │   └── WithdrawOrderPolicy.php
 ├── Exports/Admin/
 │   ├── WalletTradeExport.php
 │   ├── WithdrawOrderExport.php
-│   └── RechargeOrderExport.php
+│   └── RechargeExport.php
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Admin/
 │   │   │   ├── WalletController.php            # 流水列表/详情/统计/调账
 │   │   │   ├── WithdrawOrderController.php     # 提现审核
-│   │   │   └── RechargeOrderController.php     # 充值订单查看
+│   │   │   └── RechargeController.php     # 充值订单查看
 │   │   ├── Api/V1/User/
 │   │   │   └── WalletController.php            # 前台钱包概览/流水/充值/提现
 │   │   └── PayCallbackController.php           # 支付渠道异步回调
@@ -76,29 +76,33 @@ app/
 │       │   ├── WalletTradeResource.php
 │       │   ├── WalletStatResource.php
 │       │   ├── WithdrawOrderResource.php
-│       │   └── RechargeOrderResource.php
+│       │   └── RechargeResource.php
 │       └── Api/V1/
 │           ├── WalletResource.php
 │           ├── WalletTradeResource.php
 │           ├── WithdrawOrderResource.php
-│           └── RechargeOrderResource.php
+│           └── RechargeResource.php
 database/
 ├── migrations/
 │   ├── xxxx_add_balance_to_users_table.php     # users 表加 balance/frozen_balance
 │   ├── xxxx_create_wallet_trades_table.php
-│   ├── xxxx_create_recharge_orders_table.php
+│   ├── xxxx_create_recharges_table.php
 │   └── xxxx_create_withdraw_orders_table.php
 └── factories/Wallet/
     ├── WalletTradeFactory.php
-    ├── RechargeOrderFactory.php
+    ├── RechargeFactory.php
     └── WithdrawOrderFactory.php
 tests/Feature/
 ├── Admin/
 │   ├── WalletControllerTest.php
 │   ├── WithdrawOrderControllerTest.php
-│   └── RechargeOrderControllerTest.php
-└── Api/V1/
-    └── WalletControllerTest.php
+│   └── RechargeAdminControllerTest.php
+├── Api/V1/
+│   ├── WalletControllerTest.php
+│   └── RechargeControllerTest.php
+└── Wallet/
+    ├── WalletHelperTest.php
+    └── RechargeServiceTest.php
 ```
 
 ## 3. HasWalletBalance Trait
@@ -108,7 +112,7 @@ tests/Feature/
 | 方法 | 职责 |
 |------|------|
 | `walletTrades(): MorphMany` | 钱包流水（作为 owner） |
-| `rechargeOrders(): MorphMany` | 充值订单（作为 owner） |
+| `recharges(): MorphMany` | 充值订单（作为 owner） |
 | `withdrawOrders(): MorphMany` | 提现申请（作为 owner） |
 | `hasBalance(float $amount): bool` | 判定可用余额是否充足 |
 | `totalBalance(): float` | 总资产（可用 + 冻结） |
@@ -142,15 +146,15 @@ tests/Feature/
 **Phase 2 实现的链路（管理员手动确认）**
 
 ```
-POST /api/v1/user/wallet/recharge
+POST /api/v1/user/wallet/recharges
   → CreateRechargeRequest 校验开关与金额区间
   → RechargeService::create()
       → 计算赠送金额（wallet.recharge_bonus_rate）
       → 生成 order_no（R + YmdHis + 随机串）
-      → 创建 RechargeOrder(pay_status=pending, expired_at=now+30min)
+      → 创建 Recharge(pay_status=pending, expired_at=now+30min)
       → 返回订单信息（暂不返回渠道支付参数）
 
-POST /admin/wallet/recharge-orders/{order}/confirm
+POST /admin/wallet/recharges/{recharge}/confirm
   → RechargeService::confirmManually()
       → 事务内按 order_no 加锁查单
       → 幂等判定：已 success 直接返回
@@ -162,7 +166,7 @@ POST /admin/wallet/recharge-orders/{order}/confirm
 **渠道接入后的目标链路（挂起）**
 
 ```
-POST /api/v1/user/wallet/recharge
+POST /api/v1/user/wallet/recharges
   → ... 同上 ...
   → 调用支付渠道预下单，返回客户端支付参数
 
@@ -172,7 +176,7 @@ POST /callback/pay/{channel}
       → 与 confirmManually() 复用同一入账内核（保证两条路径行为一致）
 ```
 
-超时未支付订单由 `CloseExpiredRechargeOrdersJob` 定时置为 `expired`，注册到 `routes/console.php`。
+超时未支付订单由 `CloseExpiredRechargesJob` 定时置为 `expired`，注册到 `routes/console.php`。
 
 ## 6. 提现链路
 
@@ -243,7 +247,7 @@ POST /admin/wallet/withdraws/{id}/transfer
 | wallet.min_recharge_amount | 1 | int | 单笔最低充值金额（元） |
 | wallet.max_recharge_amount | 50000 | int | 单笔最高充值金额（元） |
 | wallet.recharge_bonus_rate | 0 | float | 充值赠送比例（%） |
-| wallet.recharge_order_expire_minutes | 30 | int | 充值订单超时时长（分钟） |
+| wallet.recharge_expire_minutes | 30 | int | 充值订单超时时长（分钟） |
 | wallet.min_withdraw_amount | 100 | int | 单笔最低提现金额（元） |
 | wallet.max_withdraw_amount | 50000 | int | 单笔最高提现金额（元） |
 | wallet.withdraw_fee_rate | 0 | float | 提现手续费率（%） |
@@ -256,7 +260,7 @@ POST /admin/wallet/withdraws/{id}/transfer
 
 ```php
 'wallet_trade'   => \App\Models\Wallet\WalletTrade::class,
-'recharge_order' => \App\Models\Wallet\RechargeOrder::class,
+'recharge' => \App\Models\Wallet\Recharge::class,
 'withdraw_order' => \App\Models\Wallet\WithdrawOrder::class,
 ```
 
@@ -289,7 +293,7 @@ POST /admin/wallet/withdraws/{id}/transfer
 | 阶段 | 内容 | 交付物 | 状态 |
 |------|------|--------|------|
 | **Phase 1 基础账本** | `users` 表加字段；`wallet_trades` 表；`WalletTradeType` / `WalletTradeStatus` 枚举；`HasWalletBalance` trait；`WalletHelper` 四个核心方法 + 结算方法；后台流水列表/详情/统计/调账；前台钱包概览与流水接口；PHPUnit 覆盖并发扣减与余额不足场景 | 可查询、可调账的完整账本 | ✅ **已完成**（35 用例 / 137 断言全绿） |
-| **Phase 2 充值订单** | `recharge_orders` 表 + 模型 + Policy；`PayChannel` / `RechargeStatus` 枚举；`RechargeService`（下单 + 管理员手动确认到账 + 幂等 + 超时关单）；超时关单 Job + 定时任务注册；后台充值订单管理（列表/详情/统计/确认/导出）；前台充值下单与订单查询接口；`RechargeSucceededNotification` | 订单生命周期完整，管理员可手动确认到账 | 🔄 进行中 |
+| **Phase 2 充值订单** | `recharges` 表 + 模型 + Policy；`PayChannel` / `RechargeStatus` 枚举；`RechargeService`（下单 + 管理员手动确认到账 + 幂等 + 超时关单）；超时关单 Job + 定时任务注册；后台充值订单管理（列表/详情/统计/确认/导出）；前台充值下单与订单查询接口；`RechargeSucceededNotification` | 订单生命周期完整，管理员可手动确认到账 | 🔄 进行中 |
 | **Phase 3 提现审核** | `withdraw_orders` 表 + 模型 + Policy；`WithdrawStatus` / `WithdrawAccountType` 枚举；`WithdrawService` 完整状态流转；冻结/解冻/结算联动；后台提现审核页面；前台提现接口 + 限流；三个提现通知类；导出类 | 提现申请到打款全流程闭环 | 未开始 |
 | **Phase 4 集成与验收** | 订单/优惠券等业务侧接入冻结与结算；钱包指标并入业务数据看板；Apifox 按 Admin/Api 模块规范全量发布；补齐测试至项目 70% 覆盖率要求；README 与文档同步 | 生产可用 | 未开始 |
 
@@ -309,8 +313,8 @@ POST /admin/wallet/withdraws/{id}/transfer
 | 挂起原因 | 本地无商户号与支付证书，真实支付链路无法验证；强行实现会导致核心的幂等与入账逻辑缺乏可靠测试覆盖 |
 | 恢复条件 | 提供微信支付/支付宝商户号、API 密钥与证书，并配置到 `config/services.php` |
 | 待补内容 | ① `app/Payments/Contracts/PaymentGateway.php` 网关契约（`prepay` / `verifyCallback` / `queryOrder` 三个方法）；② `PaymentManager` 渠道路由；③ `WechatPayGateway`、`AlipayGateway` 实现类；④ `PayCallbackController` 统一回调入口（`POST /callback/pay/{channel}`，豁免认证与 CSRF）；⑤ `RechargeService::handleCallback()` 验签入账；⑥ `queryAndSync()` 主动查单补偿 |
-| 设计约束 | 渠道接入时**不得修改** `RechargeService` 的入账内核与 `RechargeOrder` 状态机，只允许新增网关实现类并在 `PaymentManager` 注册；回调入账必须复用 Phase 2 已验证的幂等逻辑 |
-| 数据准备 | `recharge_orders` 表在 Phase 2 已预留 `pay_channel`、`transaction_id`（唯一索引防重复入账）、`callback_payload` 三个字段，渠道接入无需再改表结构 |
+| 设计约束 | 渠道接入时**不得修改** `RechargeService` 的入账内核与 `Recharge` 状态机，只允许新增网关实现类并在 `PaymentManager` 注册；回调入账必须复用 Phase 2 已验证的幂等逻辑 |
+| 数据准备 | `recharges` 表在 Phase 2 已预留 `pay_channel`、`transaction_id`（唯一索引防重复入账）、`callback_payload` 三个字段，渠道接入无需再改表结构 |
 
 ### 12.2 充值套餐配置（挂起）
 

@@ -17,7 +17,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('recharge_orders', function (Blueprint $table) {
+        Schema::create('recharges', function (Blueprint $table) {
             $table->id()->from(10000000);
             $table->string('owner_type', 64)->comment('持有者类型（多态，如 user）');
             $table->unsignedBigInteger('owner_id')->comment('持有者ID');
@@ -49,6 +49,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('recharge_orders');
+        Schema::dropIfExists('recharges');
     }
 };

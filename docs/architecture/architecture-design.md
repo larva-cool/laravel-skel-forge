@@ -43,7 +43,7 @@ POST /admin/chat → ChatController → AI Agent (laravel/ai) → Tool 调用 �
 | `System/` | Area、Attachment、AuditLog、Dict、DictItem、Feedback、LoginHistory、MailCode、Permission、PersonalAccessToken、PhoneCode、Role、ScheduleLog、Setting、Social |
 | `User/` | Address、IdentityVerification、UserExtra、UserProfile、UserStat |
 | `UserSegment/` | Membership、Segment、SegmentTask |
-| `Wallet/` | WalletTrade、RechargeOrder、WithdrawOrder |
+| `Wallet/` | WalletTrade、Recharge、WithdrawOrder |
 
 ---
 

@@ -102,9 +102,9 @@
 |------|------|------|------|
 | GET | `/api/v1/user/wallet` | 我的钱包概览（可用余额、冻结余额、累计收入、累计支出） | ✅ 已交付 |
 | GET | `/api/v1/user/wallet/trades` | 我的钱包流水（分页，可按 `type`/时间范围过滤） | ✅ 已交付 |
-| POST | `/api/v1/user/wallet/recharge` | 创建充值订单（返回 `order_no`，成功返回 201） | ✅ 已交付 |
-| GET | `/api/v1/user/wallet/recharge-orders` | 我的充值订单列表（分页，可按 `pay_status` 过滤） | ✅ 已交付 |
-| GET | `/api/v1/user/wallet/recharge-orders/{order}` | 充值订单详情（用于轮询到账状态） | ✅ 已交付 |
+| POST | `/api/v1/user/wallet/recharges` | 创建充值订单（返回 `order_no`，成功返回 201） | ✅ 已交付 |
+| GET | `/api/v1/user/wallet/recharges` | 我的充值订单列表（分页，可按 `pay_status` 过滤） | ✅ 已交付 |
+| GET | `/api/v1/user/wallet/recharges/{recharge}` | 充值订单详情（用于轮询到账状态） | ✅ 已交付 |
 | POST | `/api/v1/user/wallet/withdraw` | 提交提现申请（校验限额与频次，成功后冻结对应金额） | Phase 3 |
 | GET | `/api/v1/user/wallet/withdraws` | 我的提现记录列表（分页） | Phase 3 |
 | GET | `/api/v1/user/wallet/withdraws/{withdraw}` | 提现详情 | Phase 3 |
@@ -113,7 +113,7 @@
 
 - 全部接口需 Sanctum 认证，内部统一取 `auth()->user()` 作为 owner，前台无需感知多态
 - 充值下单与提现提交均通过独立 `throttle` 限流（可配 `wallet.recharge_throttle`），防止刷单
-- 越权访问他人订单返回 `403`，由 `RechargeOrderPolicy` / `WithdrawOrderPolicy` 校验
+- 越权访问他人订单返回 `403`，由 `RechargePolicy` / `WithdrawOrderPolicy` 校验
 - 金额字段统一以元为单位、`decimal(16,2)` 精度返回字符串，避免前端浮点精度丢失
 - 前台端不返回 `owner`、`client_ip`、`confirmed_by`、`callback_payload` 等内部字段
 - 支付渠道对接已挂起，`pay_channel` 当前仅接受 `manual`，到账由管理员在后台确认

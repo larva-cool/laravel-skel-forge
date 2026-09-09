@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-class CloseExpiredRechargeOrdersJob implements ShouldQueue
+class CloseExpiredRechargesJob implements ShouldQueue
 {
     use Queueable;
 

@@ -17,7 +17,7 @@ use Illuminate\Validation\Rule;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-class RechargeOrderIndexRequest extends FormRequest
+class RechargeIndexRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
