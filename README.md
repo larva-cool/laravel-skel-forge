@@ -85,7 +85,7 @@ app/
 │   └── Resources/   # Eloquent API Resources
 ├── Jobs/            # 队列任务
 ├── Mail/            # 邮件
-├── Models/          # Admin/、App/、Coin/、Content/、Point/、System/、User/
+├── Models/          # Admin/、App/、Coin/、Content/、Invite/、Point/、System/、User/
 ├── Policies/        # 授权策略
 ├── Providers/       # 服务提供者
 ├── Services/        # 业务服务
@@ -151,6 +151,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 实名认证 | `/admin/identity-verifications` | 用户实名认证审核（个人/企业），支持通过/驳回、统计、详情查看证件附件 |
 | 评论管理 | `/admin/comments` | 评论列表（按审核状态/源类型/关键词/用户过滤）、详情（含 IP 与上级评论摘要）、回复链分页查询、审核（通过/驳回/审核中）、删除，列表可导出 Excel |
 | 用户分群 | `/admin/user-segments`、`/admin/segment-tasks`、`/user/segment`、`/user/segment-task` | 用户分群（segment）CRUD：手动分群与规则分群两种类型，规则分群按 JSON 条件由定时任务每天 02:00 增量同步成员；支持为用户批量打标/移标（含笛卡尔批量，>1000 ID 自动转为异步任务入队，通过 `/admin/segment-tasks` 后端接口 + 前端 `/user/segment-task` 任务列表页轮询查询进度，完成/失败时站内信通知）、按分群筛选用户（AND 语义）、规则预览；公告群发可复用 `options` 接口拉取手动分群作为目标范围 |
+| 邀请记录 | `/admin/invite-records` | 邀请关系查询（只读）：分页列表与详情，支持按邀请人/被邀请人（多态类型 + ID）、描述关键词、邀请时间范围筛选。邀请人与被邀请人均为多态关联，可跨 `user`/`admin` 主体查询 |
 | 公共接口 | `/admin/common` | 与业务无关的通用选项（如 `source-types` 多态源类型下拉） |
 | 监控 | `/admin/monitor`、`/admin/queue`、`/admin/debug` | Pulse 性能、Horizon 队列、Telescope 调试（仅 local） |
 | 审计 | `/admin/audit-logs`、`/admin/schedule-logs`、`/admin/login-histories` | 操作审计、调度日志与全局登录历史（跨管理员/前台用户，可按 guard、结果、时间过滤）。**导出支持**：用户/评论/反馈/审计日志列表与用户流水均提供 `GET /export` 端点（同步/异步双通道，大数据量走队列生成并通过站内信推送下载链接） |
@@ -164,6 +165,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 认证 | `/api/v1/auth` | 用户注册（手机/邮箱）、登录、登出、当前用户、Token 刷新 |
 | 用户中心 | `/api/v1/user` | 资料、联系方式、密码、VIP、积分/金币流水、社交账号、登录历史 |
 | 内容互动 | `/api/v1/likes`、`/api/v1/collections`、`/api/v1/comments` | 多态点赞/收藏/评论（支持 `parent_id` 回复、`mentioned_users` 艾特） |
+| 邀请 | `/api/v1/invite` | 我的邀请记录列表（分页）、邀请统计（邀请人数、是否有邀请人）。用户注册时携带 `invite_code` 即自动建立邀请关系（通过 `InviteRegistered` 事件 + 队列异步处理，不阻塞注册）；每个用户创建时自动分配唯一邀请码，可从用户资料的 `invite_code` 字段获取 |
 | 通知 | `/api/v1/notifications` | 客户端通知列表、未读数、已读 |
 | 地址 | `/api/v1/addresses` | 收货地址管理 |
 | 反馈 | `/api/v1/feedbacks` | 用户提交反馈 |
