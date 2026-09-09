@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Listeners;
 
+use App\Events\Invite\InviteRegistered;
 use App\Events\Invite\InviteRelationshipCreated;
-use App\Events\User\InviteRegistered;
 use App\Listeners\User\InviteRegisteredListener;
 use App\Models\Invite\InviteRecord;
 use App\Models\User;

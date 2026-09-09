@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Listeners\User;
 
-use App\Events\User\InviteRegistered;
+use App\Events\Invite\InviteRegistered;
 use App\Services\InviteService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
