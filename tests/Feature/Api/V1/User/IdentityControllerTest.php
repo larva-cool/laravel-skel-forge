@@ -53,7 +53,7 @@ class IdentityControllerTest extends TestCase
         return [
             'type' => IdentityType::PERSONAL->value,
             'real_name' => '张三',
-            'id_card_no' => '110102199003078531',
+            'id_card_no' => '110102199003078538',
             'id_card_front_id' => $front->id,
         ];
     }
@@ -147,7 +147,7 @@ class IdentityControllerTest extends TestCase
             'company_name' => '示例科技有限公司',
             'credit_code' => '91110000XXXXXXXX1X',
             'legal_person_name' => '李四',
-            'legal_person_id_card_no' => '110102199003078531',
+            'legal_person_id_card_no' => '110102199003078538',
             'business_license_id' => $license->id,
         ];
 

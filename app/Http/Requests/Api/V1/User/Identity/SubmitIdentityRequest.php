@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Api\V1\User\Identity;
 
 use App\Enums\IdentityType;
+use App\Rules\IdCardRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
