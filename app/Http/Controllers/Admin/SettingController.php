@@ -231,6 +231,7 @@ class SettingController extends Controller
             'schedule' => '调度设置',
             'openai' => 'OpenAI 配置',
             'broadcast' => '点播设置',
+            'wallet' => '钱包设置',
         ];
     }
 }
