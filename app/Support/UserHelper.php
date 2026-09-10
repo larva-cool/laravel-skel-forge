@@ -9,6 +9,7 @@ namespace App\Support;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 
 /**
@@ -90,5 +91,35 @@ class UserHelper
         }
 
         return $username;
+    }
+
+    /**
+     * 延长用户VIP有效期
+     *
+     * @param  int|string|User  $user  用户ID或用户模型
+     * @param  int  $days  延长天数，必须为正整数
+     * @return User 返回更新后的用户模型
+     */
+    public static function extendVip(int|string|User $user, int $days): User
+    {
+        if ($days <= 0) {
+            throw new \InvalidArgumentException('VIP延长天数必须为正整数');
+        }
+
+        if (! $user instanceof User) {
+            $user = User::findOrFail((int) $user);
+        }
+
+        $now = Carbon::now();
+        $currentExpiry = $user->vip_expires_at;
+
+        // 如果已过期，从当前时间开始算；否则从到期日往后延
+        $newExpiry = ($currentExpiry && $currentExpiry->gt($now))
+            ? $currentExpiry->copy()->addDays($days)
+            : $now->copy()->addDays($days);
+
+        $user->update(['vip_expires_at' => $newExpiry]);
+
+        return $user->refresh();
     }
 }

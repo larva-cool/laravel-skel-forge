@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Events\User\UserProfileUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\User\ModifyMailRequest;
 use App\Http\Requests\Api\V1\User\ModifyPasswordRequest;
@@ -80,10 +81,14 @@ class UserController extends Controller
      */
     public function modifyProfile(ModifyProfileRequest $request): UserResource
     {
-        $request->user()->update(['name' => $request->name]);
-        $request->user()->profile->update($request->except(['name']));
+        $user = $request->user();
+        $user->update(['name' => $request->name]);
+        $user->profile->update($request->except(['name']));
 
-        return new UserResource($request->user());
+        $user->refresh()->loadMissing('profile');
+        UserProfileUpdated::dispatch($user);
+
+        return new UserResource($user);
     }
 
     /**

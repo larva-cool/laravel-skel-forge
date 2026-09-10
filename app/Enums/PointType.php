@@ -22,6 +22,7 @@ enum PointType: string implements \JsonSerializable
     case TYPE_SIGN_IN = 'sign_in'; // 签到获取积分
     case TYPE_INVITE_REGISTER = 'invite_register'; // 邀请注册获取积分
     case TYPE_SET_UP_AVATAR = 'modify_avatar'; // 设置头像获取积分
+    case TYPE_TASK = 'task'; // 任务奖励
     case TYPE_RECOVERY = 'recovery'; // 过期回收积分
     case TYPE_ADMIN_RECHARGE = 'admin_recharge'; // 后台充值
     case TYPE_ADMIN_DEDUCT = 'admin_deduct'; // 后台扣减
@@ -35,6 +36,7 @@ enum PointType: string implements \JsonSerializable
             self::TYPE_SIGN_IN => '签到',
             self::TYPE_INVITE_REGISTER => '邀请注册',
             self::TYPE_SET_UP_AVATAR => '设置头像',
+            self::TYPE_TASK => '任务',
             self::TYPE_RECOVERY => '过期回收',
             self::TYPE_ADMIN_RECHARGE => '后台充值',
             self::TYPE_ADMIN_DEDUCT => '后台扣减',
