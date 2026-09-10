@@ -201,13 +201,15 @@ TaskGroup（任务组） ──1:N── Task（任务） ──1:N── TaskPr
 
 #### 3.2.4 邀请好友任务（invite_user）
 
-- **触发事件**：`UserInvitedRegistered`（被邀请人注册成功时触发）
+- **触发事件**：`App\Events\Invite\InviteRelationshipCreated`（已有事件，邀请关系建立时触发，携带 `InviteRecord` 模型）
 - **判定逻辑**：
-  1. 找到邀请人（`inviter_id`）
-  2. 对邀请人的 `invite_user` 任务进度 `current_value + 1`
-  3. 当 `current_value >= target_count` 时标记完成
+  1. 从事件中获取 `InviteRecord`，通过 `$inviteRecord->inviter` 获取邀请人
+  2. 查询邀请人的 `invite_user` 类型任务
+  3. 对匹配任务的进度 `current_value + 1`
+  4. 当 `current_value >= target_count` 时标记完成
 - **奖励模式**：auto 或 manual
 - **重置周期**：none
+- **注意**：该事件由 `InviteService::createRelationshipByCode()` 在邀请关系写入 `invite_records` 表后触发，任务系统监听此事件即可接入奖励。已有 `CoinType::TYPE_INVITE_REGISTER` 和 `PointType::TYPE_INVITE_REGISTER` 枚举可用。
 
 #### 3.2.5 每日登录任务（daily_login）
 
@@ -271,7 +273,7 @@ TaskGroup（任务组） ──1:N── Task（任务） ──1:N── TaskPr
 | `Events\User\UserMobileBound` | 用户绑定手机 | `user_id` |
 | `Events\User\UserEmailBound` | 用户绑定邮箱 | `user_id` |
 | `Events\User\UserSocialBound` | 用户绑定社交账号 | `user_id`、`provider` |
-| `Events\User\UserInvitedRegistered` | 邀请的用户注册成功 | `inviter_id`、`invitee_id` |
+| `Events\Invite\InviteRelationshipCreated` | 邀请关系建立（已有事件） | `inviteRecord`（含 `inviter`、`invitee` 关联） |
 | `Events\Task\TaskActionTriggered` | 通用任务行为触发 | `user_id`、`action`、`value` |
 
 ### 5.2 监听器列表
@@ -282,7 +284,7 @@ TaskGroup（任务组） ──1:N── Task（任务） ──1:N── TaskPr
 | `Listeners\Task\LoginTaskListener` | `UserLoggedIn` | 处理每日登录任务 |
 | `Listeners\Task\ProfileTaskListener` | `UserProfileUpdated` | 处理完善资料任务 |
 | `Listeners\Task\BindTaskListener` | `UserMobileBound` / `UserEmailBound` / `UserSocialBound` | 处理绑定类任务 |
-| `Listeners\Task\InviteTaskListener` | `UserInvitedRegistered` | 处理邀请任务 |
+| `Listeners\Task\InviteTaskListener` | `InviteRelationshipCreated` | 处理邀请任务 |
 | `Listeners\Task\CustomActionTaskListener` | `TaskActionTriggered` | 处理自定义行为任务 |
 
 每个监听器内部按以下通用流程处理：
@@ -437,8 +439,10 @@ app/
 ├── Casts/
 │   └── AsTaskCondition.php           # 任务条件 JSON Cast
 ├── Events/
-│   └── Task/
-│       └── TaskActionTriggered.php   # 通用行为触发事件
+│   ├── Task/
+│   │   └── TaskActionTriggered.php   # 通用行为触发事件
+│   └── User/
+│       └── UserSignedIn.php          # 签到事件（复用已有 Invite\InviteRelationshipCreated）
 ├── Listeners/
 │   └── Task/
 │       ├── SignInTaskListener.php
@@ -578,16 +582,17 @@ $this->getTaskProgress($taskCode): ?TaskProgress
 
 ### 10.1 金币 / 积分 / VIP
 
-- 金币奖励：调用 `CoinHelper::incr($user, $amount, $taskLog, 'task', '完成任务奖励')`
-- 积分奖励：调用 `PointHelper::incr(...)`
+- 金币奖励：调用 `CoinHelper::incr($user, $amount, $taskLog, 'task', '完成任务奖励')`，签到类用 `CoinType::TYPE_SIGN_IN`，邀请类用 `CoinType::TYPE_INVITE_REGISTER`
+- 积分奖励：调用 `PointHelper::incr(...)`，同上区分类型
 - VIP 奖励：调用 `UserHelper::extendVip($user, $days)`
 - 所有奖励操作均通过已有 Helper，不直接修改 `users` 表字段
 
 ### 10.2 事件系统
 
 - 复用现有 `UserLoggedIn`、`UserProfileUpdated` 等事件
-- 新增 `UserSignedIn`、`UserInvitedRegistered`、`TaskActionTriggered` 等事件
-- 在 `EventServiceProvider` 中注册监听器
+- 复用已有 `InviteRelationshipCreated` 事件接入邀请任务奖励
+- 新增 `UserSignedIn`、`TaskActionTriggered` 等事件
+- 项目使用 Laravel 11+ 自动事件发现机制，监听器放在 `app/Listeners/` 下自动注册，无需手动绑定
 
 ### 10.3 多态映射
 

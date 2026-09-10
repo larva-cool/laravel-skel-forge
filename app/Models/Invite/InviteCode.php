@@ -76,8 +76,8 @@ class InviteCode extends Model
     public static function generateUniqueCode(): string
     {
         do {
-            $code = strtolower((string) Str::ulid());
-        } while (static::where('code', $code)->exists());
+            $code = strtoupper((string) Str::ulid());
+        } while (static::query()->where('code', $code)->exists());
 
         return $code;
     }
