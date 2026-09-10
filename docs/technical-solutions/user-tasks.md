@@ -91,9 +91,9 @@ TaskGroup（任务组） ──1:N── Task（任务） ──1:N── TaskPr
 
 ```json
 {
-  "serial_days": 0,       // 连续天数（签到类）
-  "target_value": 0,      // 目标值（数值累计类，如邀请人数）
-  "min_level": 0          // 其他扩展字段按需添加
+  "serial_days": 0,              // 连续天数（签到类）
+  "target_value": 0,             // 目标值（数值累计类，如邀请人数）
+  "completeness_threshold": 100  // 资料完整度阈值，百分比（完善资料类）
 }
 ```
 
@@ -149,9 +149,7 @@ TaskGroup（任务组） ──1:N── Task（任务） ──1:N── TaskPr
 |--------|-----|------|-------------|
 | `SIGN_IN` | `sign_in` | 签到任务 | daily |
 | `COMPLETE_PROFILE` | `complete_profile` | 完善资料 | none（一次性） |
-| `BIND_MOBILE` | `bind_mobile` | 绑定手机 | none |
-| `BIND_EMAIL` | `bind_email` | 绑定邮箱 | none |
-| `BIND_SOCIAL` | `bind_social` | 绑定第三方账号 | none |
+| `FOLLOW_OFFICIAL_ACCOUNT` | `follow_official_account` | 关注公众号 | none（一次性） |
 | `INVITE_USER` | `invite_user` | 邀请好友注册 | none（累计） |
 | `DAILY_LOGIN` | `daily_login` | 每日登录 | daily |
 | `CUSTOM_ACTION` | `custom_action` | 自定义行为事件 | 按业务而定 |
@@ -187,17 +185,36 @@ TaskGroup（任务组） ──1:N── Task（任务） ──1:N── TaskPr
 
 #### 3.2.2 完善资料任务（complete_profile）
 
-- **触发事件**：`UserProfileUpdated`
-- **判定逻辑**：检查用户资料完整度（昵称、头像、性别、生日等字段是否已填），达到阈值（如 80%）即完成
+- **触发事件**：`UserProfileUpdated`（携带 `user_id`，由 `UserController@modifyProfile` 和头像上传接口在用户更新资料后触发）
+- **判定逻辑**：资料完整度基于 `UserProfile` 模型字段计算，共 6 个维度，每填一项算 1 分：
+
+  | 序号 | 维度 | 所在表 | 字段 | 判定为"已填"的条件 |
+  |------|------|--------|------|-------------------|
+  | 1 | 昵称 | users | `name` | `name is not null`（注意：null 时 getter 会 fallback 为 username，此处必须判断数据库原始值非 null） |
+  | 2 | 头像 | users | `avatar` | `avatar is not null` |
+  | 3 | 性别 | user_profiles | `gender` | `gender != 0`（0=保密即未选择） |
+  | 4 | 生日 | user_profiles | `birthday` | `birthday is not null` |
+  | 5 | 签名 | user_profiles | `bio` | `bio is not null and bio != ''` |
+  | 6 | 地区 | user_profiles | `province_id` / `city_id` / `district_id` | 三个字段均 `is not null`（省/市/区三级联动，都选才算填了地区） |
+
+  完整度 = 已填项数 / 6（满分 100%）。当完整度达到任务 `condition.completeness_threshold`（默认 100%，即全部填完）时标记完成。阈值通过任务的 `condition` JSON 配置，方便运营灵活调整。
+
+- **condition 字段**：`{ "completeness_threshold": 100 }`，单位为百分比
+- **period_key 策略**：`all`（一次性，完成后永久有效，不重置）
 - **奖励模式**：auto
 - **重置周期**：none
+- **注意**：资料完整度计算逻辑封装在 `TaskService::calculateProfileCompleteness($user)` 方法中，监听器调用此方法获得完整度百分比，与任务阈值对比判定是否达成。
 
-#### 3.2.3 绑定手机/邮箱/社交账号
+#### 3.2.3 关注公众号任务（follow_official_account）
 
-- **触发事件**：`UserMobileBound` / `UserEmailBound` / `UserSocialBound`
-- **判定逻辑**：绑定成功即完成
+- **触发事件**：`UserFollowedOfficialAccount`（公众号关注/取关回调时触发，携带 `user_id`、`openid`、`is_followed`）
+- **判定逻辑**：
+  1. 公众号关注回调（`is_followed = true`）时，通过 `openid` 匹配本地用户（`socials` 表中 `provider = wechat_official` 的记录）
+  2. 匹配成功则对用户的 `follow_official_account` 类型任务标记完成
+  3. 取关回调（`is_followed = false`）不做回滚（已发放的奖励不回收，但可在前台标记任务为未完成）
 - **奖励模式**：auto
 - **重置周期**：none
+- **注意**：依赖项目已有 `WechatService` 和公众号回调处理，关注事件由微信服务器推送，需在 `WechatController` 中处理 `event` 消息并触发事件。用户与公众号的关联通过 `socials` 表的 `provider = wechat_official` 记录建立。
 
 #### 3.2.4 邀请好友任务（invite_user）
 
@@ -270,9 +287,7 @@ TaskGroup（任务组） ──1:N── Task（任务） ──1:N── TaskPr
 | `Events\User\UserSignedIn` | 用户签到 | `user_id`、`serial_days` |
 | `Events\User\UserLoggedIn` | 用户登录 | `user_id`、`ip` |
 | `Events\User\UserProfileUpdated` | 用户更新资料 | `user_id`、`completeness` |
-| `Events\User\UserMobileBound` | 用户绑定手机 | `user_id` |
-| `Events\User\UserEmailBound` | 用户绑定邮箱 | `user_id` |
-| `Events\User\UserSocialBound` | 用户绑定社交账号 | `user_id`、`provider` |
+| `Events\User\UserFollowedOfficialAccount` | 公众号关注回调 | `user_id`、`openid`、`is_followed` |
 | `Events\Invite\InviteRelationshipCreated` | 邀请关系建立（已有事件） | `inviteRecord`（含 `inviter`、`invitee` 关联） |
 | `Events\Task\TaskActionTriggered` | 通用任务行为触发 | `user_id`、`action`、`value` |
 
@@ -283,7 +298,7 @@ TaskGroup（任务组） ──1:N── Task（任务） ──1:N── TaskPr
 | `Listeners\Task\SignInTaskListener` | `UserSignedIn` | 处理签到类任务进度 |
 | `Listeners\Task\LoginTaskListener` | `UserLoggedIn` | 处理每日登录任务 |
 | `Listeners\Task\ProfileTaskListener` | `UserProfileUpdated` | 处理完善资料任务 |
-| `Listeners\Task\BindTaskListener` | `UserMobileBound` / `UserEmailBound` / `UserSocialBound` | 处理绑定类任务 |
+| `Listeners\Task\FollowOfficialAccountTaskListener` | `UserFollowedOfficialAccount` | 处理关注公众号任务 |
 | `Listeners\Task\InviteTaskListener` | `InviteRelationshipCreated` | 处理邀请任务 |
 | `Listeners\Task\CustomActionTaskListener` | `TaskActionTriggered` | 处理自定义行为任务 |
 
@@ -448,7 +463,7 @@ app/
 │       ├── SignInTaskListener.php
 │       ├── LoginTaskListener.php
 │       ├── ProfileTaskListener.php
-│       ├── BindTaskListener.php
+│       ├── FollowOfficialAccountTaskListener.php
 │       ├── InviteTaskListener.php
 │       └── CustomActionTaskListener.php
 ├── Services/
@@ -523,8 +538,7 @@ $this->getTaskProgress($taskCode): ?TaskProgress
 | 任务 | 类型 | 奖励 | 奖励数量 |
 |------|------|------|---------|
 | 完善个人资料 | complete_profile | coin | 50 |
-| 绑定手机号 | bind_mobile | coin | 30 |
-| 绑定邮箱 | bind_email | point | 20 |
+| 关注公众号 | follow_official_account | coin | 30 |
 | 首次邀请好友 | invite_user | coin | 100 |
 
 ### 8.2 签到任务组（sign_in，不重置 — 阶梯奖励永久有效；每日签到基础奖按日重置）
