@@ -8,12 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Enums\Gender;
-use App\Enums\Task\TaskClaimMode;
-use App\Enums\Task\TaskGroupType;
 use App\Enums\Task\TaskProgressStatus;
-use App\Enums\Task\TaskResetType;
 use App\Enums\Task\TaskRewardType;
-use App\Enums\Task\TaskType;
 use App\Models\Task\Task;
 use App\Models\Task\TaskGroup;
 use App\Models\Task\TaskProgress;
@@ -57,30 +53,9 @@ class TaskServiceTest extends TestCase
         ]);
         $this->user->loadMissing('profile');
 
-        // 创建新手任务组 + 完善资料任务
-        $this->newbieGroup = TaskGroup::create([
-            'name' => '新手任务',
-            'code' => 'newbie',
-            'type' => TaskGroupType::NEWBIE,
-            'reset_type' => TaskResetType::NONE,
-            'sort_order' => 1,
-            'description' => '新手任务',
-            'status' => true,
-        ]);
-
-        $this->completeProfileTask = Task::create([
-            'group_id' => $this->newbieGroup->id,
-            'name' => '完善个人资料',
-            'code' => 'complete_profile',
-            'type' => TaskType::COMPLETE_PROFILE,
-            'description' => '完善昵称、头像、性别、生日、签名、地区信息',
-            'condition' => ['completeness_threshold' => 100],
-            'reward_type' => TaskRewardType::COIN,
-            'reward_amount' => 50,
-            'claim_mode' => TaskClaimMode::AUTO,
-            'sort_order' => 1,
-            'status' => true,
-        ]);
+        // 种子迁移（seed_initial_task_data）已创建新手任务组和完善资料任务，直接获取
+        $this->newbieGroup = TaskGroup::where('code', 'newbie')->firstOrFail();
+        $this->completeProfileTask = Task::where('code', 'complete_profile')->firstOrFail();
     }
 
     #[Test]

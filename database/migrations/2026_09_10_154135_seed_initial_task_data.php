@@ -5,32 +5,26 @@
  */
 declare(strict_types=1);
 
-namespace Database\Seeders;
-
 use App\Enums\Task\TaskClaimMode;
 use App\Enums\Task\TaskGroupType;
 use App\Enums\Task\TaskResetType;
 use App\Enums\Task\TaskRewardType;
 use App\Enums\Task\TaskType;
+use App\Models\Task\Task;
 use App\Models\Task\TaskGroup;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Schema;
 
-/**
- * 任务数据填充器
- *
- * 初始化任务分组和任务定义数据。
- *
- * @author Tongle Xu <xutongle@msn.com>
- */
-class TaskSeeder extends Seeder
+return new class extends Migration
 {
     /**
-     * Run the database seeds.
+     * Run the migrations.
      */
-    public function run(): void
+    public function up(): void
     {
-        $now = Carbon::now();
+        if (! Schema::hasTable('task_groups') || ! Schema::hasTable('tasks')) {
+            return;
+        }
 
         // ========== 新手任务组 ==========
         $newbieGroup = TaskGroup::query()->updateOrCreate(
@@ -42,8 +36,6 @@ class TaskSeeder extends Seeder
                 'sort_order' => 1,
                 'description' => '完成新手任务，快速熟悉平台并获得奖励',
                 'status' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
             ]
         );
 
@@ -59,7 +51,7 @@ class TaskSeeder extends Seeder
                 'claim_mode' => TaskClaimMode::AUTO->value,
                 'sort_order' => 1,
             ],
-            'follow_official' => [
+            [
                 'name' => '关注公众号',
                 'code' => 'follow_official_account',
                 'type' => TaskType::FOLLOW_OFFICIAL_ACCOUNT->value,
@@ -73,14 +65,21 @@ class TaskSeeder extends Seeder
         ];
 
         foreach ($newbieTasks as $taskData) {
-            $newbieGroup->tasks()->updateOrCreate(
+            Task::query()->updateOrCreate(
                 ['code' => $taskData['code']],
                 array_merge($taskData, [
+                    'group_id' => $newbieGroup->id,
                     'status' => true,
-                    'created_at' => $now,
-                    'updated_at' => $now,
                 ])
             );
         }
     }
-}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // 不回滚种子数据
+    }
+};
