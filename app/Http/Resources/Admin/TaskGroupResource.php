@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
@@ -29,7 +30,7 @@ class TaskGroupResource extends JsonResource
             'icon' => $this->icon,
             'description' => $this->description,
             'status' => $this->status,
-            'tasks_count' => $this->when(isset($this->tasks_count), $this->tasks_count),
+            'tasks_count' => $this->when(isset($this->tasks_count), fn () => $this->tasks_count),
             'tasks' => $this->when(
                 $request->routeIs('admin.task-groups.show'),
                 fn () => TaskResource::collection($this->whenLoaded('tasks'))
