@@ -76,34 +76,32 @@ return new class extends Migration
     {
         $menus = $this->menus();
 
-        $idMap = [];
         foreach ($menus as $menu) {
-            $children = $menu['children'] ?? [];
-            $buttons = $menu['buttons'] ?? [];
-            $menuKey = $menu['key'] ?? null;
-            unset($menu['children'], $menu['buttons'], $menu['key']);
-
-            $menu['parent_id'] = null;
-
-            $model = AdminMenu::query()->create($menu);
-            if ($menuKey !== null) {
-                $idMap[$menuKey] = $model->id;
-            }
-
-            foreach ($children as $child) {
-                $childButtons = $child['buttons'] ?? [];
-                $childKey = $child['key'] ?? null;
-                unset($child['buttons'], $child['key']);
-
-                $child['parent_id'] = $model->id;
-                $childModel = AdminMenu::query()->create($child);
-                if ($childKey !== null) {
-                    $idMap[$childKey] = $childModel->id;
-                }
-
-                $this->createButtons($childModel->id, $childButtons);
-            }
+            $this->createMenuRecursively($menu, null);
         }
+    }
+
+    /**
+     * 递归创建菜单及其子菜单
+     *
+     * @param  array<string, mixed>  $menuData
+     */
+    private function createMenuRecursively(array $menuData, ?int $parentId): void
+    {
+        $children = $menuData['children'] ?? [];
+        $buttons = $menuData['buttons'] ?? [];
+        unset($menuData['children'], $menuData['buttons'], $menuData['key']);
+
+        $menuData['parent_id'] = $parentId;
+
+        /** @var AdminMenu $model */
+        $model = AdminMenu::query()->create($menuData);
+
+        foreach ($children as $child) {
+            $this->createMenuRecursively($child, $model->id);
+        }
+
+        $this->createButtons($model->id, $buttons);
     }
 
     /**
