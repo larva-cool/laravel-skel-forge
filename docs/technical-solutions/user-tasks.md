@@ -373,65 +373,31 @@ public function handle(UserSignedIn $event): void
 
 ### 6.1 前台用户端 API（/api/v1）
 
-| 方法 | 路径 | 说明 | 权限 |
-|------|------|------|------|
-| GET | `/api/v1/tasks` | 任务列表（按组分，含用户当前进度） | 已登录用户 |
-| GET | `/api/v1/tasks/{group_code}` | 单个任务组详情 | 已登录用户 |
-| POST | `/api/v1/tasks/{task_id}/claim` | 手动领取任务奖励 | 已登录用户 |
-| POST | `/api/v1/tasks/sign-in` | 签到（同时触发签到事件） | 已登录用户 |
-
-#### 6.1.1 GET /api/v1/tasks 响应结构
-
-```json
-{
-  "data": [
-    {
-      "group_id": 1,
-      "group_name": "每日任务",
-      "code": "daily",
-      "reset_type": "daily",
-      "tasks": [
-        {
-          "task_id": 1,
-          "name": "每日签到",
-          "description": "每日签到获得10金币",
-          "type": "sign_in",
-          "icon": "",
-          "reward_type": "coin",
-          "reward_amount": 10,
-          "target_count": 1,
-          "current_value": 1,
-          "is_completed": true,
-          "is_claimed": true,
-          "claim_mode": "auto",
-          "sort": 1
-        }
-      ],
-      "completed_count": 1,
-      "total_count": 3
-    }
-  ]
-}
-```
-
-#### 6.1.2 POST /api/v1/tasks/{task_id}/claim
-
-请求体：无
-成功响应：200 `{ data: { reward_type: "coin", reward_amount: 10 } }`
-错误：422 任务未达成 / 已领取 / 已禁用
+| 方法 | 路径 | 说明 | 权限 | 状态 |
+|------|------|------|------|------|
+| GET | `/api/v1/tasks` | 任务中心列表（按分组返回，含用户进度） | 已登录用户 | ✅ 已完成 |
+| POST | `/api/v1/tasks/{task_id}/claim` | 手动领取任务奖励 | 已登录用户 | ✅ 已完成 |
+| POST | `/api/v1/tasks/sign-in` | 签到（同时触发签到事件） | 已登录用户 | ⏳ 待实现 |
 
 ### 6.2 后台管理 API（/admin）
 
-| 方法 | 路径 | 说明 | 权限 |
-|------|------|------|------|
-| GET | `/admin/task-groups/data` | 任务组分页列表 | task-groups.index |
-| GET/POST/PUT/DELETE | `/admin/task-groups` | 任务组 CRUD | task-groups.* |
-| POST | `/admin/task-groups/{id}/status` | 切换任务组状态 | task-groups.edit |
-| GET | `/admin/tasks/data` | 任务分页列表（可按 group_id 筛选） | tasks.index |
-| GET/POST/PUT/DELETE | `/admin/tasks` | 任务 CRUD | tasks.* |
-| GET | `/admin/task-logs/data` | 任务完成日志列表 | task-logs.index |
-| GET | `/admin/task-logs/{id}` | 任务完成日志详情 | task-logs.index |
-| POST | `/admin/tasks/{id}/reward` | 补发/调整奖励（高权限） | tasks.reward |
+| 方法 | 路径 | 说明 | 权限 | 状态 |
+|------|------|------|------|------|
+| GET | `/admin/task-groups` | 任务组分页列表 | task-groups.index | ✅ 已完成 |
+| GET | `/admin/task-groups/options` | 任务分组选项（不分页，下拉选择用） | task-groups.index | ✅ 已完成 |
+| POST | `/admin/task-groups` | 创建任务分组 | task-groups.create | ✅ 已完成 |
+| GET | `/admin/task-groups/{id}` | 任务分组详情（含分组下任务） | task-groups.index | ✅ 已完成 |
+| PUT | `/admin/task-groups/{id}` | 更新任务分组 | task-groups.edit | ✅ 已完成 |
+| PUT | `/admin/task-groups/{id}/toggle-status` | 切换任务分组启用状态 | task-groups.edit | ✅ 已完成 |
+| DELETE | `/admin/task-groups/{id}` | 删除任务分组（有任务时不允许删除） | task-groups.delete | ✅ 已完成 |
+| GET | `/admin/tasks` | 任务分页列表（支持 group_id/type/status/keyword 筛选） | tasks.index | ✅ 已完成 |
+| POST | `/admin/tasks` | 创建任务 | tasks.create | ✅ 已完成 |
+| GET | `/admin/tasks/{id}` | 任务详情 | tasks.index | ✅ 已完成 |
+| PUT | `/admin/tasks/{id}` | 更新任务 | tasks.edit | ✅ 已完成 |
+| PUT | `/admin/tasks/{id}/toggle-status` | 切换任务启用状态 | tasks.edit | ✅ 已完成 |
+| DELETE | `/admin/tasks/{id}` | 删除任务 | tasks.delete | ✅ 已完成 |
+| GET | `/admin/task-logs` | 任务完成日志列表 | task-logs.index | ⏳ 待实现 |
+| POST | `/admin/tasks/{id}/reward` | 补发/调整奖励（高权限） | tasks.reward | ⏳ 待实现 |
 
 ---
 
@@ -440,68 +406,78 @@ public function handle(UserSignedIn $event): void
 ```
 app/
 ├── Enums/
+│   ├── PointType.php                        # 新增 TYPE_TASK 枚举值
 │   └── Task/
-│       ├── TaskType.php              # 任务类型枚举（HasLabel）
-│       ├── TaskResetType.php         # 重置周期枚举
-│       ├── TaskRewardType.php        # 奖励类型枚举
-│       └── TaskClaimMode.php         # 领取方式枚举
+│       ├── TaskType.php                     # 任务类型枚举（sign_in/complete_profile/...）
+│       ├── TaskGroupType.php                # 任务组类型（NEWBIE/DAILY/WEEKLY/SIGN_IN/CUSTOM）
+│       ├── TaskResetType.php                # 重置周期枚举（NONE/DAILY/WEEKLY/MONTHLY）
+│       ├── TaskRewardType.php               # 奖励类型枚举（coin/point/vip_days）
+│       ├── TaskClaimMode.php                # 领取方式枚举（AUTO/MANUAL）
+│       └── TaskProgressStatus.php           # 进度状态枚举
 ├── Models/
 │   └── Task/
-│       ├── TaskGroup.php             # 任务组模型
-│       ├── Task.php                  # 任务模型
-│       ├── TaskProgress.php          # 用户任务进度
-│       └── TaskLog.php               # 完成日志
+│       ├── TaskGroup.php                    # 任务组模型（type/reset_type 为 int Enum）
+│       ├── Task.php                         # 任务模型（含 activeTasks 作用域）
+│       ├── TaskProgress.php                 # 用户任务进度（status 为 Enum Cast）
+│       └── TaskLog.php                      # 完成日志
 ├── Casts/
-│   └── AsTaskCondition.php           # 任务条件 JSON Cast
+│   └── AsTaskCondition.php                  # 任务条件 JSON Cast，默认值 {serial_days:0,target_value:0,completeness_threshold:100}
 ├── Events/
-│   ├── Task/
-│   │   └── TaskActionTriggered.php   # 通用行为触发事件
 │   └── User/
-│       └── UserSignedIn.php          # 签到事件（复用已有 Invite\InviteRelationshipCreated）
+│       └── UserProfileUpdated.php           # ✅ 用户资料更新事件（modifyProfile 后触发）
 ├── Listeners/
 │   └── Task/
-│       ├── SignInTaskListener.php
-│       ├── LoginTaskListener.php
-│       ├── ProfileTaskListener.php
-│       ├── FollowOfficialAccountTaskListener.php
-│       ├── InviteTaskListener.php
-│       └── CustomActionTaskListener.php
+│       └── ProfileTaskListener.php          # ✅ 完善资料监听器（ShouldQueue）
+│       # SignInTaskListener / LoginTaskListener / FollowOfficialAccountTaskListener
+│       # InviteTaskListener / CustomActionTaskListener ⏳ 待实现
 ├── Services/
-│   └── TaskService.php               # 任务进度判定 + 奖励发放编排
+│   └── TaskService.php                      # 任务进度判定 + 奖励发放编排
 ├── Support/
+│   ├── UserHelper.php                       # 新增 extendVip($user, $days) 方法
 │   └── Traits/
-│       └── HasTaskProgress.php       # 用户模型的任务关联 trait
+│       └── HasTaskProgress.php              # 用户模型的任务关联 trait
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Api/V1/
-│   │   │   └── TaskController.php    # 前台任务接口
+│   │   │   └── TaskController.php           # ✅ 前台任务接口（index / claim）
 │   │   └── Admin/
-│   │       ├── TaskGroupController.php
-│   │       ├── TaskController.php
-│   │       └── TaskLogController.php
+│   │       ├── TaskGroupController.php      # ✅ 任务分组 CRUD + options + toggle-status
+│   │       └── TaskController.php           # ✅ 任务 CRUD + toggle-status
+│   │       # TaskLogController.php        ⏳ 待实现
 │   ├── Requests/
-│   │   ├── Admin/Task/               # 后台表单请求
-│   │   └── Api/V1/Task/              # 前台表单请求
+│   │   └── Admin/
+│   │       ├── TaskGroup/
+│   │       │   ├── TaskGroupIndexRequest.php
+│   │       │   └── TaskGroupSaveRequest.php
+│   │       └── Task/
+│   │           ├── TaskIndexRequest.php
+│   │           └── TaskSaveRequest.php
 │   └── Resources/
-│       ├── Admin/Task/               # 后台资源
-│       └── Api/V1/Task/              # 前台资源
-├── Policies/
-│   └── TaskPolicy.php
+│       ├── Admin/
+│       │   ├── TaskGroupResource.php
+│       │   └── TaskResource.php
+│       └── Api/V1/
+│           ├── TaskGroupResource.php
+│           └── TaskResource.php
+config/
+└── morph_maps.php                           # 注册 'task' => Task::class 多态别名
 database/
-├── migrations/
-│   └── xxxx_create_task_tables.php   # 4 张表
-├── seeders/
-│   └── TaskSeeder.php                # 默认任务（每日签到、完善资料等）
-└── factories/
-    └── Task/                         # 模型工厂
+└── migrations/
+    ├── 2026_09_10_150858_create_task_tables.php         # 4 张表（task_groups/tasks/task_progress/task_logs）
+    ├── 2026_09_10_154135_seed_initial_task_data.php     # 初始任务组和任务种子（迁移方式，不用 Seeder）
+    └── 2026_10_31_111934_seed_initial_admin_data.php    # 追加任务分组/任务管理菜单与按钮权限
+routes/
+├── api_v1.php                               # 新增 /tasks 路由组
+└── admin.php                                # 新增 task-groups 和 tasks 资源路由
 tests/
-└── Feature/
-    ├── Api/V1/TaskControllerTest.php
-    └── Admin/
-        ├── TaskGroupControllerTest.php
-        ├── TaskControllerTest.php
-        └── TaskLogControllerTest.php
+├── Feature/
+│   ├── Api/V1/TaskControllerTest.php        # ✅ 前台任务接口测试（5 个用例）
+│   └── Admin/                               # ⏳ 待补充后台 CRUD 测试
+└── Unit/Services/
+    └── TaskServiceTest.php                  # ✅ TaskService 单元测试（12 个用例）
 ```
+
+> 注：实际表结构相比设计文档有所调整——`task_groups` 使用 int Enum（`type`/`reset_type`），不使用 `visibility`/`deleted_at`/`task_count`；`tasks` 不使用 `target_count`/`icon`/`log_count`/`deleted_at`，条件通过统一的 `condition` JSON 存储；`task_progress` 使用 `status` Enum（IN_PROGRESS/COMPLETED/CLAIMED）替代 `is_completed`+`claimed_at` 组合判断。
 
 ### 7.1 TaskService 核心方法
 
@@ -531,33 +507,27 @@ $this->getTaskProgress($taskCode): ?TaskProgress
 
 ## 8. 初始种子数据
 
-`TaskSeeder` 中预置以下任务组和任务，方便开箱即用：
+初始数据通过 `2026_09_10_154135_seed_initial_task_data.php` 迁移写入（使用 `updateOrCreate`，幂等执行）：
 
-### 8.1 新手任务组（newbie，不重置）
+### 8.1 新手任务组（newbie，不重置，type=0, reset_type=0）
 
-| 任务 | 类型 | 奖励 | 奖励数量 |
-|------|------|------|---------|
-| 完善个人资料 | complete_profile | coin | 50 |
-| 关注公众号 | follow_official_account | coin | 30 |
-| 首次邀请好友 | invite_user | coin | 100 |
+| 任务 | 类型 | condition | 奖励 | 奖励数量 | claim_mode |
+|------|------|-----------|------|---------|------------|
+| 完善个人资料 | complete_profile | {completeness_threshold:100} | coin | 50 | auto |
+| 关注公众号 | follow_official_account | {target_value:1} | coin | 30 | auto |
 
-### 8.2 签到任务组（sign_in，不重置 — 阶梯奖励永久有效；每日签到基础奖按日重置）
+### 8.2 签到任务组（sign_in，type=3, reset_type=1）⏳ 待补充
 
 | 任务 | type | condition.serial_days | reward_type | reward_amount | period_key 策略 |
 |------|------|----------------------|-------------|---------------|----------------|
 | 每日签到 | sign_in | 0 | coin | 10 | `Y-m-d`，每日重置 |
-| 连续签到第2天 | sign_in | 2 | coin | 15 | `sign_in_day_2`，永久唯一 |
-| 连续签到第3天 | sign_in | 3 | coin | 20 | `sign_in_day_3`，永久唯一 |
-| 连续签到第7天 | sign_in | 7 | coin | 100 | `sign_in_day_7`，永久唯一 |
-| 连续签到第30天 | sign_in | 30 | coin | 500 | `sign_in_day_30`，永久唯一 |
+| 连续签到第2天~第30天阶梯 | sign_in | 2/3/7/30 | coin | 15/20/100/500 | `sign_in_day_N`，永久唯一 |
 
-### 8.3 每日任务组（daily，每日重置）
+### 8.3 每日任务组（daily，type=1, reset_type=1）⏳ 待补充
 
 | 任务 | 类型 | 奖励 | 奖励数量 |
 |------|------|------|---------|
 | 每日登录 | daily_login | point | 5 |
-
-> 业务项目可在自身的 Seeder 中追加更多任务，或通过后台手动创建。
 
 ---
 
@@ -565,30 +535,28 @@ $this->getTaskProgress($taskCode): ?TaskProgress
 
 ### 9.1 新增权限
 
-| 权限标识 | 说明 |
-|---------|------|
-| task-groups.index | 查看任务组列表 |
-| task-groups.create | 创建任务组 |
-| task-groups.edit | 编辑任务组 |
-| task-groups.delete | 删除任务组 |
-| tasks.index | 查看任务列表 |
-| tasks.create | 创建任务 |
-| tasks.edit | 编辑任务 |
-| tasks.delete | 删除任务 |
-| tasks.reward | 补发/调整任务奖励（高权限） |
-| task-logs.index | 查看任务完成日志 |
+| 权限标识 | 说明 | 状态 |
+|---------|------|------|
+| task-groups.index | 查看任务组列表 | ✅ 已实现 |
+| task-groups.create | 创建任务组 | ✅ 已实现 |
+| task-groups.edit | 编辑任务组 | ✅ 已实现 |
+| task-groups.delete | 删除任务组 | ✅ 已实现 |
+| tasks.index | 查看任务列表 | ✅ 已实现 |
+| tasks.create | 创建任务 | ✅ 已实现 |
+| tasks.edit | 编辑任务 | ✅ 已实现 |
+| tasks.delete | 删除任务 | ✅ 已实现 |
+| tasks.reward | 补发/调整任务奖励（高权限） | ⏳ 待实现 |
+| task-logs.index | 查看任务完成日志 | ⏳ 待实现 |
 
 ### 9.2 新增菜单
 
-挂在「运营管理」目录下：
+已追加到 `database/migrations/2026_10_31_111934_seed_initial_admin_data.php`，挂在「运营管理」目录下，原运营菜单 sort 值已顺延：
 
-| 菜单 key | path | component | title | permission |
-|----------|------|-----------|-------|------------|
-| operation.task-group | task-group | /operation/task-group | 任务组管理 | task-groups.index |
-| operation.task | task | /operation/task | 任务管理 | tasks.index |
-| operation.task-log | task-log | /operation/task-log | 任务记录 | task-logs.index |
-
-菜单数据追加到 `seed_initial_admin_data.php` 迁移文件中。
+| 菜单 key | path | component | title | icon | permission | 按钮权限 |
+|----------|------|-----------|-------|------|------------|---------|
+| operation.task-group | task-group | /operation/task-group | 任务分组 | ri:folder-3-line | task-groups.index | create/edit/delete |
+| operation.task | task | /operation/task | 任务管理 | ri:task-line | tasks.index | create/edit/delete |
+| operation.task-log | task-log | /operation/task-log | 任务记录 | — | task-logs.index | ⏳ 待添加 |
 
 ---
 
@@ -622,14 +590,27 @@ $this->getTaskProgress($taskCode): ?TaskProgress
 
 ## 11. 实施阶段
 
-| 阶段 | 内容 | 交付物 |
-|------|------|--------|
-| **Phase 1 数据模型** | 4 张表迁移 + 4 个模型 + 枚举 + Cast + 工厂 + Seeder；`HasTaskProgress` trait；PHPUnit 覆盖模型关系与基础查询 | 可查询、可配置的任务数据层 |
-| **Phase 2 任务引擎** | `TaskService` 核心逻辑（进度更新 + 达成判定 + 奖励发放）；6 个事件 + 6 个监听器；并发安全与幂等保障；单元测试覆盖各任务类型的达成逻辑和并发场景 | 完整可用的任务奖励引擎 |
-| **Phase 3 前台 API** | `TaskController` 前台接口（列表/详情/领取/签到）；Request + Resource；功能测试覆盖各接口的正常、失败、权限场景 | 前台用户端可用 |
-| **Phase 4 后台管理** | 任务组 CRUD + 状态切换；任务 CRUD；任务日志列表/详情；权限与菜单接入；后台功能测试 | 运营可配置任务 |
-| **Phase 5 前端落地** | laravel-skel-admin 中新增运营管理下 3 个页面（任务组、任务、任务记录） | 后台管理 UI 完整 |
-| **Phase 6 文档与发布** | Apifox 全量发布（Admin + Api 双模块）；更新 README；补齐测试覆盖率至 70%+ | 生产可用 |
+| 阶段 | 内容 | 交付物 | 状态 |
+|------|------|--------|------|
+| **Phase 1 数据模型** | 4 张表迁移 + 4 个模型 + 6 个枚举 + Cast；`HasTaskProgress` trait；`UserHelper::extendVip`；`PointType::TYPE_TASK`；morph map 注册；初始任务种子迁移 | 可查询、可配置的任务数据层 | ✅ 已完成 |
+| **Phase 2 任务引擎（基础）** | `TaskService` 核心逻辑（周期计算、进度更新、完整度判定、签到处理、领取奖励、发奖事务、列表查询）；`UserProfileUpdated` 事件 + `ProfileTaskListener` 队列监听器；`UserController::modifyProfile` 触发事件；单元测试覆盖（12 个用例） | 完善资料类型任务奖励引擎可用 | ✅ 部分完成 |
+| **Phase 3 前台 API** | `GET /api/v1/tasks`（任务中心列表，按分组返回含进度）；`POST /api/v1/tasks/{taskId}/claim`（手动领奖）；`TaskResource` + `TaskGroupResource`；功能测试 5 个用例；Apifox Api 模块发布 | 前台用户端基础接口可用 | ✅ 已完成 |
+| **Phase 4 后台管理（分组+任务）** | `TaskGroupController`（7 个接口：列表/options/创建/详情/更新/状态切换/删除）；`TaskController`（6 个接口：列表/创建/详情/更新/状态切换/删除）；Form Request（Index+Save）；Admin Resource；菜单权限迁移；Apifox Admin 模块发布 | 运营可配置任务分组和任务 | ✅ 已完成 |
+| **Phase 5 前端落地（分组+任务）** | laravel-skel-admin 中 `src/views/operation/task-group/`（列表+搜索+编辑弹窗）和 `src/views/operation/task/`（列表+搜索+编辑弹窗，条件字段按任务类型动态显示）；API 函数 + TS 类型；`pnpm build` 通过 | 分组和任务管理 UI 可用 | ✅ 已完成 |
+| **Phase 2+ 剩余任务类型引擎** | 剩余 5 个事件（`UserSignedIn`/`UserLoggedIn`/`UserFollowedOfficialAccount`/`InviteRelationshipCreated`/`TaskActionTriggered`）+ 5 个监听器（SignIn/Login/Follow/Invite/CustomAction）；签到特殊 period_key 策略；邀请任务累计；自定义行为通用触发；补齐单元测试 | 全部任务类型奖励引擎可用 | ⏳ 待实现 |
+| **Phase 3+ 前台补充接口** | `POST /api/v1/tasks/sign-in` 签到专用接口（触发签到事件并返回签到结果）；签到相关的连续签到天数返回 | 前台签到功能可用 | ⏳ 待实现 |
+| **Phase 4+ 后台日志与补偿** | `TaskLogController`（日志分页列表/详情）；补发奖励接口（`POST /admin/tasks/{id}/reward`）；后台 CRUD 功能测试 | 任务审计与运营补偿能力 | ⏳ 待实现 |
+| **Phase 5+ 前端日志页面** | laravel-skel-admin 中 `src/views/operation/task-log/` 任务记录页面 | 后台任务记录 UI | ⏳ 待实现 |
+| **Phase 6 文档与收尾** | 补齐测试覆盖率至 70%+；前端开发环境联调验证；README 更新；最终 Apifox 质量检查 | 生产可用 | ⏳ 待实现 |
+
+### 当前可用功能（截至本次实现）
+
+- 后台可创建/编辑/启用/禁用任务分组（新手/每日/每周/签到/自定义 5 种类型）
+- 后台可创建/编辑/启用/禁用任务（6 种类型 + 3 种奖励 + 自动/手动领取模式 + 生效时间范围）
+- 前台用户调用 `GET /api/v1/tasks` 可查看按分组组织的任务列表及个人进度
+- 用户更新个人资料后自动触发完善资料任务判定，达到阈值（默认100%即6项全填）自动发放金币奖励
+- 前台用户对 manual 领取模式的任务可调用 `POST /api/v1/tasks/{taskId}/claim` 领取奖励
+- 所有写操作幂等安全（唯一索引 + 事务 + UniqueConstraintViolationException 捕获）
 
 ---
 
