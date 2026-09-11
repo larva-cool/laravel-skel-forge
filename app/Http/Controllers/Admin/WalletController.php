@@ -9,6 +9,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\WalletTradeType;
 use App\Exceptions\InsufficientBalanceException;
+use App\Exports\Admin\WalletTradeExport;
+use App\Exports\HandlesExports;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Wallet\WalletAdjustRequest;
 use App\Http\Requests\Admin\Wallet\WalletTradeIndexRequest;
@@ -18,6 +20,7 @@ use App\Models\Wallet\WalletTrade;
 use App\Support\WalletHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * 后台钱包管理控制器
@@ -26,6 +29,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 class WalletController extends Controller
 {
+    use HandlesExports;
+
     /**
      * Constructor.
      */
@@ -34,6 +39,7 @@ class WalletController extends Controller
         $this->middleware('auth:admin');
         $this->middleware('permission:wallet.index')->only(['index', 'show', 'stats', 'userWallet', 'userTrades']);
         $this->middleware('permission:wallet.adjust')->only(['adjust']);
+        $this->middleware('permission:wallet.export')->only(['export']);
     }
 
     /**
@@ -56,6 +62,20 @@ class WalletController extends Controller
     public function show(WalletTrade $trade): WalletTradeResource
     {
         return new WalletTradeResource($trade->load('owner'));
+    }
+
+    /**
+     * 导出钱包流水
+     */
+    public function export(WalletTradeIndexRequest $request): BinaryFileResponse|JsonResponse
+    {
+        return $this->exportDispatch(
+            $request,
+            WalletTradeExport::class,
+            [$request->validated()],
+            $this->exportFileName('wallet_trades'),
+            WalletTradeExport::SYNC_THRESHOLD,
+        );
     }
 
     /**

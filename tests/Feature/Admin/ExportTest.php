@@ -8,16 +8,19 @@ declare(strict_types=1);
 namespace Tests\Feature\Admin;
 
 use App\Enums\UserStatus;
+use App\Enums\WalletTradeType;
 use App\Exports\Admin\AuditLogListExport;
 use App\Exports\Admin\CommentListExport;
 use App\Exports\Admin\FeedbackListExport;
 use App\Exports\Admin\UserListExport;
+use App\Exports\Admin\WalletTradeExport;
 use App\Jobs\Export\PerformExportJob;
 use App\Models\Admin\Admin;
 use App\Models\Content\Comment;
 use App\Models\Point\PointTrade;
 use App\Models\System\AuditLog;
 use App\Models\User;
+use App\Support\WalletHelper;
 use Database\Factories\FeedbackFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -177,6 +180,69 @@ class ExportTest extends TestCase
             "user_{$user->id}_points_",
             (string) $response->headers->get('content-disposition')
         );
+    }
+
+    // ========== 钱包流水导出 ==========
+
+    #[Test]
+    #[TestDox('未登录访问钱包流水导出返回 401')]
+    public function guest_cannot_export_wallet_trades(): void
+    {
+        $this->getJson('/admin/wallet/trades/export')->assertUnauthorized();
+    }
+
+    #[Test]
+    #[TestDox('钱包流水导出走同步，返回 xlsx 文件流')]
+    public function wallet_trade_export_sync_returns_xlsx(): void
+    {
+        $user = User::factory()->create();
+        WalletHelper::incr($user, 100, $user, WalletTradeType::RECHARGE, '充值');
+        WalletHelper::decr($user, 30, $user, WalletTradeType::PAYMENT, '消费');
+
+        $response = $this->actingAsAdmin()->get('/admin/wallet/trades/export');
+
+        $response->assertOk();
+        $this->assertSame(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            $response->headers->get('content-type')
+        );
+        $this->assertStringContainsString(
+            'attachment; filename=wallet_trades_',
+            (string) $response->headers->get('content-disposition')
+        );
+    }
+
+    #[Test]
+    #[TestDox('钱包流水导出按交易类型筛选')]
+    public function wallet_trade_export_filters_by_type(): void
+    {
+        $user = User::factory()->create();
+        WalletHelper::incr($user, 100, $user, WalletTradeType::RECHARGE, '充值');
+        WalletHelper::decr($user, 10, $user, WalletTradeType::PAYMENT, '消费1');
+        WalletHelper::decr($user, 20, $user, WalletTradeType::PAYMENT, '消费2');
+
+        $response = $this->actingAsAdmin()->get('/admin/wallet/trades/export?type=payment');
+        $response->assertOk();
+
+        $this->assertXlsxRowCount($response->streamedContent(), 3); // 1 表头 + 2 消费
+    }
+
+    #[Test]
+    #[TestDox('WalletTradeExport 将交易类型与状态枚举映射为中文标签')]
+    public function wallet_trade_export_maps_enum_labels(): void
+    {
+        $user = User::factory()->create();
+        $trade = WalletHelper::incr($user, 100, $user, WalletTradeType::ADMIN_RECHARGE, '后台充正');
+
+        $export = new WalletTradeExport;
+        $columns = (new \ReflectionMethod($export, 'columns'))->invoke($export);
+        $typeIdx = array_search('type', array_keys($columns));
+        $statusIdx = array_search('status', array_keys($columns));
+
+        $mapped = (new \ReflectionMethod($export, 'map'))->invoke($export, $trade);
+
+        $this->assertSame('后台充正', $mapped[$typeIdx]);
+        $this->assertSame('已完成', $mapped[$statusIdx]);
     }
 
     // ========== 异步导出（大数据量） ==========

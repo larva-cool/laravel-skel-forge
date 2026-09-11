@@ -106,6 +106,7 @@ Route::apiResource('users', \App\Http\Controllers\Admin\UserController::class)->
 // 钱包管理
 Route::group(['prefix' => 'wallet', 'as' => 'wallet.'], function (Registrar $registrar) {
     $registrar->get('stats', [\App\Http\Controllers\Admin\WalletController::class, 'stats'])->name('stats'); // 钱包统计
+    $registrar->get('trades/export', [\App\Http\Controllers\Admin\WalletController::class, 'export'])->name('trades.export'); // 导出钱包流水
     $registrar->get('trades', [\App\Http\Controllers\Admin\WalletController::class, 'index'])->name('trades.index'); // 全局流水列表
     $registrar->get('trades/{trade}', [\App\Http\Controllers\Admin\WalletController::class, 'show'])->name('trades.show'); // 流水详情
 
