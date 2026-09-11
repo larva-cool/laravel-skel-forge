@@ -268,9 +268,7 @@ class TaskService
     {
         $time = $time ?: now();
         $groups = TaskGroup::where('status', true)
-            ->with(['activeTasks' => function ($query) {
-                // 预加载时不需要额外过滤，activeTasks 关系已包含时间和状态过滤
-            }])
+            ->with('activeTasks')
             ->orderBy('sort_order')
             ->get();
 

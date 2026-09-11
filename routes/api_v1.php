@@ -101,6 +101,14 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     Route::get('announcements/{id}', [\App\Http\Controllers\Api\V1\AnnouncementController::class, 'show'])->name('announcements.show');
 
     /**
+     * 任务中心
+     */
+    Route::group(['prefix' => 'tasks', 'as' => 'tasks.'], function (Registrar $registrar) {
+        $registrar->get('', [\App\Http\Controllers\Api\V1\TaskController::class, 'index'])->name('index'); // 任务中心列表
+        $registrar->post('{taskId}/claim', [\App\Http\Controllers\Api\V1\TaskController::class, 'claim'])->name('claim'); // 领取任务奖励
+    });
+
+    /**
      * 用户接口
      */
     Route::group(['prefix' => 'user', 'as' => 'user.'], function (Registrar $registrar) {
