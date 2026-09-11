@@ -29,6 +29,8 @@ return new class extends Migration
             $table->boolean('identity_verified')->index()->default(false)->comment('是否已通过实名认证');
             $table->unsignedInteger('available_points')->nullable()->default(0)->comment('可用积分');
             $table->unsignedInteger('available_coins')->nullable()->default(0)->comment('可用金币');
+            $table->decimal('balance', 16, 2)->default(0)->comment('可用余额（元）');
+            $table->decimal('frozen_balance', 16, 2)->default(0)->comment('冻结余额（元）');
             $table->string('password')->nullable()->comment('密码');
             $table->rememberToken()->comment('记住我token');
             $table->unsignedBigInteger('login_count')->nullable()->default(0)->comment('登录次数');
