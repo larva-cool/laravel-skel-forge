@@ -262,6 +262,15 @@ Route::apiResource('banners', \App\Http\Controllers\Admin\BannerController::clas
 Route::put('announcements/{announcement}/toggle-status', [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggleStatus'])->name('announcements.toggle-status');
 Route::apiResource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
 
+// 任务分组管理（运营管理）
+Route::get('task-groups/options', [\App\Http\Controllers\Admin\TaskGroupController::class, 'options'])->name('task-groups.options');
+Route::put('task-groups/{taskGroup}/toggle-status', [\App\Http\Controllers\Admin\TaskGroupController::class, 'toggleStatus'])->name('task-groups.toggle-status');
+Route::apiResource('task-groups', \App\Http\Controllers\Admin\TaskGroupController::class);
+
+// 任务管理（运营管理）
+Route::put('tasks/{task}/toggle-status', [\App\Http\Controllers\Admin\TaskController::class, 'toggleStatus'])->name('tasks.toggle-status');
+Route::apiResource('tasks', \App\Http\Controllers\Admin\TaskController::class);
+
 // 用户分群管理（用户管理）
 Route::get('user-segments/options', [\App\Http\Controllers\Admin\UserSegmentController::class, 'options'])->name('user-segments.options');
 Route::post('user-segments/batch-attach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'batchAttach'])->name('user-segments.batch-attach');
