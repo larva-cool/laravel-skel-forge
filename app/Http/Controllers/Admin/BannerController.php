@@ -12,6 +12,7 @@ use App\Http\Requests\Admin\Banner\BannerSaveRequest;
 use App\Http\Requests\Admin\Banner\BannerSortRequest;
 use App\Http\Resources\Admin\BannerResource;
 use App\Models\Operation\Banner;
+use App\Models\System\Dict;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -28,7 +29,7 @@ class BannerController extends Controller
     public function __construct()
     {
         $this->middleware('auth:admin');
-        $this->middleware('permission:banners.index')->only(['index', 'show']);
+        $this->middleware('permission:banners.index')->only(['index', 'show', 'positions']);
         $this->middleware('permission:banners.create')->only(['store']);
         $this->middleware('permission:banners.edit')->only(['update', 'toggleStatus', 'sort']);
         $this->middleware('permission:banners.delete')->only(['destroy']);
@@ -132,5 +133,22 @@ class BannerController extends Controller
         $banner->delete();
 
         return response()->json(status: 204);
+    }
+
+    /**
+     * 获取所有可用广告位选项（基于字典 banner_positions）
+     *
+     * 用于后台新增/编辑 Banner 时的下拉选择。
+     */
+    public function positions(): JsonResponse
+    {
+        $items = Dict::getActiveItemsByCode('banner_positions');
+
+        $data = $items->map(fn ($item) => [
+            'label' => $item->label,
+            'value' => $item->value,
+        ])->values();
+
+        return response()->json($data);
     }
 }
