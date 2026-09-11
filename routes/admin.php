@@ -271,6 +271,10 @@ Route::apiResource('task-groups', \App\Http\Controllers\Admin\TaskGroupControlle
 Route::put('tasks/{task}/toggle-status', [\App\Http\Controllers\Admin\TaskController::class, 'toggleStatus'])->name('tasks.toggle-status');
 Route::apiResource('tasks', \App\Http\Controllers\Admin\TaskController::class);
 
+// 任务日志（运营管理）—— 只读
+Route::apiResource('task-logs', \App\Http\Controllers\Admin\TaskLogController::class)
+    ->only(['index', 'show']);
+
 // 用户分群管理（用户管理）
 Route::get('user-segments/options', [\App\Http\Controllers\Admin\UserSegmentController::class, 'options'])->name('user-segments.options');
 Route::post('user-segments/batch-attach', [\App\Http\Controllers\Admin\UserSegmentController::class, 'batchAttach'])->name('user-segments.batch-attach');

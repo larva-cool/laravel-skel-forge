@@ -9,6 +9,7 @@ namespace App\Models\Task;
 
 use App\Enums\Task\TaskRewardType;
 use App\Models\Model;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $remark 备注
  * @property Carbon $created_at
  * @property-read Task $task
+ * @property-read User $user
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
@@ -39,6 +41,11 @@ class TaskLog extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     protected function casts(): array
