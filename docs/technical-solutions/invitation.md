@@ -24,7 +24,7 @@
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `id` | BIGINT UNSIGNED PK | 主键 |
-| `code` | VARCHAR(26) | 邀请码（小写 ULID，全局唯一） |
+| `code` | VARCHAR(26) | 邀请码（大写 ULID，全局唯一） |
 | `owner_id` | BIGINT UNSIGNED | 所属主体 ID |
 | `owner_type` | VARCHAR(64) | 所属主体类型（多态类型别名，如 `user`、`admin`） |
 | `created_at` | TIMESTAMP NULL | 创建时间 |
@@ -57,7 +57,7 @@ public function owner(): MorphTo
 
 - 使用 `#[Table]`、`#[Fillable]` 等属性注解（对齐项目现有风格）
 - `code`、`owner_id`、`owner_type` 为 fillable
-- `creating` 钩子在未显式指定 `code` 时自动生成小写 ULID；`generateUniqueCode()` 应用层查重 + DB 唯一索引双重兜底
+- `creating` 钩子在未显式指定 `code` 时自动生成大写 ULID；`generateUniqueCode()` 应用层查重 + DB 唯一索引双重兜底
 - 用户创建时由 `UserObserver` 自动为其创建邀请码；用户硬删除时一并清理
 
 ---

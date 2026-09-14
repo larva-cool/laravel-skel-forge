@@ -51,7 +51,7 @@ class InviteCodeTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('创建时自动生成 26 位小写邀请码')]
+    #[TestDox('创建时自动生成 26 位大写邀请码')]
     public function code_is_auto_generated_on_create(): void
     {
         $inviteCode = InviteCode::factory()->create([
@@ -61,7 +61,7 @@ class InviteCodeTest extends TestCase
 
         $this->assertNotNull($inviteCode->code);
         $this->assertSame(26, strlen($inviteCode->code));
-        $this->assertSame(strtolower($inviteCode->code), $inviteCode->code);
+        $this->assertSame(strtoupper($inviteCode->code), $inviteCode->code);
     }
 
     #[Test]
