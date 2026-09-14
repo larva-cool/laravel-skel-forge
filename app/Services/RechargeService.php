@@ -27,7 +27,7 @@ use Illuminate\Validation\ValidationException;
  *
  * 到账入账逻辑统一收敛到 {@see markAsPaid()}，支付渠道接入后回调处理
  * 必须复用该方法，以保证「手动确认」与「渠道回调」两条路径行为完全一致。
- * 详见 docs/technical-solutions/wallet.md 第 12.1 节。
+ * 详见文档站（~/Skel/doc）「技术方案 · 钱包」第 12.1 节。
  *
  * @author Tongle Xu <xutongle@msn.com>
  */

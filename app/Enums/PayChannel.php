@@ -13,7 +13,7 @@ use App\Enums\Traits\HasLabel;
  * 支付渠道
  *
  * MANUAL 用于管理员后台手动确认到账；其余渠道待支付网关接入后启用
- * （见 docs/technical-solutions/wallet.md 第 12.1 节「支付渠道对接（挂起）」）。
+ * （见文档站（~/Skel/doc）「技术方案 · 钱包」第 12.1 节「支付渠道对接（挂起）」）。
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
