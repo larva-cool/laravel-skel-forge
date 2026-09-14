@@ -599,6 +599,25 @@ return new class extends Migration
                         ],
                     ],
                     [
+                        'key' => 'operation.sensitive-word',
+                        'path' => 'sensitive-word',
+                        'name' => 'SensitiveWord',
+                        'component' => '/operation/sensitive-word',
+                        'title' => '敏感词管理',
+                        'icon' => 'ri:shield-keyhole-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 5,
+                        'keep_alive' => true,
+                        'permission' => 'sensitive-words.index',
+                        'buttons' => [
+                            ['title' => '新增敏感词', 'permission' => 'sensitive-words.create'],
+                            ['title' => '编辑敏感词', 'permission' => 'sensitive-words.edit'],
+                            ['title' => '删除敏感词', 'permission' => 'sensitive-words.delete'],
+                            ['title' => '批量导入', 'permission' => 'sensitive-words.create'],
+                            ['title' => '刷新字典', 'permission' => 'sensitive-words.edit'],
+                        ],
+                    ],
+                    [
                         'key' => 'operation.task',
                         'path' => 'task',
                         'name' => 'TaskManage',
@@ -606,7 +625,7 @@ return new class extends Migration
                         'title' => '任务管理',
                         'icon' => 'ri:task-line',
                         'type' => MenuType::DIRECTORY,
-                        'sort' => 5,
+                        'sort' => 6,
                         'children' => [
                             [
                                 'key' => 'operation.task.group',

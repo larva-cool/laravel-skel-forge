@@ -57,6 +57,14 @@ class Comment extends Model
     // 时间定义
     public const UPDATED_AT = null;
 
+    /** @var array<string, mixed> */
+    protected $attributes = [
+        'is_top' => false,
+        'like_count' => 0,
+        'comment_count' => 0,
+        'status' => ReviewStatus::APPROVED,
+    ];
+
     /**
      * Get the attributes that should be cast.
      *

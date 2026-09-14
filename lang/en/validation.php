@@ -188,6 +188,7 @@ return [
     'phone' => 'The :attribute field format is invalid.',
     'verify_code' => 'The :attribute field format is invalid.',
     'id_card' => 'The :attribute field format is invalid.',
+    'sensitive_text' => 'The :attribute contains prohibited content (:words), please revise and try again.',
 
     'custom' => [
         'phone' => [

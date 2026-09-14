@@ -292,6 +292,15 @@ Route::group(['prefix' => 'announcements', 'as' => 'announcements.'], function (
 });
 Route::apiResource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
 
+// 敏感词管理（运营管理 / 内容安全）
+Route::group(['prefix' => 'sensitive-words', 'as' => 'sensitive-words.'], function (Registrar $registrar) {
+    $registrar->post('import', [\App\Http\Controllers\Admin\SensitiveWordController::class, 'import'])->name('import');
+    $registrar->post('refresh', [\App\Http\Controllers\Admin\SensitiveWordController::class, 'refresh'])->name('refresh');
+    $registrar->put('{sensitive_word}/toggle-status', [\App\Http\Controllers\Admin\SensitiveWordController::class, 'toggleStatus'])->name('toggle-status');
+    $registrar->get('options', [\App\Http\Controllers\Admin\SensitiveWordController::class, 'options'])->name('options');
+});
+Route::apiResource('sensitive-words', \App\Http\Controllers\Admin\SensitiveWordController::class);
+
 // 任务分组管理（运营管理）
 Route::group(['prefix' => 'task-groups', 'as' => 'task-groups.'], function (Registrar $registrar) {
     $registrar->get('options', [\App\Http\Controllers\Admin\TaskGroupController::class, 'options'])->name('options');

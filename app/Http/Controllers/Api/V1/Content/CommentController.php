@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Content;
 
+use App\Enums\ReviewStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Content\Comment\StoreCommentRequest;
 use App\Http\Resources\Api\V1\CommentResource;
@@ -29,11 +30,12 @@ class CommentController extends Controller
     }
 
     /**
-     * 获取评论列表
+     * 获取评论列表（仅展示已审核通过的评论）
      */
     public function index(Request $request): AnonymousResourceCollection
     {
         $items = Comment::query()
+            ->where('status', ReviewStatus::APPROVED)
             ->when($request->filled('source_type'), fn ($query) => $query->where('source_type', $request->input('source_type')))
             ->when($request->filled('source_id'), fn ($query) => $query->where('source_id', $request->input('source_id')))
             ->orderByDesc('id')

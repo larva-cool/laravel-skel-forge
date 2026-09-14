@@ -188,6 +188,7 @@ return [
     'phone' => ':attribute不正确，请重新输入。',
     'verify_code' => ':attribute不正确，请重新输入。',
     'id_card' => ':attribute不正确，请重新输入。',
+    'sensitive_text' => ':attribute包含敏感内容（:words），请修改后重试。',
 
     'custom' => [
         'phone' => [
