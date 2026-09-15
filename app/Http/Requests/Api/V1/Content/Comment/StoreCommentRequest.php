@@ -69,8 +69,8 @@ class StoreCommentRequest extends FormRequest
         $this->merge([
             'content' => $result->filtered,
             'status' => $result->maxLevel === SensitiveLevel::REVIEW
-                ? ReviewStatus::PENDING
-                : ReviewStatus::APPROVED,
+                ? ReviewStatus::PENDING->value
+                : ReviewStatus::APPROVED->value,
         ]);
 
         if ($result->hits !== []) {

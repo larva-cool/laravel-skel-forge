@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
@@ -220,13 +221,21 @@ class SensitiveWordService
 
             for ($j = $i; $j < $textLen; $j++) {
                 $char = mb_substr($text, $j, 1, 'UTF-8');
-
-                // 忽略干扰字符（在已开始匹配的情况下跳过）
-                if ($matchLen > 0 && $this->ignoreStopwords && isset($this->stopChars[$char])) {
-                    continue;
-                }
-
                 $checkChar = $this->ignoreCase ? mb_strtolower($char, 'UTF-8') : $char;
+
+                // 干扰字符处理：若该字符是当前 Trie 节点的合法子节点（即敏感词本身包含该字符），
+                // 则沿 Trie 下钻以支持更长匹配；否则视为干扰插入符，跳过（保持 matchLen 不变）。
+                // 仅在已开始匹配（matchLen > 0）时才允许跳过，避免开头的非敏感字符被盲目吞掉。
+                if ($this->ignoreStopwords && isset($this->stopChars[$char])) {
+                    if ($matchLen > 0 && ! isset($node[$checkChar])) {
+                        continue;
+                    }
+                    // 若 $node[$checkChar] 存在（字符本身是词的一部分，如词中含 _），走正常下钻逻辑
+                    if ($matchLen === 0 && ! isset($node[$checkChar])) {
+                        // 起始位置的干扰字符直接跳出内层循环
+                        break;
+                    }
+                }
 
                 if (! isset($node[$checkChar])) {
                     break;

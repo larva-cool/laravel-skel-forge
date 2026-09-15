@@ -62,7 +62,7 @@ class Comment extends Model
         'is_top' => false,
         'like_count' => 0,
         'comment_count' => 0,
-        'status' => ReviewStatus::APPROVED,
+        'status' => ReviewStatus::APPROVED->value,
     ];
 
     /**

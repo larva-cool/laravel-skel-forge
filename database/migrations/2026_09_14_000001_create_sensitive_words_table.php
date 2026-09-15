@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
@@ -16,7 +17,7 @@ return new class extends Migration
     {
         Schema::create('sensitive_words', function (Blueprint $table) {
             $table->id();
-            $table->string('word', 64)->charset('utf8mb4')->collation('utf8mb4_bin')->unique()->comment('敏感词（区分大小写，精确匹配）');
+            $table->string('word', 64)->unique()->comment('敏感词（大小写不敏感，由 DFA 服务控制）');
             $table->string('category', 20)->default(SensitiveCategory::OTHER->value)->comment('分类');
             $table->string('level', 20)->default(SensitiveLevel::REVIEW->value)->comment('命中级别');
             $table->string('replacement', 16)->default('*')->comment('替换字符（REPLACE 级别使用）');
