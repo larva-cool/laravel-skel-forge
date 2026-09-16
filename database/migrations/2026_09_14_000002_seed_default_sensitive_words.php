@@ -28,7 +28,6 @@ return new class extends Migration
         ['word' => '傻逼', 'category' => SensitiveCategory::INSULT, 'level' => SensitiveLevel::REVIEW],
         ['word' => '傻B', 'category' => SensitiveCategory::INSULT, 'level' => SensitiveLevel::REVIEW],
         ['word' => 'sb', 'category' => SensitiveCategory::INSULT, 'level' => SensitiveLevel::REVIEW],
-        ['word' => 'SB', 'category' => SensitiveCategory::INSULT, 'level' => SensitiveLevel::REVIEW],
         ['word' => '操你妈', 'category' => SensitiveCategory::INSULT, 'level' => SensitiveLevel::REVIEW],
         ['word' => '草泥马', 'category' => SensitiveCategory::INSULT, 'level' => SensitiveLevel::REVIEW],
         ['word' => '王八蛋', 'category' => SensitiveCategory::INSULT, 'level' => SensitiveLevel::REVIEW],
@@ -42,7 +41,6 @@ return new class extends Migration
         ['word' => '兼职', 'category' => SensitiveCategory::AD, 'level' => SensitiveLevel::REPLACE],
         ['word' => '日赚', 'category' => SensitiveCategory::AD, 'level' => SensitiveLevel::REPLACE],
         ['word' => 'VX', 'category' => SensitiveCategory::AD, 'level' => SensitiveLevel::REPLACE],
-        ['word' => 'vx', 'category' => SensitiveCategory::AD, 'level' => SensitiveLevel::REPLACE],
         ['word' => '威信', 'category' => SensitiveCategory::AD, 'level' => SensitiveLevel::REPLACE],
     ];
 
