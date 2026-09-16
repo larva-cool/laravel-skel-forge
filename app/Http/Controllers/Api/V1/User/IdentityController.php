@@ -36,8 +36,10 @@ class IdentityController extends Controller
      */
     public function show(Request $request): IdentityVerificationResource
     {
+        $user = $request->user();
         $verification = IdentityVerification::query()
-            ->where('user_id', $request->user()->id)
+            ->where('verifiable_type', $user::class)
+            ->where('verifiable_id', $user->id)
             ->orderByDesc('id')
             ->first();
 
@@ -65,7 +67,8 @@ class IdentityController extends Controller
         }
         $user = $user->fresh();
         $latest = IdentityVerification::query()
-            ->where('user_id', $user->id)
+            ->where('verifiable_type', $user::class)
+            ->where('verifiable_id', $user->id)
             ->orderByDesc('id')
             ->first();
 

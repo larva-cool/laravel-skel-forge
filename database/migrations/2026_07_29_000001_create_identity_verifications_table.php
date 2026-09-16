@@ -20,7 +20,9 @@ return new class extends Migration
     {
         Schema::create('identity_verifications', function (Blueprint $table) {
             $table->id()->comment('认证记录ID');
-            $table->unsignedBigInteger('user_id')->index()->comment('申请人用户ID');
+            $table->string('verifiable_type', 100)->comment('申请人类型（多态）');
+            $table->unsignedBigInteger('verifiable_id')->comment('申请人ID');
+            $table->index(['verifiable_type', 'verifiable_id']);
             $table->string('type', 16)->index()->comment('认证类型：personal 个人 / enterprise 企业');
 
             // 审核状态（复用 ReviewStatus：pending / review / approved / rejected）

@@ -76,7 +76,8 @@ class IdentityControllerTest extends TestCase
         $response->assertCreated();
 
         $this->assertDatabaseHas('identity_verifications', [
-            'user_id' => $this->user->id,
+            'verifiable_type' => $this->user::class,
+            'verifiable_id' => $this->user->id,
             'type' => 'personal',
             'status' => 'pending',
         ]);
@@ -87,7 +88,8 @@ class IdentityControllerTest extends TestCase
     public function cannot_submit_while_pending_exists(): void
     {
         IdentityVerificationFactory::new()->create([
-            'user_id' => $this->user->id,
+            'verifiable_type' => $this->user::class,
+            'verifiable_id' => $this->user->id,
             'status' => ReviewStatus::PENDING,
         ]);
 
@@ -163,7 +165,8 @@ class IdentityControllerTest extends TestCase
     public function status_returns_overview(): void
     {
         IdentityVerificationFactory::new()->create([
-            'user_id' => $this->user->id,
+            'verifiable_type' => $this->user::class,
+            'verifiable_id' => $this->user->id,
             'status' => ReviewStatus::REJECTED,
             'reject_reason' => 'mismatch',
         ]);
@@ -180,7 +183,10 @@ class IdentityControllerTest extends TestCase
     #[TestDox('show 接口返回用户最新一条认证记录')]
     public function show_returns_latest_verification(): void
     {
-        IdentityVerificationFactory::new()->count(2)->create(['user_id' => $this->user->id]);
+        IdentityVerificationFactory::new()->count(2)->create([
+            'verifiable_type' => $this->user::class,
+            'verifiable_id' => $this->user->id,
+        ]);
 
         $this->actingAs($this->user, 'sanctum')
             ->getJson('/api/v1/user/identity')

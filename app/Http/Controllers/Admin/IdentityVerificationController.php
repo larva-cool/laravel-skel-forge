@@ -13,6 +13,7 @@ use App\Http\Requests\Admin\Identity\IdentityIndexRequest;
 use App\Http\Requests\Admin\Identity\RejectIdentityRequest;
 use App\Http\Resources\Admin\IdentityVerificationResource;
 use App\Http\Resources\Admin\IdentityVerificationStatResource;
+use App\Models\User;
 use App\Models\User\IdentityVerification;
 use App\Services\IdentityVerificationService;
 use Illuminate\Http\Request;
@@ -43,10 +44,10 @@ class IdentityVerificationController extends Controller
         $filters = $request->filters();
         $perPage = per_page($request);
 
-        $query = IdentityVerification::query()->with(['user', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
+        $query = IdentityVerification::query()->with(['verifiable', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
 
-        if ($filters['user_id'] ?? null) {
-            $query->where('user_id', $filters['user_id']);
+        if ($filters['verifiable_id'] ?? null) {
+            $query->where('verifiable_id', $filters['verifiable_id']);
         }
 
         if ($keyword = $filters['keyword'] ?? null) {
@@ -56,9 +57,8 @@ class IdentityVerificationController extends Controller
                     ->orWhere('company_name', 'like', $like)
                     ->orWhere('credit_code', 'like', $like)
                     ->orWhere('legal_person_name', 'like', $like)
-                    ->orWhereHas('user', function ($uq) use ($like) {
-                        $uq->where('username', 'like', $like)
-                            ->orWhere('name', 'like', $like)
+                    ->orWhereHasMorph('verifiable', [User::class], function ($uq) use ($like) {
+                        $uq->where('name', 'like', $like)
                             ->orWhere('phone', 'like', $like);
                     });
             });
@@ -98,7 +98,7 @@ class IdentityVerificationController extends Controller
      */
     public function show(IdentityVerification $verification): IdentityVerificationResource
     {
-        $verification->load(['user', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
+        $verification->load(['verifiable', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
 
         return new IdentityVerificationResource($verification);
     }
@@ -112,7 +112,7 @@ class IdentityVerificationController extends Controller
 
         $service->approve($verification, $request->user('admin'));
         $verification->refresh();
-        $verification->load(['user', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
+        $verification->load(['verifiable', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
 
         return new IdentityVerificationResource($verification);
     }
@@ -131,7 +131,7 @@ class IdentityVerificationController extends Controller
             $request->input('remark'),
         );
         $verification->refresh();
-        $verification->load(['user', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
+        $verification->load(['verifiable', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
 
         return new IdentityVerificationResource($verification);
     }

@@ -36,7 +36,8 @@ class IdentityVerificationFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => \App\Models\User::factory(),
+            'verifiable_type' => \App\Models\User::class,
+            'verifiable_id' => \App\Models\User::factory(),
             'type' => IdentityType::PERSONAL,
             'status' => ReviewStatus::PENDING,
             'real_name' => fake()->name(),

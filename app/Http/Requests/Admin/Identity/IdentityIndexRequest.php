@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
 /**
  * 实名认证列表请求（管理端）
  *
- * @property-read int|null $user_id 用户ID
+ * @property-read int|null $verifiable_id 申请人ID
  * @property-read string|null $keyword 关键词
  * @property-read string|null $type 认证类型
  * @property-read string|null $status 状态
@@ -35,7 +35,7 @@ class IdentityIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['nullable', 'integer', 'min:1'],
+            'verifiable_id' => ['nullable', 'integer', 'min:1'],
             'keyword' => ['nullable', 'string', 'max:64'],
             'type' => ['nullable', 'string', Rule::enum(IdentityType::class)],
             'status' => ['nullable', 'string', Rule::enum(ReviewStatus::class)],
@@ -52,7 +52,7 @@ class IdentityIndexRequest extends FormRequest
     public function filters(): array
     {
         return $this->only([
-            'user_id', 'keyword', 'type', 'status', 'start_date', 'end_date',
+            'verifiable_id', 'keyword', 'type', 'status', 'start_date', 'end_date',
         ]);
     }
 }

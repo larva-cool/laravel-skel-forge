@@ -31,7 +31,7 @@ class IdentityVerificationPolicy
      */
     public function view(User $user, IdentityVerification $verification): bool
     {
-        return $user->id === $verification->user_id;
+        return $user->id === $verification->verifiable_id && $verification->verifiable_type === $user::class;
     }
 
     /**
@@ -44,7 +44,8 @@ class IdentityVerificationPolicy
         }
 
         $pendingExists = IdentityVerification::query()
-            ->where('user_id', $user->id)
+            ->where('verifiable_type', $user::class)
+            ->where('verifiable_id', $user->id)
             ->whereIn('status', ['pending', 'review'])
             ->exists();
 
@@ -56,7 +57,9 @@ class IdentityVerificationPolicy
      */
     public function update(User $user, IdentityVerification $verification): bool
     {
-        return $user->id === $verification->user_id && $verification->status->isRejected();
+        return $user->id === $verification->verifiable_id
+            && $verification->verifiable_type === $user::class
+            && $verification->status->isRejected();
     }
 
     /**

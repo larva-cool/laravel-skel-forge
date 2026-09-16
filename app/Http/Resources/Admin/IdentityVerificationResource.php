@@ -33,12 +33,11 @@ class IdentityVerificationResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'user' => $this->whenLoaded('user', fn () => $this->user ? [
-                'id' => $this->user->id,
-                'username' => $this->user->username,
-                'name' => $this->user->name,
-                'phone' => $this->user->phone,
+            'verifiable_type' => $this->verifiable_type,
+            'verifiable_id' => $this->verifiable_id,
+            'verifiable' => $this->whenLoaded('verifiable', fn () => $this->verifiable ? [
+                'id' => $this->verifiable->id,
+                'name' => $this->verifiable->name ?? null,
             ] : null),
             'type' => $this->type?->value,
             'type_label' => $this->type?->label(),

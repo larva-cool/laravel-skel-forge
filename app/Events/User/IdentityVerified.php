@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace App\Events\User;
 
-use App\Models\User;
 use App\Models\User\IdentityVerification;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -15,6 +14,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -28,16 +28,16 @@ class IdentityVerified implements ShouldBroadcast, ShouldHandleEventsAfterCommit
 {
     use Dispatchable, InteractsWithQueue, InteractsWithSockets, SerializesModels;
 
-    public User $user;
+    public Model $verifiable;
 
     public IdentityVerification $verification;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(User $user, IdentityVerification $verification)
+    public function __construct(Model $verifiable, IdentityVerification $verification)
     {
-        $this->user = $user;
+        $this->verifiable = $verifiable;
         $this->verification = $verification;
     }
 
@@ -49,7 +49,7 @@ class IdentityVerified implements ShouldBroadcast, ShouldHandleEventsAfterCommit
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('User.'.$this->user->id),
+            new PrivateChannel(class_basename($this->verifiable).'.'.$this->verifiable->id),
         ];
     }
 }

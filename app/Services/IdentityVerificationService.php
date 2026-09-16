@@ -38,7 +38,8 @@ class IdentityVerificationService
         return DB::transaction(function () use ($user, $data) {
             // 同一用户仅允许一条待审记录
             $existing = IdentityVerification::query()
-                ->where('user_id', $user->id)
+                ->where('verifiable_type', $user::class)
+                ->where('verifiable_id', $user->id)
                 ->whereIn('status', [ReviewStatus::PENDING->value, ReviewStatus::REVIEW->value])
                 ->lockForUpdate()
                 ->first();
@@ -47,7 +48,8 @@ class IdentityVerificationService
                 abort(422, __('system.identity_pending_exists'));
             }
 
-            $data['user_id'] = $user->id;
+            $data['verifiable_type'] = $user::class;
+            $data['verifiable_id'] = $user->id;
             $data['status'] = ReviewStatus::PENDING;
             $data['submitted_at'] = Carbon::now();
 
@@ -71,12 +73,12 @@ class IdentityVerificationService
             ])->save();
 
             // 同步用户标记位
-            $verification->user->forceFill([
+            $verification->verifiable->forceFill([
                 'identity_type' => $verification->type,
                 'identity_verified' => true,
             ])->saveQuietly();
 
-            IdentityVerified::dispatch($verification->user, $verification);
+            IdentityVerified::dispatch($verification->verifiable, $verification);
 
             return $verification->refresh();
         });
@@ -98,7 +100,7 @@ class IdentityVerificationService
                 'reject_remark' => $remark,
             ])->save();
 
-            IdentityRejected::dispatch($verification->user, $verification, $reason, $remark);
+            IdentityRejected::dispatch($verification->verifiable, $verification, $reason, $remark);
 
             return $verification->refresh();
         });

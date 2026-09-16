@@ -12,7 +12,6 @@ use App\Enums\ReviewStatus;
 use App\Models\Admin\Admin;
 use App\Models\Model;
 use App\Models\System\Attachment;
-use App\Models\User;
 use App\Policies\IdentityVerificationPolicy;
 use Database\Factories\User\IdentityVerificationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -21,13 +20,15 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
 /**
  * 实名认证记录
  *
  * @property int $id 记录ID
- * @property int $user_id 申请人用户ID
+ * @property string $verifiable_type 申请人类型（多态）
+ * @property int $verifiable_id 申请人ID
  * @property IdentityType $type 认证类型
  * @property ReviewStatus $status 审核状态
  * @property string|null $real_name 真实姓名（个人）
@@ -51,7 +52,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $expires_at 认证有效期
  *
  * 关系对象
- * @property User $user 申请人
+ * @property \Illuminate\Database\Eloquent\Model $verifiable 申请人
  * @property Admin|null $admin 审核管理员
  * @property Attachment|null $idCardFront 身份证人像面
  * @property Attachment|null $idCardBack 身份证国徽面
@@ -63,7 +64,7 @@ use Illuminate\Support\Carbon;
  */
 #[Table('identity_verifications')]
 #[Fillable([
-    'user_id', 'type', 'status',
+    'verifiable_type', 'verifiable_id', 'type', 'status',
     'real_name', 'id_card_no', 'id_card_front_id', 'id_card_back_id', 'handheld_id',
     'company_name', 'credit_code', 'legal_person_name', 'legal_person_id_card_no',
     'business_license_id', 'opening_permit_id', 'bank_account', 'bank_name',
@@ -94,7 +95,7 @@ class IdentityVerification extends Model
     protected function casts(): array
     {
         return [
-            'user_id' => 'integer',
+            'verifiable_id' => 'integer',
             'type' => IdentityType::class,
             'status' => ReviewStatus::class,
             'id_card_front_id' => 'integer',
@@ -112,11 +113,11 @@ class IdentityVerification extends Model
     }
 
     /**
-     * 申请人
+     * 申请人（多态）
      */
-    public function user(): BelongsTo
+    public function verifiable(): MorphTo
     {
-        return $this->belongsTo(User::class);
+        return $this->morphTo();
     }
 
     /**

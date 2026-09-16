@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace App\Events\User;
 
-use App\Models\User;
 use App\Models\User\IdentityVerification;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -15,6 +14,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -28,7 +28,7 @@ class IdentityRejected implements ShouldBroadcast, ShouldHandleEventsAfterCommit
 {
     use Dispatchable, InteractsWithQueue, InteractsWithSockets, SerializesModels;
 
-    public User $user;
+    public Model $verifiable;
 
     public IdentityVerification $verification;
 
@@ -39,9 +39,9 @@ class IdentityRejected implements ShouldBroadcast, ShouldHandleEventsAfterCommit
     /**
      * Create a new event instance.
      */
-    public function __construct(User $user, IdentityVerification $verification, string $reason, ?string $remark = null)
+    public function __construct(Model $verifiable, IdentityVerification $verification, string $reason, ?string $remark = null)
     {
-        $this->user = $user;
+        $this->verifiable = $verifiable;
         $this->verification = $verification;
         $this->reason = $reason;
         $this->remark = $remark;
@@ -55,7 +55,7 @@ class IdentityRejected implements ShouldBroadcast, ShouldHandleEventsAfterCommit
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('User.'.$this->user->id),
+            new PrivateChannel(class_basename($this->verifiable).'.'.$this->verifiable->id),
         ];
     }
 }

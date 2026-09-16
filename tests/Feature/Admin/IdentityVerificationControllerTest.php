@@ -54,8 +54,14 @@ class IdentityVerificationControllerTest extends TestCase
     public function admin_can_list_with_filters(): void
     {
         $user = User::factory()->create();
-        IdentityVerificationFactory::new()->count(3)->create(['user_id' => $user->id]);
-        IdentityVerificationFactory::new()->enterprise()->create(['user_id' => $user->id]);
+        IdentityVerificationFactory::new()->count(3)->create([
+            'verifiable_type' => $user::class,
+            'verifiable_id' => $user->id,
+        ]);
+        IdentityVerificationFactory::new()->enterprise()->create([
+            'verifiable_type' => $user::class,
+            'verifiable_id' => $user->id,
+        ]);
 
         $response = $this->actingAsAdmin()->getJson('/admin/identity-verifications?type=personal');
         $response->assertOk()->assertJsonPath('meta.total', 3);
@@ -69,7 +75,10 @@ class IdentityVerificationControllerTest extends TestCase
     public function approve_syncs_user_flags(): void
     {
         $user = User::factory()->create();
-        $verification = IdentityVerificationFactory::new()->personal()->create(['user_id' => $user->id]);
+        $verification = IdentityVerificationFactory::new()->personal()->create([
+            'verifiable_type' => $user::class,
+            'verifiable_id' => $user->id,
+        ]);
 
         $this->actingAsAdmin()
             ->postJson("/admin/identity-verifications/{$verification->id}/approve")
@@ -89,7 +98,8 @@ class IdentityVerificationControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $verification = IdentityVerificationFactory::new()->create([
-            'user_id' => $user->id,
+            'verifiable_type' => $user::class,
+            'verifiable_id' => $user->id,
             'status' => ReviewStatus::PENDING,
         ]);
 
