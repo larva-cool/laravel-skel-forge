@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Identity;
 
+use App\Enums\IdentityStatus;
 use App\Enums\IdentityType;
-use App\Enums\ReviewStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -38,7 +38,7 @@ class IdentityIndexRequest extends FormRequest
             'verifiable_id' => ['nullable', 'integer', 'min:1'],
             'keyword' => ['nullable', 'string', 'max:64'],
             'type' => ['nullable', 'string', Rule::enum(IdentityType::class)],
-            'status' => ['nullable', 'string', Rule::enum(ReviewStatus::class)],
+            'status' => ['nullable', 'string', Rule::enum(IdentityStatus::class)],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ];

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
-use App\Enums\ReviewStatus;
+use App\Enums\IdentityStatus;
 use App\Http\Controllers\Admin\IdentityVerificationController;
 use App\Models\Admin\Admin;
 use App\Models\User;
@@ -102,7 +102,7 @@ class IdentityVerificationControllerTest extends TestCase
         $verification = IdentityVerificationFactory::new()->create([
             'verifiable_type' => 'user',
             'verifiable_id' => $user->id,
-            'status' => ReviewStatus::PENDING,
+            'status' => IdentityStatus::PENDING,
         ]);
 
         $this->actingAsAdmin()
@@ -138,7 +138,7 @@ class IdentityVerificationControllerTest extends TestCase
     #[TestDox('统计接口返回正确结构')]
     public function stats_returns_summary(): void
     {
-        IdentityVerificationFactory::new()->count(2)->create(['status' => ReviewStatus::PENDING]);
+        IdentityVerificationFactory::new()->count(2)->create(['status' => IdentityStatus::PENDING]);
         IdentityVerificationFactory::new()->approved()->create();
 
         $this->actingAsAdmin()

@@ -328,7 +328,7 @@ class SegmentServiceTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('syncRuleSegment 按 identity_status in [pending,review] 过滤：仅审核中用户被纳入分群')]
+    #[TestDox('syncRuleSegment 按 identity_status in [unsubmitted,pending] 过滤：仅未认证/审核中用户被纳入分群')]
     public function sync_rule_segment_filters_by_identity_status_in(): void
     {
         $seg = Segment::factory()->rule()->create([
@@ -336,16 +336,15 @@ class SegmentServiceTest extends TestCase
                 'version' => 1,
                 'logic' => 'and',
                 'conditions' => [
-                    ['field' => 'identity_status', 'op' => 'in', 'value' => ['pending', 'review']],
+                    ['field' => 'identity_status', 'op' => 'in', 'value' => ['unsubmitted', 'pending']],
                 ],
             ],
         ]);
 
+        $unsubmitted = $this->makeUser(); // 默认 identity_status=unsubmitted
+
         $pending = $this->makeUser();
         $pending->forceFill(['identity_status' => 'pending'])->saveQuietly();
-
-        $review = $this->makeUser();
-        $review->forceFill(['identity_status' => 'review'])->saveQuietly();
 
         $approved = $this->makeUser();
         $approved->forceFill(['identity_status' => 'approved'])->saveQuietly();
@@ -359,7 +358,7 @@ class SegmentServiceTest extends TestCase
             ->pluck('user_id')
             ->all();
         sort($matched);
-        $this->assertSame([$pending->id, $review->id], $matched);
+        $this->assertSame([$unsubmitted->id, $pending->id], $matched);
         $this->assertFalse(in_array($approved->id, $matched, true));
     }
 

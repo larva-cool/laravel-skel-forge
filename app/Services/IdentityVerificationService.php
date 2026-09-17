@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\ReviewStatus;
+use App\Enums\IdentityStatus;
 use App\Events\User\IdentityRejected;
 use App\Events\User\IdentityVerified;
 use App\Models\Admin\Admin;
@@ -38,7 +38,7 @@ class IdentityVerificationService
         return DB::transaction(function () use ($user, $data) {
             // 同一用户仅允许一条待审记录
             $existing = $user->identityVerifications()
-                ->whereIn('status', [ReviewStatus::PENDING, ReviewStatus::REVIEW])
+                ->where('status', IdentityStatus::PENDING)
                 ->lockForUpdate()
                 ->first();
 
@@ -46,13 +46,13 @@ class IdentityVerificationService
                 abort(422, __('system.identity_pending_exists'));
             }
 
-            $data['status'] = ReviewStatus::PENDING;
+            $data['status'] = IdentityStatus::PENDING;
             $data['submitted_at'] = Carbon::now();
 
             $verification = $user->identityVerifications()->create($data);
 
             // 同步用户实名认证状态为待审核
-            $user->setIdentityStatus(ReviewStatus::PENDING);
+            $user->setIdentityStatus(IdentityStatus::PENDING);
 
             return $verification;
         });
@@ -65,7 +65,7 @@ class IdentityVerificationService
     {
         return DB::transaction(function () use ($verification, $admin) {
             $verification->forceFill([
-                'status' => ReviewStatus::APPROVED,
+                'status' => IdentityStatus::APPROVED,
                 'admin_id' => $admin->id,
                 'reviewed_at' => Carbon::now(),
                 'expires_at' => Carbon::now()->addYears(self::DEFAULT_EXPIRES_YEARS),
@@ -76,7 +76,7 @@ class IdentityVerificationService
             // 同步用户认证类型与状态
             $verification->verifiable->forceFill([
                 'identity_type' => $verification->type,
-                'identity_status' => ReviewStatus::APPROVED,
+                'identity_status' => IdentityStatus::APPROVED,
             ])->saveQuietly();
 
             IdentityVerified::dispatch($verification->verifiable, $verification);
@@ -94,7 +94,7 @@ class IdentityVerificationService
     {
         return DB::transaction(function () use ($verification, $admin, $reason, $remark) {
             $verification->forceFill([
-                'status' => ReviewStatus::REJECTED,
+                'status' => IdentityStatus::REJECTED,
                 'admin_id' => $admin->id,
                 'reviewed_at' => Carbon::now(),
                 'reject_reason' => $reason,
@@ -102,7 +102,7 @@ class IdentityVerificationService
             ])->save();
 
             // 同步用户实名认证状态为已驳回
-            $verification->verifiable->setIdentityStatus(ReviewStatus::REJECTED);
+            $verification->verifiable->setIdentityStatus(IdentityStatus::REJECTED);
 
             IdentityRejected::dispatch($verification->verifiable, $verification, $reason, $remark);
 

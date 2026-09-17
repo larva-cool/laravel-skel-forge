@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1\User;
 
+use App\Enums\IdentityStatus;
 use App\Enums\IdentityType;
-use App\Enums\ReviewStatus;
 use App\Http\Controllers\Api\V1\User\IdentityController;
 use App\Models\User;
 use Database\Factories\User\IdentityVerificationFactory;
@@ -79,7 +79,7 @@ class IdentityControllerTest extends TestCase
         IdentityVerificationFactory::new()->create([
             'verifiable_type' => 'user',
             'verifiable_id' => $this->user->id,
-            'status' => ReviewStatus::PENDING,
+            'status' => IdentityStatus::PENDING,
         ]);
 
         $this->actingAs($this->user, 'sanctum')
@@ -155,12 +155,12 @@ class IdentityControllerTest extends TestCase
         $verification = IdentityVerificationFactory::new()->create([
             'verifiable_type' => 'user',
             'verifiable_id' => $this->user->id,
-            'status' => ReviewStatus::REJECTED,
+            'status' => IdentityStatus::REJECTED,
             'reject_reason' => 'mismatch',
         ]);
 
         // 模拟驳回流程同步用户状态
-        $this->user->setIdentityStatus(ReviewStatus::REJECTED);
+        $this->user->setIdentityStatus(IdentityStatus::REJECTED);
 
         $this->actingAs($this->user, 'sanctum')
             ->getJson('/api/v1/user/identity/status')

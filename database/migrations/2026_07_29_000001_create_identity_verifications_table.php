@@ -5,6 +5,7 @@
  */
 declare(strict_types=1);
 
+use App\Enums\IdentityStatus;
 use App\Models\System\Dict;
 use App\Models\System\DictItem;
 use Illuminate\Database\Migrations\Migration;
@@ -25,8 +26,8 @@ return new class extends Migration
             $table->index(['verifiable_type', 'verifiable_id']);
             $table->string('type', 16)->index()->comment('认证类型：personal 个人 / enterprise 企业');
 
-            // 审核状态（复用 ReviewStatus：pending / review / approved / rejected）
-            $table->string('status', 16)->default('pending')->index()->comment('审核状态');
+            // 审核状态（IdentityStatus：pending / approved / rejected）
+            $table->string('status', 16)->default(IdentityStatus::PENDING->value)->index()->comment('审核状态');
 
             // 个人字段
             $table->string('real_name', 64)->nullable()->comment('真实姓名');

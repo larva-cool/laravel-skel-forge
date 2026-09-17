@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
-use App\Enums\ReviewStatus;
+use App\Enums\IdentityStatus;
 use App\Models\User\IdentityVerification;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -47,13 +47,10 @@ class IdentityVerificationStatResource extends JsonResource
     {
         return [
             'total' => IdentityVerification::query()->count(),
-            'pending' => IdentityVerification::query()->whereIn('status', [
-                ReviewStatus::PENDING->value,
-                ReviewStatus::REVIEW->value,
-            ])->count(),
+            'pending' => IdentityVerification::query()->where('status', IdentityStatus::PENDING->value)->count(),
             'today' => IdentityVerification::query()->whereDate('submitted_at', now()->toDateString())->count(),
-            'approved' => IdentityVerification::query()->where('status', ReviewStatus::APPROVED->value)->count(),
-            'rejected' => IdentityVerification::query()->where('status', ReviewStatus::REJECTED->value)->count(),
+            'approved' => IdentityVerification::query()->where('status', IdentityStatus::APPROVED->value)->count(),
+            'rejected' => IdentityVerification::query()->where('status', IdentityStatus::REJECTED->value)->count(),
         ];
     }
 }

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\ReviewStatus;
+use App\Enums\IdentityStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Identity\IdentityIndexRequest;
 use App\Http\Requests\Admin\Identity\RejectIdentityRequest;
@@ -141,7 +141,7 @@ class IdentityVerificationController extends Controller
      */
     protected function authorizeAction(IdentityVerification $verification): void
     {
-        if ($verification->status === ReviewStatus::APPROVED || $verification->status === ReviewStatus::REJECTED) {
+        if ($verification->status === IdentityStatus::APPROVED || $verification->status === IdentityStatus::REJECTED) {
             abort(422, __('system.identity_already_reviewed'));
         }
     }

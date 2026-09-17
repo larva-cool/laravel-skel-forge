@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-use App\Enums\ReviewStatus;
+use App\Enums\IdentityStatus;
 use App\Enums\UserStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('avatar', 1000)->nullable()->comment('头像');
             $table->unsignedTinyInteger('status')->default(UserStatus::ACTIVE->value)->comment('状态：0、frozen,1、active，2、not_active');
             $table->string('identity_type', 16)->nullable()->comment('实名认证类型：personal / enterprise');
-            $table->string('identity_status', 16)->default(ReviewStatus::UNSUBMITTED->value)->index()->comment('实名认证状态：unsubmitted 未提交 / pending 待审核 / review 需复审 / approved 已通过 / rejected 已驳回');
+            $table->string('identity_status', 16)->default(IdentityStatus::UNSUBMITTED->value)->index()->comment('实名认证状态：unsubmitted 未提交 / pending 待审核 / approved 已通过 / rejected 已驳回');
             $table->unsignedInteger('available_points')->nullable()->default(0)->comment('可用积分');
             $table->unsignedInteger('available_coins')->nullable()->default(0)->comment('可用金币');
             $table->decimal('balance', 16, 2)->default(0)->comment('可用余额（元）');

@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\User;
 
+use App\Enums\IdentityStatus;
 use App\Enums\IdentityType;
-use App\Enums\ReviewStatus;
 use App\Models\User\IdentityVerification;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -39,7 +39,7 @@ class IdentityVerificationFactory extends Factory
             'verifiable_type' => 'user',
             'verifiable_id' => \App\Models\User::factory(),
             'type' => IdentityType::PERSONAL,
-            'status' => ReviewStatus::PENDING,
+            'status' => IdentityStatus::PENDING,
             'real_name' => fake()->name(),
             'id_card_no' => null,
             'id_card_front' => null,
@@ -98,7 +98,7 @@ class IdentityVerificationFactory extends Factory
     public function pending(): static
     {
         return $this->state(fn () => [
-            'status' => ReviewStatus::PENDING,
+            'status' => IdentityStatus::PENDING,
         ]);
     }
 
@@ -108,7 +108,7 @@ class IdentityVerificationFactory extends Factory
     public function approved(): static
     {
         return $this->state(fn () => [
-            'status' => ReviewStatus::APPROVED,
+            'status' => IdentityStatus::APPROVED,
             'reviewed_at' => now(),
             'expires_at' => now()->addYears(3),
         ]);
@@ -120,7 +120,7 @@ class IdentityVerificationFactory extends Factory
     public function rejected(): static
     {
         return $this->state(fn () => [
-            'status' => ReviewStatus::REJECTED,
+            'status' => IdentityStatus::REJECTED,
             'reject_reason' => 'mismatch',
             'reject_remark' => '证件信息与提交信息不符',
             'reviewed_at' => now(),

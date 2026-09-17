@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace App\Models\User;
 
 use App\Casts\AsAttachmentUrl;
+use App\Enums\IdentityStatus;
 use App\Enums\IdentityType;
-use App\Enums\ReviewStatus;
 use App\Models\Admin\Admin;
 use App\Models\Model;
 use App\Policies\IdentityVerificationPolicy;
@@ -30,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property string $verifiable_type 申请人类型（多态）
  * @property int $verifiable_id 申请人ID
  * @property IdentityType $type 认证类型
- * @property ReviewStatus $status 审核状态
+ * @property IdentityStatus $status 审核状态
  * @property string|null $real_name 真实姓名（个人）
  * @property string|null $id_card_no 身份证号（密文）
  * @property string|null $id_card_front 身份证人像面图片路径
@@ -92,7 +92,7 @@ class IdentityVerification extends Model
         return [
             'verifiable_id' => 'integer',
             'type' => IdentityType::class,
-            'status' => ReviewStatus::class,
+            'status' => IdentityStatus::class,
             'id_card_front' => AsAttachmentUrl::class,
             'id_card_back' => AsAttachmentUrl::class,
             'handheld' => AsAttachmentUrl::class,

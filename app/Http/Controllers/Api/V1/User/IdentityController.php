@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\User;
 
-use App\Enums\ReviewStatus;
+use App\Enums\IdentityStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\User\Identity\SubmitIdentityRequest;
 use App\Http\Resources\Api\V1\IdentityVerificationResource;
@@ -72,8 +72,8 @@ class IdentityController extends Controller
             'identity_type_label' => $user->identity_type?->label(),
             'latest_status' => $user->identity_status->value,
             'latest_status_label' => $user->identity_status->label(),
-            'latest_reject_reason' => $latest && $latest->status === ReviewStatus::REJECTED ? $latest->reject_reason : null,
-            'latest_reject_remark' => $latest && $latest->status === ReviewStatus::REJECTED ? $latest->reject_remark : null,
+            'latest_reject_reason' => $latest && $latest->status === IdentityStatus::REJECTED ? $latest->reject_reason : null,
+            'latest_reject_remark' => $latest && $latest->status === IdentityStatus::REJECTED ? $latest->reject_remark : null,
         ]);
     }
 }
