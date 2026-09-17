@@ -38,6 +38,8 @@ class UserResource extends JsonResource
             'available_points' => $this->available_points,
             'available_coins' => $this->available_coins,
             'login_count' => $this->login_count,
+            'identity_status' => $this->identity_status,
+            'identity_type' => $this->identity_type,
             'last_login_ip' => $this->last_login_ip,
             'vip_expires_at' => $this->vip_expires_at?->toDateTimeString(),
             'is_vip' => $this->isVip(),

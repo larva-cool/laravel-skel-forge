@@ -70,6 +70,10 @@ class UserController extends Controller
             $query->where('status', (int) $request->query('status'));
         }
 
+        if ($request->filled('identity_status')) {
+            $query->where('identity_status', $request->query('identity_status'));
+        }
+
         if ($vip = $request->query('vip')) {
             if ($vip === '1') {
                 $query->whereNotNull('vip_expires_at')->where('vip_expires_at', '>', now());
