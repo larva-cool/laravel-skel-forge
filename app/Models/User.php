@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\IdentityType;
+use App\Enums\ReviewStatus;
 use App\Enums\UserStatus;
 use App\Events\User\EmailReset;
 use App\Events\User\EmailVerified;
@@ -74,7 +75,8 @@ use Laravel\Scout\Searchable;
  * @property Carbon|null $last_active_at 最后活动时间
  * @property Carbon|null $last_login_at 最后登录时间
  * @property string|null $identity_type 实名认证类型
- * @property bool $identity_verified 是否已通过实名认证
+ * @property bool $identity_verified 是否已通过实名认证（逻辑属性，由 identity_status 派生）
+ * @property ReviewStatus $identity_status 实名认证状态
  * @property Carbon|null $created_at 注册时间
  * @property Carbon|null $updated_at 更新时间
  * @property Carbon|null $deleted_at 删除时间
@@ -129,7 +131,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'balance' => 0,
         'frozen_balance' => 0,
         'vip_expires_at' => null,
-        'identity_verified' => false,
+        'identity_status' => ReviewStatus::UNSUBMITTED,
     ];
 
     /**
@@ -156,6 +158,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'login_count' => 'integer',
             'last_login_ip' => 'string',
             'vip_expires_at' => 'datetime',
+            'identity_status' => ReviewStatus::class,
             'last_active_at' => 'datetime',
             'last_login_at' => 'datetime',
             'created_at' => 'datetime',
@@ -415,7 +418,25 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isVerified(): bool
     {
-        return (bool) $this->getAttribute('identity_verified');
+        return $this->identity_status === ReviewStatus::APPROVED;
+    }
+
+    /**
+     * identity_verified 访问器
+     */
+    protected function identityVerified(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value, array $attributes) => ($attributes['identity_status'] ?? null) === ReviewStatus::APPROVED->value
+        );
+    }
+
+    /**
+     * 设置实名认证状态
+     */
+    public function setIdentityStatus(ReviewStatus $status): bool
+    {
+        return $this->forceFill(['identity_status' => $status])->saveQuietly();
     }
 
     /**
@@ -425,7 +446,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $status = $this->forceFill([
             'identity_type' => $type,
-            'identity_verified' => true,
+            'identity_status' => ReviewStatus::APPROVED,
         ])->saveQuietly();
         Event::dispatch(new IdentityVerified($this, $verification));
 
@@ -435,11 +456,11 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * 标记用户未通过实名认证
      */
-    public function markUnverified(): bool
+    public function markUnverified(?ReviewStatus $status = null): bool
     {
         return $this->forceFill([
             'identity_type' => null,
-            'identity_verified' => false,
+            'identity_status' => $status ?? ReviewStatus::UNSUBMITTED,
         ])->saveQuietly();
     }
 

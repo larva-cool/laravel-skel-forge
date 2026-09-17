@@ -76,8 +76,8 @@ class IdentityController extends Controller
             'is_verified' => $user->isVerified(),
             'identity_type' => $user->identity_type?->value,
             'identity_type_label' => $user->identity_type?->label(),
-            'latest_status' => $latest?->status?->value,
-            'latest_status_label' => $latest?->status?->label(),
+            'latest_status' => $user->identity_status->value,
+            'latest_status_label' => $user->identity_status->label(),
             'latest_reject_reason' => $latest && $latest->status === ReviewStatus::REJECTED ? $latest->reject_reason : null,
             'latest_reject_remark' => $latest && $latest->status === ReviewStatus::REJECTED ? $latest->reject_remark : null,
         ]);

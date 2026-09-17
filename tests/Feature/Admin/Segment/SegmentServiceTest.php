@@ -290,26 +290,26 @@ class SegmentServiceTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('syncRuleSegment 按 identity_verified=true 过滤：仅已实名用户被纳入分群')]
-    public function sync_rule_segment_filters_by_identity_verified_true(): void
+    #[TestDox('syncRuleSegment 按 identity_status=approved 过滤：仅已实名用户被纳入分群')]
+    public function sync_rule_segment_filters_by_identity_status_approved(): void
     {
         $seg = Segment::factory()->rule()->create([
             'rule' => [
                 'version' => 1,
                 'logic' => 'and',
                 'conditions' => [
-                    ['field' => 'identity_verified', 'op' => '=', 'value' => true],
+                    ['field' => 'identity_status', 'op' => '=', 'value' => 'approved'],
                 ],
             ],
         ]);
 
         $verified = $this->makeUser();
         $verified->forceFill([
-            'identity_verified' => true,
+            'identity_status' => 'approved',
             'identity_type' => IdentityType::PERSONAL,
         ])->saveQuietly();
 
-        $unverified = $this->makeUser(); // 默认 identity_verified=false
+        $unverified = $this->makeUser(); // 默认 identity_status=unsubmitted
         $result = $this->service->syncRuleSegment($seg);
 
         $this->assertSame(1, $result['added']);
@@ -328,27 +328,27 @@ class SegmentServiceTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('syncRuleSegment 按 identity_verified!=true 过滤：仅未实名用户被纳入分群')]
-    public function sync_rule_segment_filters_by_identity_verified_false(): void
+    #[TestDox('syncRuleSegment 按 identity_status in [pending,review] 过滤：仅审核中用户被纳入分群')]
+    public function sync_rule_segment_filters_by_identity_status_in(): void
     {
         $seg = Segment::factory()->rule()->create([
             'rule' => [
                 'version' => 1,
                 'logic' => 'and',
                 'conditions' => [
-                    ['field' => 'identity_verified', 'op' => '!=', 'value' => true],
+                    ['field' => 'identity_status', 'op' => 'in', 'value' => ['pending', 'review']],
                 ],
             ],
         ]);
 
-        $verified = $this->makeUser();
-        $verified->forceFill([
-            'identity_verified' => true,
-            'identity_type' => IdentityType::PERSONAL,
-        ])->saveQuietly();
+        $pending = $this->makeUser();
+        $pending->forceFill(['identity_status' => 'pending'])->saveQuietly();
 
-        $unverifiedA = $this->makeUser();
-        $unverifiedB = $this->makeUser();
+        $review = $this->makeUser();
+        $review->forceFill(['identity_status' => 'review'])->saveQuietly();
+
+        $approved = $this->makeUser();
+        $approved->forceFill(['identity_status' => 'approved'])->saveQuietly();
 
         $result = $this->service->syncRuleSegment($seg);
 
@@ -359,8 +359,8 @@ class SegmentServiceTest extends TestCase
             ->pluck('user_id')
             ->all();
         sort($matched);
-        $this->assertSame([$unverifiedA->id, $unverifiedB->id], $matched);
-        $this->assertFalse(in_array($verified->id, $matched, true));
+        $this->assertSame([$pending->id, $review->id], $matched);
+        $this->assertFalse(in_array($approved->id, $matched, true));
     }
 
     #[Test]
@@ -379,13 +379,13 @@ class SegmentServiceTest extends TestCase
 
         $enterprise = $this->makeUser();
         $enterprise->forceFill([
-            'identity_verified' => true,
+            'identity_status' => 'approved',
             'identity_type' => IdentityType::ENTERPRISE,
         ])->saveQuietly();
 
         $personal = $this->makeUser();
         $personal->forceFill([
-            'identity_verified' => true,
+            'identity_status' => 'approved',
             'identity_type' => IdentityType::PERSONAL,
         ])->saveQuietly();
 
@@ -427,13 +427,13 @@ class SegmentServiceTest extends TestCase
 
         $personal = $this->makeUser();
         $personal->forceFill([
-            'identity_verified' => true,
+            'identity_status' => 'approved',
             'identity_type' => IdentityType::PERSONAL,
         ])->saveQuietly();
 
         $enterprise = $this->makeUser();
         $enterprise->forceFill([
-            'identity_verified' => true,
+            'identity_status' => 'approved',
             'identity_type' => IdentityType::ENTERPRISE,
         ])->saveQuietly();
 
@@ -468,7 +468,7 @@ class SegmentServiceTest extends TestCase
 
         $personal = $this->makeUser();
         $personal->forceFill([
-            'identity_verified' => true,
+            'identity_status' => 'approved',
             'identity_type' => IdentityType::PERSONAL,
         ])->saveQuietly();
 

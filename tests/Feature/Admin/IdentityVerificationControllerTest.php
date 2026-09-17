@@ -88,8 +88,10 @@ class IdentityVerificationControllerTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'identity_type' => 'personal',
-            'identity_verified' => 1,
+            'identity_status' => 'approved',
         ]);
+        $user->refresh();
+        $this->assertTrue($user->identity_verified);
     }
 
     #[Test]

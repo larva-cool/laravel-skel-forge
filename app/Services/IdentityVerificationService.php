@@ -53,7 +53,12 @@ class IdentityVerificationService
             $data['status'] = ReviewStatus::PENDING;
             $data['submitted_at'] = Carbon::now();
 
-            return IdentityVerification::create($data);
+            $verification = IdentityVerification::create($data);
+
+            // 同步用户实名认证状态为待审核
+            $user->setIdentityStatus(ReviewStatus::PENDING);
+
+            return $verification;
         });
     }
 
@@ -72,10 +77,10 @@ class IdentityVerificationService
                 'reject_remark' => null,
             ])->save();
 
-            // 同步用户标记位
+            // 同步用户认证类型与状态
             $verification->verifiable->forceFill([
                 'identity_type' => $verification->type,
-                'identity_verified' => true,
+                'identity_status' => ReviewStatus::APPROVED,
             ])->saveQuietly();
 
             IdentityVerified::dispatch($verification->verifiable, $verification);
@@ -99,6 +104,9 @@ class IdentityVerificationService
                 'reject_reason' => $reason,
                 'reject_remark' => $remark,
             ])->save();
+
+            // 同步用户实名认证状态为已驳回
+            $verification->verifiable->setIdentityStatus(ReviewStatus::REJECTED);
 
             IdentityRejected::dispatch($verification->verifiable, $verification, $reason, $remark);
 

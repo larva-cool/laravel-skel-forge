@@ -152,12 +152,15 @@ class IdentityControllerTest extends TestCase
     #[TestDox('当前状态接口返回 is_verified 与最新状态')]
     public function status_returns_overview(): void
     {
-        IdentityVerificationFactory::new()->create([
+        $verification = IdentityVerificationFactory::new()->create([
             'verifiable_type' => $this->user::class,
             'verifiable_id' => $this->user->id,
             'status' => ReviewStatus::REJECTED,
             'reject_reason' => 'mismatch',
         ]);
+
+        // 模拟驳回流程同步用户状态
+        $this->user->setIdentityStatus(ReviewStatus::REJECTED);
 
         $this->actingAs($this->user, 'sanctum')
             ->getJson('/api/v1/user/identity/status')
@@ -165,6 +168,18 @@ class IdentityControllerTest extends TestCase
             ->assertJsonPath('is_verified', false)
             ->assertJsonPath('latest_status', 'rejected')
             ->assertJsonPath('latest_reject_reason', 'mismatch');
+    }
+
+    #[Test]
+    #[TestDox('无认证记录时状态接口返回未提交')]
+    public function status_returns_unsubmitted_when_no_record(): void
+    {
+        $this->actingAs($this->user, 'sanctum')
+            ->getJson('/api/v1/user/identity/status')
+            ->assertOk()
+            ->assertJsonPath('is_verified', false)
+            ->assertJsonPath('latest_status', 'unsubmitted')
+            ->assertJsonPath('latest_status_label', '未提交');
     }
 
     #[Test]
