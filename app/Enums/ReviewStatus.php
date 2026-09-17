@@ -18,7 +18,6 @@ enum ReviewStatus: string implements \JsonSerializable
 {
     use HasLabel;
 
-    case UNSUBMITTED = 'unsubmitted'; // 未提交
     case PENDING = 'pending'; // 待审核
     case REVIEW = 'review'; // 需复审
     case APPROVED = 'approved'; // 已通过
@@ -30,7 +29,6 @@ enum ReviewStatus: string implements \JsonSerializable
     public function label(): string
     {
         return match ($this) {
-            self::UNSUBMITTED => '未提交',
             self::PENDING => '待审核',
             self::REVIEW => '需复审',
             self::APPROVED => '已通过',
@@ -44,20 +42,11 @@ enum ReviewStatus: string implements \JsonSerializable
     public function labelType(): string
     {
         return match ($this) {
-            self::UNSUBMITTED => 'info',
             self::PENDING => 'warning',
             self::REVIEW => 'primary',
             self::APPROVED => 'success',
             self::REJECTED => 'danger',
         };
-    }
-
-    /**
-     * 是否为未提交状态
-     */
-    public function isUnsubmitted(): bool
-    {
-        return $this === self::UNSUBMITTED;
     }
 
     /**
