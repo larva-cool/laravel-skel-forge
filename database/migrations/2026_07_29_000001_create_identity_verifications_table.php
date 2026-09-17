@@ -31,17 +31,17 @@ return new class extends Migration
             // 个人字段
             $table->string('real_name', 64)->nullable()->comment('真实姓名');
             $table->string('id_card_no', 32)->nullable()->comment('身份证号（密文存储）');
-            $table->unsignedBigInteger('id_card_front_id')->nullable()->comment('身份证人像面附件ID');
-            $table->unsignedBigInteger('id_card_back_id')->nullable()->comment('身份证国徽面附件ID');
-            $table->unsignedBigInteger('handheld_id')->nullable()->comment('手持身份证附件ID');
+            $table->string('id_card_front')->nullable()->comment('身份证人像面图片路径');
+            $table->string('id_card_back')->nullable()->comment('身份证国徽面图片路径');
+            $table->string('handheld')->nullable()->comment('手持身份证图片路径');
 
             // 企业字段
             $table->string('company_name', 128)->nullable()->comment('企业名称');
             $table->string('credit_code', 32)->nullable()->comment('统一社会信用代码');
             $table->string('legal_person_name', 64)->nullable()->comment('法人姓名');
             $table->string('legal_person_id_card_no', 32)->nullable()->comment('法人身份证号（密文存储）');
-            $table->unsignedBigInteger('business_license_id')->nullable()->comment('营业执照附件ID');
-            $table->unsignedBigInteger('opening_permit_id')->nullable()->comment('开户许可证附件ID');
+            $table->string('business_license')->nullable()->comment('营业执照图片路径');
+            $table->string('opening_permit')->nullable()->comment('开户许可证图片路径');
             $table->string('bank_account', 64)->nullable()->comment('对公账户');
             $table->string('bank_name', 64)->nullable()->comment('开户行');
 

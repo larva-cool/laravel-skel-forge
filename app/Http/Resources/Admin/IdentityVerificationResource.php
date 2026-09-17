@@ -7,9 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
-use App\Models\System\Attachment;
 use App\Models\User\IdentityVerification;
-use App\Services\AttachmentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -46,15 +44,15 @@ class IdentityVerificationResource extends JsonResource
             'status_label_type' => $this->status?->labelType() ?? 'default',
             'real_name' => $this->real_name,
             'id_card_no' => $this->id_card_no,
-            'id_card_front' => $this->formatAttachment($this->idCardFront),
-            'id_card_back' => $this->formatAttachment($this->idCardBack),
-            'handheld' => $this->formatAttachment($this->handheld),
+            'id_card_front' => $this->id_card_front,
+            'id_card_back' => $this->id_card_back,
+            'handheld' => $this->handheld,
             'company_name' => $this->company_name,
             'credit_code' => $this->credit_code,
             'legal_person_name' => $this->legal_person_name,
             'legal_person_id_card_no' => $this->legal_person_id_card_no,
-            'business_license' => $this->formatAttachment($this->businessLicense),
-            'opening_permit' => $this->formatAttachment($this->openingPermit),
+            'business_license' => $this->business_license,
+            'opening_permit' => $this->opening_permit,
             'bank_account' => $this->bank_account,
             'bank_name' => $this->bank_name,
             'admin_id' => $this->admin_id,
@@ -111,23 +109,5 @@ class IdentityVerificationResource extends JsonResource
     public static function flushRejectReasonMapCache(): void
     {
         \Illuminate\Support\Facades\Cache::forget(\App\Enums\CacheKey::key(\App\Enums\CacheKey::DICT_TYPE, 'identity_reject_reason').':map');
-    }
-
-    /**
-     * 格式化附件输出
-     */
-    protected function formatAttachment(?Attachment $attachment): ?array
-    {
-        if (! $attachment) {
-            return null;
-        }
-
-        return [
-            'id' => $attachment->id,
-            'url' => app(AttachmentService::class)->url($attachment),
-            'name' => $attachment->name,
-            'size' => $attachment->size,
-            'size_text' => $attachment->size_text,
-        ];
     }
 }

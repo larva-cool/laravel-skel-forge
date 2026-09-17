@@ -10,7 +10,6 @@ namespace Tests\Feature\Api\V1\User;
 use App\Enums\IdentityType;
 use App\Enums\ReviewStatus;
 use App\Http\Controllers\Api\V1\User\IdentityController;
-use App\Models\System\Attachment;
 use App\Models\User;
 use Database\Factories\User\IdentityVerificationFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,23 +37,13 @@ class IdentityControllerTest extends TestCase
         $this->user = User::factory()->create();
     }
 
-    private function attachment(): Attachment
-    {
-        return Attachment::factory()->create([
-            'uploader_id' => $this->user->id,
-            'uploader_type' => $this->user->getMorphClass(),
-        ]);
-    }
-
     private function validPersonalPayload(): array
     {
-        $front = $this->attachment();
-
         return [
             'type' => IdentityType::PERSONAL->value,
             'real_name' => '张三',
             'id_card_no' => '110102199003078538',
-            'id_card_front_id' => $front->id,
+            'id_card_front' => 'identity/id-card-front.jpg',
         ];
     }
 
@@ -112,16 +101,16 @@ class IdentityControllerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('附件不存在时返回 422')]
-    public function attachment_must_exist(): void
+    #[TestDox('图片路径过长时返回 422')]
+    public function image_path_too_long_rejected(): void
     {
         $payload = $this->validPersonalPayload();
-        $payload['id_card_front_id'] = 9999999;
+        $payload['id_card_front'] = str_repeat('a', 256);
 
         $this->actingAs($this->user, 'sanctum')
             ->postJson('/api/v1/user/identity', $payload)
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['id_card_front_id']);
+            ->assertJsonValidationErrors(['id_card_front']);
     }
 
     #[Test]
@@ -135,7 +124,7 @@ class IdentityControllerTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors([
                 'company_name', 'credit_code', 'legal_person_name',
-                'legal_person_id_card_no', 'business_license_id',
+                'legal_person_id_card_no', 'business_license',
             ]);
     }
 
@@ -143,14 +132,13 @@ class IdentityControllerTest extends TestCase
     #[TestDox('企业完整提交可成功')]
     public function enterprise_can_submit(): void
     {
-        $license = $this->attachment();
         $payload = [
             'type' => IdentityType::ENTERPRISE->value,
             'company_name' => '示例科技有限公司',
             'credit_code' => '91110000XXXXXXXX1X',
             'legal_person_name' => '李四',
             'legal_person_id_card_no' => '110102199003078538',
-            'business_license_id' => $license->id,
+            'business_license' => 'identity/business-license.jpg',
         ];
 
         $this->actingAs($this->user, 'sanctum')

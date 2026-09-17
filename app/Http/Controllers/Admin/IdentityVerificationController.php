@@ -44,7 +44,7 @@ class IdentityVerificationController extends Controller
         $filters = $request->filters();
         $perPage = per_page($request);
 
-        $query = IdentityVerification::query()->with(['verifiable', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
+        $query = IdentityVerification::query()->with(['verifiable', 'admin']);
 
         if ($filters['verifiable_id'] ?? null) {
             $query->where('verifiable_id', $filters['verifiable_id']);
@@ -98,7 +98,7 @@ class IdentityVerificationController extends Controller
      */
     public function show(IdentityVerification $verification): IdentityVerificationResource
     {
-        $verification->load(['verifiable', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
+        $verification->load(['verifiable', 'admin']);
 
         return new IdentityVerificationResource($verification);
     }
@@ -112,7 +112,7 @@ class IdentityVerificationController extends Controller
 
         $service->approve($verification, $request->user('admin'));
         $verification->refresh();
-        $verification->load(['verifiable', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
+        $verification->load(['verifiable', 'admin']);
 
         return new IdentityVerificationResource($verification);
     }
@@ -131,7 +131,7 @@ class IdentityVerificationController extends Controller
             $request->input('remark'),
         );
         $verification->refresh();
-        $verification->load(['verifiable', 'admin', 'idCardFront', 'idCardBack', 'handheld', 'businessLicense', 'openingPermit']);
+        $verification->load(['verifiable', 'admin']);
 
         return new IdentityVerificationResource($verification);
     }

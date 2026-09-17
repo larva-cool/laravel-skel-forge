@@ -18,15 +18,15 @@ use Illuminate\Validation\Rule;
  * @property-read string $type 认证类型
  * @property-read string|null $real_name 真实姓名
  * @property-read string|null $id_card_no 身份证号
- * @property-read int|null $id_card_front_id 身份证人像面附件ID
- * @property-read int|null $id_card_back_id 身份证国徽面附件ID
- * @property-read int|null $handheld_id 手持身份证附件ID
+ * @property-read string|null $id_card_front 身份证人像面图片路径
+ * @property-read string|null $id_card_back 身份证国徽面图片路径
+ * @property-read string|null $handheld 手持身份证图片路径
  * @property-read string|null $company_name 企业名称
  * @property-read string|null $credit_code 统一社会信用代码
  * @property-read string|null $legal_person_name 法人姓名
  * @property-read string|null $legal_person_id_card_no 法人身份证号
- * @property-read int|null $business_license_id 营业执照附件ID
- * @property-read int|null $opening_permit_id 开户许可证附件ID
+ * @property-read string|null $business_license 营业执照图片路径
+ * @property-read string|null $opening_permit 开户许可证图片路径
  * @property-read string|null $bank_account 对公账户
  * @property-read string|null $bank_name 开户行
  *
@@ -47,9 +47,9 @@ class SubmitIdentityRequest extends FormRequest
             'id_card_no' => [
                 'required_if:type,personal', 'nullable', 'string', 'max:32', new IdCardRule,
             ],
-            'id_card_front_id' => ['required_if:type,personal', 'nullable', 'integer', 'exists:attachments,id'],
-            'id_card_back_id' => ['nullable', 'integer', 'exists:attachments,id'],
-            'handheld_id' => ['nullable', 'integer', 'exists:attachments,id'],
+            'id_card_front' => ['required_if:type,personal', 'nullable', 'string', 'max:255'],
+            'id_card_back' => ['nullable', 'string', 'max:255'],
+            'handheld' => ['nullable', 'string', 'max:255'],
             'company_name' => ['required_if:type,enterprise', 'nullable', 'string', 'max:128'],
             'credit_code' => [
                 'required_if:type,enterprise', 'nullable', 'string', 'max:32',
@@ -59,8 +59,8 @@ class SubmitIdentityRequest extends FormRequest
             'legal_person_id_card_no' => [
                 'required_if:type,enterprise', 'nullable', 'string', 'max:32', new IdCardRule,
             ],
-            'business_license_id' => ['required_if:type,enterprise', 'nullable', 'integer', 'exists:attachments,id'],
-            'opening_permit_id' => ['nullable', 'integer', 'exists:attachments,id'],
+            'business_license' => ['required_if:type,enterprise', 'nullable', 'string', 'max:255'],
+            'opening_permit' => ['nullable', 'string', 'max:255'],
             'bank_account' => ['nullable', 'string', 'max:64'],
             'bank_name' => ['nullable', 'string', 'max:64'],
         ];
