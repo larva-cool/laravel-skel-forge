@@ -11,7 +11,6 @@ use App\Enums\ReviewStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\User\Identity\SubmitIdentityRequest;
 use App\Http\Resources\Api\V1\IdentityVerificationResource;
-use App\Models\User\IdentityVerification;
 use App\Services\IdentityVerificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,14 +33,13 @@ class IdentityController extends Controller
     /**
      * 当前用户最新一条认证记录
      */
-    public function show(Request $request): IdentityVerificationResource
+    public function show(Request $request): IdentityVerificationResource|JsonResponse
     {
-        $user = $request->user();
-        $verification = IdentityVerification::query()
-            ->where('verifiable_type', $user::class)
-            ->where('verifiable_id', $user->id)
-            ->orderByDesc('id')
-            ->first();
+        $verification = $request->user()->latestIdentity()->first();
+
+        if (! $verification) {
+            return response()->json(null);
+        }
 
         return new IdentityVerificationResource($verification);
     }
@@ -66,11 +64,7 @@ class IdentityController extends Controller
             abort(401);
         }
         $user = $user->fresh();
-        $latest = IdentityVerification::query()
-            ->where('verifiable_type', $user::class)
-            ->where('verifiable_id', $user->id)
-            ->orderByDesc('id')
-            ->first();
+        $latest = $user->latestIdentity()->first();
 
         return response()->json([
             'is_verified' => $user->isVerified(),

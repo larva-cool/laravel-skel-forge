@@ -10,6 +10,7 @@ namespace App\Policies;
 use App\Models\Admin\Admin;
 use App\Models\User;
 use App\Models\User\IdentityVerification;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * 实名认证策略
@@ -31,7 +32,8 @@ class IdentityVerificationPolicy
      */
     public function view(User $user, IdentityVerification $verification): bool
     {
-        return $user->id === $verification->verifiable_id && $verification->verifiable_type === $user::class;
+        return $user->id === $verification->verifiable_id
+            && $verification->verifiable_type === (Relation::getMorphMapAlias($user::class) ?? $user::class);
     }
 
     /**
@@ -39,13 +41,11 @@ class IdentityVerificationPolicy
      */
     public function create(User $user): bool
     {
-        if ($user->identity_verified) {
+        if ($user->isVerified()) {
             return false;
         }
 
-        $pendingExists = IdentityVerification::query()
-            ->where('verifiable_type', $user::class)
-            ->where('verifiable_id', $user->id)
+        $pendingExists = $user->identityVerifications()
             ->whereIn('status', ['pending', 'review'])
             ->exists();
 
@@ -58,7 +58,7 @@ class IdentityVerificationPolicy
     public function update(User $user, IdentityVerification $verification): bool
     {
         return $user->id === $verification->verifiable_id
-            && $verification->verifiable_type === $user::class
+            && $verification->verifiable_type === (Relation::getMorphMapAlias($user::class) ?? $user::class)
             && $verification->status->isRejected();
     }
 

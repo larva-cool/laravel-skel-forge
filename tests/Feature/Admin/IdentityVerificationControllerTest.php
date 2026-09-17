@@ -55,11 +55,11 @@ class IdentityVerificationControllerTest extends TestCase
     {
         $user = User::factory()->create();
         IdentityVerificationFactory::new()->count(3)->create([
-            'verifiable_type' => $user::class,
+            'verifiable_type' => 'user',
             'verifiable_id' => $user->id,
         ]);
         IdentityVerificationFactory::new()->enterprise()->create([
-            'verifiable_type' => $user::class,
+            'verifiable_type' => 'user',
             'verifiable_id' => $user->id,
         ]);
 
@@ -76,7 +76,7 @@ class IdentityVerificationControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $verification = IdentityVerificationFactory::new()->personal()->create([
-            'verifiable_type' => $user::class,
+            'verifiable_type' => 'user',
             'verifiable_id' => $user->id,
         ]);
 
@@ -100,7 +100,7 @@ class IdentityVerificationControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $verification = IdentityVerificationFactory::new()->create([
-            'verifiable_type' => $user::class,
+            'verifiable_type' => 'user',
             'verifiable_id' => $user->id,
             'status' => ReviewStatus::PENDING,
         ]);

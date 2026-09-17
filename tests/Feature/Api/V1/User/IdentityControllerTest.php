@@ -65,7 +65,7 @@ class IdentityControllerTest extends TestCase
         $response->assertCreated();
 
         $this->assertDatabaseHas('identity_verifications', [
-            'verifiable_type' => $this->user::class,
+            'verifiable_type' => 'user',
             'verifiable_id' => $this->user->id,
             'type' => 'personal',
             'status' => 'pending',
@@ -77,7 +77,7 @@ class IdentityControllerTest extends TestCase
     public function cannot_submit_while_pending_exists(): void
     {
         IdentityVerificationFactory::new()->create([
-            'verifiable_type' => $this->user::class,
+            'verifiable_type' => 'user',
             'verifiable_id' => $this->user->id,
             'status' => ReviewStatus::PENDING,
         ]);
@@ -153,7 +153,7 @@ class IdentityControllerTest extends TestCase
     public function status_returns_overview(): void
     {
         $verification = IdentityVerificationFactory::new()->create([
-            'verifiable_type' => $this->user::class,
+            'verifiable_type' => 'user',
             'verifiable_id' => $this->user->id,
             'status' => ReviewStatus::REJECTED,
             'reject_reason' => 'mismatch',
@@ -187,7 +187,7 @@ class IdentityControllerTest extends TestCase
     public function show_returns_latest_verification(): void
     {
         IdentityVerificationFactory::new()->count(2)->create([
-            'verifiable_type' => $this->user::class,
+            'verifiable_type' => 'user',
             'verifiable_id' => $this->user->id,
         ]);
 
