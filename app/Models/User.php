@@ -158,7 +158,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'login_count' => 'integer',
             'last_login_ip' => 'string',
             'vip_expires_at' => 'datetime',
-            'identity_type' => 'string',
+            'identity_type' => IdentityType::class,
             'identity_status' => ReviewStatus::class,
             'last_active_at' => 'datetime',
             'last_login_at' => 'datetime',
@@ -265,6 +265,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class, 'user_id');
+    }
+
+    /**
+     * 实名认证记录（多态一对多）
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany<int, IdentityVerification>
+     */
+    public function identityVerifications(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(IdentityVerification::class, 'verifiable');
+    }
+
+    /**
+     * 最新实名认证记录（多态一对一）
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne<IdentityVerification>
+     */
+    public function latestIdentity()
+    {
+        return $this->morphOne(IdentityVerification::class, 'verifiable')
+            ->orderByDesc('id');
     }
 
     /**
