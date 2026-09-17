@@ -158,6 +158,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'login_count' => 'integer',
             'last_login_ip' => 'string',
             'vip_expires_at' => 'datetime',
+            'identity_type' => 'string',
             'identity_status' => ReviewStatus::class,
             'last_active_at' => 'datetime',
             'last_login_at' => 'datetime',
