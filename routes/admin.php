@@ -91,6 +91,7 @@ Route::group(['prefix' => 'users', 'as' => 'users.'], function (Registrar $regis
     $registrar->get('{user}/coin-trades', [\App\Http\Controllers\Admin\UserController::class, 'coinTrades'])->name('coin-trades');
     $registrar->get('{user}/wallet', [\App\Http\Controllers\Admin\WalletController::class, 'userWallet'])->name('wallet');
     $registrar->get('{user}/wallet-trades', [\App\Http\Controllers\Admin\WalletController::class, 'userTrades'])->name('wallet-trades');
+    $registrar->get('{user}/withdraw-accounts', [\App\Http\Controllers\Admin\WalletController::class, 'userWithdrawAccounts'])->name('withdraw-accounts');
     $registrar->put('{user}/adjust-wallet', [\App\Http\Controllers\Admin\WalletController::class, 'adjust'])->name('adjust-wallet');
     $registrar->get('{user}/point-trades/export', [\App\Http\Controllers\Admin\UserController::class, 'exportPointTrades'])->name('point-trades.export');
     $registrar->get('{user}/coin-trades/export', [\App\Http\Controllers\Admin\UserController::class, 'exportCoinTrades'])->name('coin-trades.export');

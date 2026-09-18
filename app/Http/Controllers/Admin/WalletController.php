@@ -15,10 +15,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Wallet\WalletAdjustRequest;
 use App\Http\Requests\Admin\Wallet\WalletTradeIndexRequest;
 use App\Http\Resources\Admin\WalletTradeResource;
+use App\Http\Resources\Admin\WithdrawAccountResource;
 use App\Models\User;
 use App\Models\Wallet\WalletTrade;
 use App\Support\WalletHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -37,7 +39,7 @@ class WalletController extends Controller
     public function __construct()
     {
         $this->middleware('auth:admin');
-        $this->middleware('permission:wallet.index')->only(['index', 'show', 'stats', 'userWallet', 'userTrades']);
+        $this->middleware('permission:wallet.index')->only(['index', 'show', 'stats', 'userWallet', 'userTrades', 'userWithdrawAccounts']);
         $this->middleware('permission:wallet.adjust')->only(['adjust']);
         $this->middleware('permission:wallet.export')->only(['export']);
     }
@@ -146,6 +148,19 @@ class WalletController extends Controller
             ->paginate(per_page($request));
 
         return WalletTradeResource::collection($items);
+    }
+
+    /**
+     * 指定用户收款账户列表（分页）
+     */
+    public function userWithdrawAccounts(Request $request, User $user): AnonymousResourceCollection
+    {
+        $items = $user->withdrawAccounts()
+            ->orderByDesc('is_default')
+            ->orderByDesc('id')
+            ->paginate(per_page($request));
+
+        return WithdrawAccountResource::collection($items);
     }
 
     /**
