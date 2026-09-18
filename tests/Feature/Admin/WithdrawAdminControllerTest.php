@@ -8,10 +8,10 @@ declare(strict_types=1);
 namespace Tests\Feature\Admin;
 
 use App\Enums\WalletTradeType;
-use App\Enums\WithdrawAccountType;
 use App\Http\Controllers\Admin\WithdrawController;
 use App\Models\Admin\Admin;
 use App\Models\User;
+use App\Models\Wallet\WithdrawAccount;
 use App\Services\WithdrawService;
 use App\Support\WalletHelper;
 use Database\Factories\Wallet\WithdrawFactory;
@@ -57,11 +57,12 @@ class WithdrawAdminControllerTest extends TestCase
         WalletHelper::incr($this->user, max($amount * 2, 1000), $this->user, WalletTradeType::RECHARGE, 'setup');
         $this->user->refresh();
 
+        $account = WithdrawAccount::factory()->forUser($this->user)->create();
+
         return app(WithdrawService::class)->submit(
             $this->user,
             $amount,
-            WithdrawAccountType::WECHAT,
-            ['account' => 'wxtest', 'real_name' => '张三'],
+            $account,
             '127.0.0.1'
         );
     }

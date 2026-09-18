@@ -8,17 +8,16 @@ declare(strict_types=1);
 namespace Tests\Feature\Wallet;
 
 use App\Enums\WalletTradeType;
-use App\Enums\WithdrawAccountType;
 use App\Enums\WithdrawStatus;
 use App\Events\Wallet\WithdrawApproved;
 use App\Events\Wallet\WithdrawFailed;
 use App\Events\Wallet\WithdrawRejected;
 use App\Events\Wallet\WithdrawTransferred;
-use App\Exceptions\InsufficientBalanceException;
 use App\Models\Admin\Admin;
 use App\Models\System\Setting;
 use App\Models\User;
 use App\Models\Wallet\WalletTrade;
+use App\Models\Wallet\WithdrawAccount;
 use App\Services\WithdrawService;
 use App\Support\WalletHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -73,24 +72,23 @@ class WithdrawServiceTest extends TestCase
     }
 
     /**
-     * 标准账户信息
-     *
-     * @return array<string, string>
+     * 为测试用户创建收款账户
      */
-    private function accountInfo(): array
+    private function createAccount(?User $user = null): WithdrawAccount
     {
-        return ['account' => 'wxtest123', 'real_name' => '张三'];
+        return WithdrawAccount::factory()->forUser($user ?? $this->user)->create();
     }
 
     #[Test]
     #[TestDox('提交申请：冻结金额并生成待审核提现单')]
     public function submit_freezes_balance_and_creates_pending_order(): void
     {
+        $account = $this->createAccount();
+
         $order = $this->service->submit(
             $this->user,
             200.0,
-            WithdrawAccountType::WECHAT,
-            $this->accountInfo(),
+            $account,
             '127.0.0.1'
         );
 
@@ -98,7 +96,7 @@ class WithdrawServiceTest extends TestCase
         $this->assertSame('200.00', $order->amount);
         $this->assertSame('0.00', $order->fee);
         $this->assertSame('200.00', $order->actual_amount);
-        $this->assertSame(WithdrawAccountType::WECHAT, $order->account_type);
+        $this->assertSame($account->account_type, $order->account_type);
         $this->assertSame('user', $order->owner_type);
         $this->assertSame($this->user->id, $order->owner_id);
         $this->assertSame('127.0.0.1', $order->client_ip);
@@ -120,8 +118,9 @@ class WithdrawServiceTest extends TestCase
     public function submit_calculates_fee_by_rate(): void
     {
         $this->setSetting('wallet.withdraw_fee_rate', 1); // 1%
+        $account = $this->createAccount();
 
-        $order = $this->service->submit($this->user, 1000, WithdrawAccountType::ALIPAY, $this->accountInfo());
+        $order = $this->service->submit($this->user, 1000, $account);
 
         $this->assertSame('10.00', $order->fee);
         $this->assertSame('990.00', $order->actual_amount);
@@ -131,12 +130,13 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('提交申请：订单号唯一')]
     public function order_no_is_unique(): void
     {
-        $first = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $first = $this->service->submit($this->user, 200, $account);
         // 第二笔需先把第一笔处理完（pending 状态下禁止再次提交）
         WalletHelper::unfreeze($this->user, 200, $first, 'test');
         $first->update(['status' => WithdrawStatus::REJECTED]);
 
-        $second = $this->service->submit($this->user->fresh(), 300, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $second = $this->service->submit($this->user->fresh(), 300, $account);
 
         $this->assertNotSame($first->order_no, $second->order_no);
     }
@@ -147,11 +147,12 @@ class WithdrawServiceTest extends TestCase
     {
         $user = User::factory()->create();
         WalletHelper::incr($user, 50, $user, WalletTradeType::RECHARGE, '测试小额');
+        $account = $this->createAccount($user);
 
         $this->expectException(ValidationException::class);
 
         try {
-            $this->service->submit($user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+            $this->service->submit($user, 200, $account);
         } finally {
             $this->assertDatabaseCount('withdraws', 0);
             $this->assertSame('50.00', $user->fresh()->balance);
@@ -164,9 +165,10 @@ class WithdrawServiceTest extends TestCase
     public function submit_rejects_below_minimum(): void
     {
         $this->setSetting('wallet.min_withdraw_amount', 500);
+        $account = $this->createAccount();
 
         $this->expectException(ValidationException::class);
-        $this->service->submit($this->user, 100, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $this->service->submit($this->user, 100, $account);
     }
 
     #[Test]
@@ -174,9 +176,10 @@ class WithdrawServiceTest extends TestCase
     public function submit_rejects_above_maximum(): void
     {
         $this->setSetting('wallet.max_withdraw_amount', 1000);
+        $account = $this->createAccount();
 
         $this->expectException(ValidationException::class);
-        $this->service->submit($this->user, 2000, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $this->service->submit($this->user, 2000, $account);
     }
 
     #[Test]
@@ -184,19 +187,21 @@ class WithdrawServiceTest extends TestCase
     public function submit_rejects_when_withdraw_disabled(): void
     {
         $this->setSetting('wallet.enable_withdraw', 0);
+        $account = $this->createAccount();
 
         $this->expectException(ValidationException::class);
-        $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $this->service->submit($this->user, 200, $account);
     }
 
     #[Test]
     #[TestDox('提交申请：存在待审核提现时拒绝再次提交')]
     public function submit_rejects_when_pending_exists(): void
     {
-        $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $this->service->submit($this->user, 200, $account);
 
         $this->expectException(ValidationException::class);
-        $this->service->submit($this->user->fresh(), 100, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $this->service->submit($this->user->fresh(), 100, $account);
     }
 
     #[Test]
@@ -204,20 +209,44 @@ class WithdrawServiceTest extends TestCase
     public function submit_rejects_daily_limit_exceeded(): void
     {
         $this->setSetting('wallet.daily_withdraw_limit', 1);
+        $account = $this->createAccount();
         // 提交一笔并处理成终态，使其不阻塞下一笔但占每日次数
-        $first = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $first = $this->service->submit($this->user, 200, $account);
         WalletHelper::settleFrozen($this->user, 200, $first, WalletTradeType::WITHDRAW, 'test');
         $first->update(['status' => WithdrawStatus::SUCCESS]);
 
         $this->expectException(ValidationException::class);
-        $this->service->submit($this->user->fresh(), 100, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $this->service->submit($this->user->fresh(), 100, $account);
+    }
+
+    #[Test]
+    #[TestDox('提交申请：收款账户不属于当前用户抛出异常')]
+    public function submit_rejects_when_account_not_owned(): void
+    {
+        $other = User::factory()->create();
+        $account = $this->createAccount($other);
+
+        $this->expectException(ValidationException::class);
+        $this->service->submit($this->user, 200, $account);
+    }
+
+    #[Test]
+    #[TestDox('提交申请：收款账户被禁用抛出异常')]
+    public function submit_rejects_when_account_disabled(): void
+    {
+        $account = $this->createAccount();
+        $account->update(['status' => \App\Enums\WithdrawAccountStatus::DISABLED]);
+
+        $this->expectException(ValidationException::class);
+        $this->service->submit($this->user, 200, $account);
     }
 
     #[Test]
     #[TestDox('审核通过：状态变更为 APPROVED，资金保持冻结')]
     public function approve_marks_status_and_keeps_frozen(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
 
         Event::fake([WithdrawApproved::class]);
         Notification::fake();
@@ -241,7 +270,8 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('审核通过：非待审核状态不可审核')]
     public function approve_rejects_non_pending(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
         $this->service->approve($order, $this->admin);
 
         $this->expectException(ValidationException::class);
@@ -252,7 +282,8 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('审核驳回：解冻退回余额并写入驳回原因')]
     public function reject_unfreezes_and_sets_reason(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
 
         Event::fake([WithdrawRejected::class]);
         Notification::fake();
@@ -281,7 +312,8 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('审核驳回：驳回原因为必填项')]
     public function reject_requires_reason(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
 
         $this->expectException(ValidationException::class);
         $this->service->reject($order, $this->admin, '   ');
@@ -291,7 +323,8 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('打款成功：结算冻结金额，资金流出')]
     public function transfer_settles_frozen_balance(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
         $this->service->approve($order, $this->admin);
 
         Event::fake([WithdrawTransferred::class]);
@@ -318,7 +351,8 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('打款成功：仅审核通过状态可执行')]
     public function transfer_rejects_non_approved(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
 
         $this->expectException(ValidationException::class);
         $this->service->markTransferred($order, $this->admin);
@@ -328,7 +362,8 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('打款失败：解冻退回余额并写入失败原因')]
     public function fail_unfreezes_and_sets_reason(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
         $this->service->approve($order, $this->admin);
 
         Event::fake([WithdrawFailed::class]);
@@ -350,7 +385,8 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('打款失败：失败原因为必填项')]
     public function fail_requires_reason(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
         $this->service->approve($order, $this->admin);
 
         $this->expectException(ValidationException::class);
@@ -361,7 +397,8 @@ class WithdrawServiceTest extends TestCase
     #[TestDox('幂等：重复审核通过/驳回/打款/失败只触发一次资金变动')]
     public function repeated_status_transitions_are_idempotent(): void
     {
-        $order = $this->service->submit($this->user, 200, WithdrawAccountType::WECHAT, $this->accountInfo());
+        $account = $this->createAccount();
+        $order = $this->service->submit($this->user, 200, $account);
         $this->service->approve($order, $this->admin);
 
         // 重复 approve 应抛异常，不允许重复操作

@@ -7,16 +7,15 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Wallet;
 
-use App\Enums\WithdrawAccountType;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 /**
  * 提交提现申请请求
  *
+ * 仅支持选择已绑定的收款账户，不支持临时填写。
+ *
  * @property-read string $amount 提现金额
- * @property-read string $account_type 账户类型
- * @property-read array $account_info 账户信息（含 account、real_name）
+ * @property-read int $withdraw_account_id 收款账户ID
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
@@ -27,7 +26,7 @@ class CreateWithdrawRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return (bool) $this->user();
     }
 
     /**
@@ -41,10 +40,7 @@ class CreateWithdrawRequest extends FormRequest
     {
         return [
             'amount' => ['required', 'numeric', 'gt:0', 'decimal:0,2', 'max:99999999.99'],
-            'account_type' => ['required', 'string', Rule::in(WithdrawAccountType::values())],
-            'account_info' => ['required', 'array'],
-            'account_info.account' => ['required', 'string', 'max:64'],
-            'account_info.real_name' => ['required', 'string', 'max:32'],
+            'withdraw_account_id' => ['required', 'integer', 'exists:withdraw_accounts,id'],
         ];
     }
 
@@ -57,9 +53,8 @@ class CreateWithdrawRequest extends FormRequest
     {
         return [
             'amount.gt' => '提现金额必须大于 0',
-            'account_type.in' => '所选账户类型暂不支持',
-            'account_info.account.required' => '请填写收款账号',
-            'account_info.real_name.required' => '请填写真实姓名',
+            'withdraw_account_id.required' => '请选择收款账户',
+            'withdraw_account_id.exists' => '所选收款账户不存在',
         ];
     }
 }

@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\WalletTradeType;
-use App\Enums\WithdrawAccountType;
 use App\Http\Controllers\Api\V1\Wallet\WithdrawController;
 use App\Models\User;
+use App\Models\Wallet\WithdrawAccount;
 use App\Services\WithdrawService;
 use App\Support\WalletHelper;
 use Database\Factories\Wallet\WithdrawFactory;
@@ -40,14 +40,21 @@ class WithdrawControllerTest extends TestCase
         $this->user = User::factory()->create();
     }
 
+    /**
+     * 为用户创建收款账户
+     */
+    private function createAccount(User $user): WithdrawAccount
+    {
+        return WithdrawAccount::factory()->forUser($user)->create();
+    }
+
     #[Test]
     #[TestDox('未登录提交提现返回 401')]
     public function guest_cannot_submit(): void
     {
         $this->postJson('/api/v1/user/wallet/withdraws', [
             'amount' => 200,
-            'account_type' => 'wechat',
-            'account_info' => ['account' => 'abc', 'real_name' => '张三'],
+            'withdraw_account_id' => 1,
         ])->assertUnauthorized();
     }
 
@@ -63,12 +70,12 @@ class WithdrawControllerTest extends TestCase
     public function user_can_submit_withdraw(): void
     {
         WalletHelper::incr($this->user, 1000, $this->user, WalletTradeType::RECHARGE, 'setup');
+        $account = $this->createAccount($this->user);
 
         $this->actingAs($this->user, 'sanctum')
             ->postJson('/api/v1/user/wallet/withdraws', [
                 'amount' => 200,
-                'account_type' => 'wechat',
-                'account_info' => ['account' => 'wxtest', 'real_name' => '张三'],
+                'withdraw_account_id' => $account->id,
             ])
             ->assertCreated()
             ->assertJsonPath('amount', '200.00')
@@ -87,52 +94,52 @@ class WithdrawControllerTest extends TestCase
     #[TestDox('提交提现：金额为 0 返回 422')]
     public function submit_with_zero_amount_returns_422(): void
     {
+        $account = $this->createAccount($this->user);
+
         $this->actingAs($this->user, 'sanctum')
             ->postJson('/api/v1/user/wallet/withdraws', [
                 'amount' => 0,
-                'account_type' => 'wechat',
-                'account_info' => ['account' => 'abc', 'real_name' => '张三'],
+                'withdraw_account_id' => $account->id,
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('amount');
     }
 
     #[Test]
-    #[TestDox('提交提现：缺少账户信息返回 422')]
+    #[TestDox('提交提现：缺少收款账户返回 422')]
     public function submit_without_account_returns_422(): void
     {
         $this->actingAs($this->user, 'sanctum')
             ->postJson('/api/v1/user/wallet/withdraws', [
                 'amount' => 200,
-                'account_type' => 'wechat',
             ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['account_info', 'account_info.account', 'account_info.real_name']);
+            ->assertJsonValidationErrors('withdraw_account_id');
     }
 
     #[Test]
-    #[TestDox('提交提现：不支持的账户类型返回 422')]
-    public function submit_with_invalid_account_type_returns_422(): void
+    #[TestDox('提交提现：收款账户不存在返回 422')]
+    public function submit_with_nonexistent_account_returns_422(): void
     {
         $this->actingAs($this->user, 'sanctum')
             ->postJson('/api/v1/user/wallet/withdraws', [
                 'amount' => 200,
-                'account_type' => 'paypal',
-                'account_info' => ['account' => 'abc', 'real_name' => '张三'],
+                'withdraw_account_id' => 99999999,
             ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors('account_type');
+            ->assertJsonValidationErrors('withdraw_account_id');
     }
 
     #[Test]
     #[TestDox('提交提现：余额不足返回 422（由 ValidationException 转换）')]
     public function submit_with_insufficient_balance_returns_422(): void
     {
+        $account = $this->createAccount($this->user);
+
         $this->actingAs($this->user, 'sanctum')
             ->postJson('/api/v1/user/wallet/withdraws', [
                 'amount' => 200,
-                'account_type' => 'wechat',
-                'account_info' => ['account' => 'abc', 'real_name' => '张三'],
+                'withdraw_account_id' => $account->id,
             ])
             ->assertStatus(422);
 
@@ -146,11 +153,12 @@ class WithdrawControllerTest extends TestCase
         $other = User::factory()->create();
         WalletHelper::incr($other, 1000, $other, WalletTradeType::RECHARGE, 'setup');
         WithdrawFactory::new()->forUser($this->user)->create(['amount' => 300]);
+
+        $otherAccount = $this->createAccount($other);
         app(WithdrawService::class)->submit(
             $other,
             200,
-            WithdrawAccountType::WECHAT,
-            ['account' => 'other', 'real_name' => '李四'],
+            $otherAccount,
         );
 
         $response = $this->actingAs($this->user, 'sanctum')
@@ -174,11 +182,11 @@ class WithdrawControllerTest extends TestCase
     public function user_can_view_own_withdraw(): void
     {
         WalletHelper::incr($this->user, 1000, $this->user, WalletTradeType::RECHARGE, 'setup');
+        $account = $this->createAccount($this->user);
         $order = app(WithdrawService::class)->submit(
             $this->user,
             200,
-            WithdrawAccountType::WECHAT,
-            ['account' => 'wxtest', 'real_name' => '张三'],
+            $account,
         );
 
         $this->actingAs($this->user, 'sanctum')
@@ -205,18 +213,17 @@ class WithdrawControllerTest extends TestCase
     public function submit_rejects_when_pending_exists(): void
     {
         WalletHelper::incr($this->user, 5000, $this->user, WalletTradeType::RECHARGE, 'setup');
+        $account = $this->createAccount($this->user);
         $this->actingAs($this->user, 'sanctum');
 
         $this->postJson('/api/v1/user/wallet/withdraws', [
             'amount' => 200,
-            'account_type' => 'wechat',
-            'account_info' => ['account' => 'a1', 'real_name' => '张三'],
+            'withdraw_account_id' => $account->id,
         ])->assertCreated();
 
         $this->postJson('/api/v1/user/wallet/withdraws', [
             'amount' => 300,
-            'account_type' => 'wechat',
-            'account_info' => ['account' => 'a1', 'real_name' => '张三'],
+            'withdraw_account_id' => $account->id,
         ])->assertStatus(422);
     }
 }

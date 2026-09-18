@@ -7,16 +7,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Wallet;
 
-use App\Enums\WithdrawAccountType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Wallet\CreateWithdrawRequest;
 use App\Http\Resources\Api\V1\WithdrawResource;
 use App\Models\User;
 use App\Models\Wallet\Withdraw;
+use App\Models\Wallet\WithdrawAccount;
 use App\Services\WithdrawService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\ValidationException;
 
 /**
  * 前台提现控制器
@@ -64,11 +65,16 @@ class WithdrawController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
+        $account = WithdrawAccount::find($data['withdraw_account_id']);
+
+        if (! $account) {
+            throw ValidationException::withMessages(['withdraw_account_id' => '收款账户不存在']);
+        }
+
         $withdraw = $this->withdrawService->submit(
             $user,
             (float) $data['amount'],
-            WithdrawAccountType::from($data['account_type']),
-            $data['account_info'],
+            $account,
             $request->ip(),
         );
 

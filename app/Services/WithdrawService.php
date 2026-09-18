@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\WalletTradeType;
-use App\Enums\WithdrawAccountType;
 use App\Enums\WithdrawStatus;
 use App\Events\Wallet\WithdrawApproved;
 use App\Events\Wallet\WithdrawFailed;
@@ -19,6 +18,7 @@ use App\Exceptions\InsufficientFrozenBalanceException;
 use App\Models\Admin\Admin;
 use App\Models\User;
 use App\Models\Wallet\Withdraw;
+use App\Models\Wallet\WithdrawAccount;
 use App\Notifications\Wallet\WithdrawApprovedNotification;
 use App\Notifications\Wallet\WithdrawFailedNotification;
 use App\Notifications\Wallet\WithdrawRejectedNotification;
@@ -47,23 +47,23 @@ class WithdrawService
      *
      * @param  User  $user  申请用户
      * @param  float  $amount  提现金额
-     * @param  WithdrawAccountType  $accountType  收款账户类型
-     * @param  array<string, mixed>  $accountInfo  收款账户信息
+     * @param  WithdrawAccount  $account  收款账户
      * @param  string|null  $clientIp  下单IP
      *
      * @throws ValidationException 校验不通过时抛出
      */
-    public function submit(User $user, float $amount, WithdrawAccountType $accountType, array $accountInfo, ?string $clientIp = null): Withdraw
+    public function submit(User $user, float $amount, WithdrawAccount $account, ?string $clientIp = null): Withdraw
     {
         $this->assertWithdrawEnabled();
         $this->assertAmountInRange($amount);
         $this->assertDailyLimit($user);
         $this->assertHasPendingWithdraw($user);
+        $this->assertAccountAvailable($user, $account);
 
         $fee = $this->calculateFee($amount);
 
         try {
-            return DB::transaction(function () use ($user, $amount, $fee, $accountType, $accountInfo, $clientIp) {
+            return DB::transaction(function () use ($user, $amount, $fee, $account, $clientIp) {
                 // 先创建提现单，再冻结余额（余额不足会抛异常回滚，连带撤销提现单）
                 // 这样冻结流水的 source_type 能正确关联到 withdraw 记录，便于对账
                 $withdraw = Withdraw::create([
@@ -73,13 +73,16 @@ class WithdrawService
                     'amount' => $amount,
                     'fee' => $fee,
                     'actual_amount' => round($amount - $fee, 2),
-                    'account_type' => $accountType,
-                    'account_info' => $accountInfo,
+                    'account_type' => $account->account_type,
+                    'account_info' => $account->toAccountInfoArray(),
                     'status' => WithdrawStatus::PENDING,
                     'client_ip' => $clientIp,
                 ]);
 
                 WalletHelper::freeze($user, $amount, $withdraw, '提现冻结');
+
+                // 标记账户最后使用时间
+                $account->markUsed();
 
                 return $withdraw->fresh();
             });
@@ -355,6 +358,22 @@ class WithdrawService
 
         if ($exists) {
             throw ValidationException::withMessages(['amount' => '您有一笔提现申请正在处理中，请完成后再提交']);
+        }
+    }
+
+    /**
+     * 校验收款账户是否属于该用户且可用
+     *
+     * @throws ValidationException
+     */
+    protected function assertAccountAvailable(User $user, WithdrawAccount $account): void
+    {
+        if ($account->owner_type !== $user->getMorphClass() || $account->owner_id !== $user->id) {
+            throw ValidationException::withMessages(['withdraw_account_id' => '收款账户不属于当前用户']);
+        }
+
+        if (! $account->isAvailable()) {
+            throw ValidationException::withMessages(['withdraw_account_id' => '收款账户已被禁用']);
         }
     }
 }

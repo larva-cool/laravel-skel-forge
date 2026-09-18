@@ -159,6 +159,13 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
             $registrar->post('withdraws', [\App\Http\Controllers\Api\V1\Wallet\WithdrawController::class, 'store'])->name('withdraws.store'); // 提交提现申请
             $registrar->get('withdraws', [\App\Http\Controllers\Api\V1\Wallet\WithdrawController::class, 'index'])->name('withdraws.index'); // 我的提现列表
             $registrar->get('withdraws/{withdraw}', [\App\Http\Controllers\Api\V1\Wallet\WithdrawController::class, 'show'])->name('withdraws.show'); // 提现详情
+
+            // 收款账户
+            $registrar->get('withdraw-accounts', [\App\Http\Controllers\Api\V1\Wallet\WithdrawAccountController::class, 'index'])->name('withdraw-accounts.index'); // 收款账户列表
+            $registrar->post('withdraw-accounts', [\App\Http\Controllers\Api\V1\Wallet\WithdrawAccountController::class, 'store'])->name('withdraw-accounts.store'); // 添加收款账户
+            $registrar->put('withdraw-accounts/{withdrawAccount}', [\App\Http\Controllers\Api\V1\Wallet\WithdrawAccountController::class, 'update'])->name('withdraw-accounts.update'); // 修改收款账户
+            $registrar->delete('withdraw-accounts/{withdrawAccount}', [\App\Http\Controllers\Api\V1\Wallet\WithdrawAccountController::class, 'destroy'])->name('withdraw-accounts.destroy'); // 删除收款账户
+            $registrar->patch('withdraw-accounts/{withdrawAccount}/default', [\App\Http\Controllers\Api\V1\Wallet\WithdrawAccountController::class, 'setDefault'])->name('withdraw-accounts.default'); // 设为默认
         });
 
         /**
