@@ -22,6 +22,8 @@ use Illuminate\Validation\Rule;
  * @property-read string|null $city_code 区号
  * @property-read int $sort 排序权重
  *
+ * 注意：pinyin / pinyin_initial 由模型根据 name 自动生成，无需在请求中传入。
+ *
  * @author Tongle Xu <xutongle@msn.com>
  */
 class AreaSaveRequest extends FormRequest
@@ -40,6 +42,8 @@ class AreaSaveRequest extends FormRequest
             'lat' => ['nullable', 'numeric'],
             'lng' => ['nullable', 'numeric'],
             'city_code' => ['nullable', 'string', 'max:20'],
+            'pinyin' => ['prohibited'],
+            'pinyin_initial' => ['prohibited'],
             'sort' => ['sometimes', 'integer', 'min:0'],
         ];
     }

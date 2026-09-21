@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Overtrue\Pinyin\Pinyin;
 
 /**
  * 地区表
@@ -29,6 +30,8 @@ use Illuminate\Support\Facades\Cache;
  * @property float|null $lat 纬度
  * @property float|null $lng 经度
  * @property int|null $area_code 区域编码
+ * @property string|null $pinyin 完整拼音（无声调）
+ * @property string|null $pinyin_initial 拼音首字母缩写（大写）
  * @property int $sort 排序权重，越小越靠前
  * @property Carbon $created_at 添加时间
  * @property Carbon $updated_at 更新时间
@@ -69,6 +72,8 @@ class Area extends Model
             'lat' => 'float',
             'lng' => 'float',
             'city_code' => 'string',
+            'pinyin' => 'string',
+            'pinyin_initial' => 'string',
             'sort' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
@@ -91,8 +96,29 @@ class Area extends Model
             }
         };
 
+        static::saving(function (Area $model) {
+            $model->syncPinyinFromName();
+        });
+
         static::saved($clearCache);
         static::deleted($clearCache);
+    }
+
+    /**
+     * 根据 name 同步 pinyin 与 pinyin_initial。
+     *
+     * 仅当 name 字段发生变更或两字段为空时才重算，避免无谓 IO。
+     */
+    protected function syncPinyinFromName(): void
+    {
+        if (! $this->isDirty('name') && $this->pinyin !== null && $this->pinyin_initial !== null) {
+            return;
+        }
+
+        $name = (string) $this->name;
+
+        $this->pinyin = $name === '' ? null : Pinyin::permalink($name, '');
+        $this->pinyin_initial = $name === '' ? null : strtoupper(Pinyin::abbr($name, preserveEnglishWords: true)->join(''));
     }
 
     /**

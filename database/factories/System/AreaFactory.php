@@ -83,4 +83,12 @@ class AreaFactory extends Factory
             ];
         });
     }
+
+    /**
+     * 指定中文名称
+     */
+    public function withChineseName(string $name): static
+    {
+        return $this->state(fn (): array => ['name' => $name]);
+    }
 }

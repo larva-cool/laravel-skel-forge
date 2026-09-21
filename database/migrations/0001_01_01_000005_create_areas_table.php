@@ -24,12 +24,16 @@ return new class extends Migration
             $table->float('lat', 10, 6)->nullable()->comment('纬度');
             $table->float('lng', 10, 6)->nullable()->comment('经度');
             $table->string('city_code')->nullable()->comment('城市编码');
+            $table->string('pinyin', 100)->nullable()->comment('完整拼音（无声调）');
+            $table->string('pinyin_initial', 20)->nullable()->comment('拼音首字母缩写（大写）');
             $table->unsignedInteger('sort')->default(1000)->comment('排序权重，越小越靠前');
             $table->timestamps();
             $table->softDeletes()->comment('删除时间');
             $table->index(['parent_id', 'deleted_at', 'sort', 'id'], 'idx_parent_id');
             $table->index(['name', 'deleted_at'], 'idx_name');
             $table->index(['area_code', 'deleted_at'], 'idx_area_code');
+            $table->index(['pinyin', 'deleted_at'], 'idx_pinyin');
+            $table->index(['pinyin_initial', 'deleted_at'], 'idx_pinyin_initial');
 
             $table->comment('地区表');
         });

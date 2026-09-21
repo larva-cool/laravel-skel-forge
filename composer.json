@@ -25,6 +25,7 @@
         "larva/volcengine-tls-sdk-php": "^1.1",
         "maatwebsite/excel": "^4.0",
         "overtrue/easy-sms": "^3.3",
+        "overtrue/pinyin": "^6.0",
         "predis/predis": "^3.5",
         "spatie/laravel-permission": "^8.3",
         "w7corp/easywechat": "^6.20",

@@ -207,4 +207,64 @@ class AreaTest extends TestCase
         $this->assertIsFloat($area->lng);
         $this->assertIsInt($area->sort);
     }
+
+    /**
+     * 测试根据中文 name 自动生成 pinyin 与 pinyin_initial
+     */
+    #[Test]
+    #[TestDox('根据中文 name 自动生成 pinyin 与 pinyin_initial')]
+    public function auto_generates_pinyin_from_chinese_name(): void
+    {
+        $area = Area::create(['name' => '北京市']);
+
+        $this->assertSame('beijingshi', $area->pinyin);
+        $this->assertSame('BJS', $area->pinyin_initial);
+    }
+
+    /**
+     * 测试拼音对包含非汉字字符的处理
+     */
+    #[Test]
+    #[TestDox('包含字母数字的 name 也能生成拼音字段')]
+    public function auto_generates_pinyin_with_alphanumeric_mixed_name(): void
+    {
+        $area = Area::create(['name' => '朝阳区CBD']);
+
+        $this->assertNotEmpty($area->pinyin);
+        $this->assertNotEmpty($area->pinyin_initial);
+        $this->assertSame(strtoupper($area->pinyin_initial), $area->pinyin_initial);
+    }
+
+    /**
+     * 测试更新 name 时 pinyin 会同步刷新
+     */
+    #[Test]
+    #[TestDox('更新 name 时 pinyin 与 pinyin_initial 同步刷新')]
+    public function updating_name_refreshes_pinyin_fields(): void
+    {
+        $area = Area::create(['name' => '上海市']);
+        $this->assertSame('shanghaishi', $area->pinyin);
+
+        $area->update(['name' => '广州市']);
+
+        $this->assertSame('guangzhoushi', $area->pinyin);
+        $this->assertSame('GZS', $area->pinyin_initial);
+    }
+
+    /**
+     * 测试未变更 name 时 pinyin 字段不会被覆盖
+     */
+    #[Test]
+    #[TestDox('未变更 name 时 pinyin 字段不会被覆盖')]
+    public function pinyin_fields_preserved_when_name_unchanged(): void
+    {
+        $area = Area::create(['name' => '深圳市']);
+
+        // 单独修改 sort，pinyin/pinyin_initial 应保持原值
+        $area->update(['sort' => 9]);
+
+        $this->assertSame('shenzhenshi', $area->pinyin);
+        $this->assertSame('SZS', $area->pinyin_initial);
+        $this->assertSame(9, $area->sort);
+    }
 }

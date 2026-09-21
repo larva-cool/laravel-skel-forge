@@ -35,6 +35,8 @@ class AreaResource extends JsonResource
             'lat' => $this->lat,
             'lng' => $this->lng,
             'city_code' => $this->city_code,
+            'pinyin' => $this->pinyin,
+            'pinyin_initial' => $this->pinyin_initial,
             'sort' => $this->sort,
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),

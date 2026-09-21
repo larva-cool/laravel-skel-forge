@@ -86,9 +86,64 @@ class AreaControllerTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('name', '上海市')
-            ->assertJsonPath('sort', 1);
+            ->assertJsonPath('sort', 1)
+            ->assertJsonPath('pinyin', 'shanghaishi')
+            ->assertJsonPath('pinyin_initial', 'SHS');
 
         $this->assertDatabaseHas('areas', ['name' => '上海市']);
+    }
+
+    /**
+     * 显式传入 pinyin / pinyin_initial 应当被拒绝
+     */
+    #[Test]
+    #[TestDox('创建地区时不允许显式传入 pinyin / pinyin_initial 返回 422')]
+    public function create_area_rejects_explicit_pinyin_fields(): void
+    {
+        $response = $this->actingAsAdmin()->postJson('/admin/areas', [
+            'name' => '南京市',
+            'pinyin' => 'fake',
+            'pinyin_initial' => 'FAKE',
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['pinyin', 'pinyin_initial']);
+    }
+
+    /**
+     * 更新地区时若显式传入 pinyin / pinyin_initial 同样被拒绝
+     */
+    #[Test]
+    #[TestDox('更新地区时不允许显式传入 pinyin / pinyin_initial 返回 422')]
+    public function update_area_rejects_explicit_pinyin_fields(): void
+    {
+        $area = Area::create(['name' => '原名称']);
+
+        $response = $this->actingAsAdmin()->putJson("/admin/areas/{$area->id}", [
+            'name' => '新名称',
+            'pinyin' => 'fake',
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['pinyin']);
+    }
+
+    /**
+     * 更新 name 后接口返回的拼音应保持同步
+     */
+    #[Test]
+    #[TestDox('更新 name 后响应中的拼音字段已刷新')]
+    public function update_area_refreshes_pinyin_in_response(): void
+    {
+        $area = Area::create(['name' => '杭州市']);
+
+        $response = $this->actingAsAdmin()->putJson("/admin/areas/{$area->id}", [
+            'name' => '苏州市',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('pinyin', 'suzhoushi')
+            ->assertJsonPath('pinyin_initial', 'SZS');
     }
 
     #[Test]
