@@ -175,4 +175,14 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->get('identity/status', [\App\Http\Controllers\Api\V1\User\IdentityController::class, 'status'])->name('identity.status'); // 简要状态
         $registrar->post('identity', [\App\Http\Controllers\Api\V1\User\IdentityController::class, 'submit'])->name('identity.submit'); // 提交/重新提交
     });
+
+    /**
+     * 上传管理
+     */
+    Route::group(['prefix' => 'uploader', 'as' => 'uploader.'], function (Registrar $registrar) {
+        $registrar->post('file', [\App\Http\Controllers\Api\V1\UploaderController::class, 'file'])->name('file');
+        $registrar->post('image', [\App\Http\Controllers\Api\V1\UploaderController::class, 'image'])->name('image');
+        $registrar->post('video', [\App\Http\Controllers\Api\V1\UploaderController::class, 'video'])->name('video');
+        $registrar->post('token', [\App\Http\Controllers\Api\V1\UploaderController::class, 'uploadToken'])->name('token');
+    });
 });
