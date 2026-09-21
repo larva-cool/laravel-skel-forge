@@ -123,7 +123,21 @@
 - 编辑后需在本地执行 `php artisan migrate:fresh`（或回滚后重新迁移）以验证迁移文件可正确执行
 - 涉及菜单的 path、component、permission key 等需要前后端联动的字段时，同步检查 `laravel-skel-admin` 前端项目中的对应实现
 
-### 8. 其他项目专属约定
+### 8. 文件存储规范
+- **禁止在代码中硬编码 `Storage::disk('local')` / `Storage::disk('public')` 等 disk 名**
+- 示例：
+  ```php
+  // ✅ 正确：使用框架默认磁盘
+  $disk = Storage::put($path, $content);
+
+  // ❌ 错误：硬编码 disk 名
+  Storage::disk('local')->put($path, $content);
+  ```
+- 调用方通过 `Storage::` 门面方法（如 `Storage::put`、`Storage::get`、`Storage::url`、`Storage::delete` 等）直接使用，由 `config/filesystems.php` 中 `default` 配置决定落盘位置
+- 跨 disk 集成（例如同时写本地磁盘与对象存储）必须通过新增配置项 + 服务容器绑定完成，禁止在业务代码里硬编码 disk 名
+- 单元测试或功能测试中如需指定磁盘，使用 `Storage::fake('disk-name')`；业务代码本身不要直接传入 disk 名字符串
+
+### 9. 其他项目专属约定
 - 始终完成需求文档中的所有任务
 
 请记住遵循这些项目专属指南，通用 Laravel 开发规范请参考根目录 AGENTS.md。如有任何疑问或需要澄清，请咨询团队负责人或资深开发人员。
