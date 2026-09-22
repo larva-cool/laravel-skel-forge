@@ -158,9 +158,58 @@ class SettingController extends Controller
         }
 
         return response()->json([
-            'groups' => array_values($groups),
+            'groups' => $this->sortGroups(array_values($groups)),
             'disks' => $disks,
         ]);
+    }
+
+    /**
+     * 按预定义顺序对分组重排，未在顺序中的分组追加在末尾并按 key 升序兜底。
+     *
+     * @param  array<int, array<string, mixed>>  $groups
+     * @return array<int, array<string, mixed>>
+     */
+    protected function sortGroups(array $groups): array
+    {
+        $order = $this->groupOrder();
+        $sorted = [];
+        $remainder = [];
+
+        foreach ($groups as $group) {
+            $key = $group['key'];
+            if (array_key_exists($key, $order)) {
+                $sorted[$order[$key]] = $group;
+            } else {
+                $remainder[] = $group;
+            }
+        }
+
+        ksort($sorted);
+        usort($remainder, fn ($a, $b) => strcmp((string) $a['key'], (string) $b['key']));
+
+        return array_merge(array_values($sorted), $remainder);
+    }
+
+    /**
+     * 配置分组展示顺序（数值小的排在前），未列出分组按 key 升序追加在末尾。
+     *
+     * @return array<string, int>
+     */
+    protected function groupOrder(): array
+    {
+        return [
+            'system' => 10,
+            'admin' => 20,
+            'sms_captcha' => 30,
+            'email_captcha' => 40,
+            'user' => 50,
+            'upload' => 60,
+            'wallet' => 70,
+            'password' => 80,
+            'openai' => 90,
+            'broadcast' => 100,
+            'schedule' => 200,
+        ];
     }
 
     /**

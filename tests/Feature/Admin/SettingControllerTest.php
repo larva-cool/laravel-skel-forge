@@ -335,6 +335,58 @@ class SettingControllerTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('分组按预定义顺序返回，schedule 排在最后')]
+    public function admin_get_setting_groups_returns_groups_in_expected_order(): void
+    {
+        // 通过 upsert 写入，覆盖已存在的 schedule.* 配置
+        Setting::query()->upsert([
+            ['name' => '调度日志', 'key' => 'schedule.log_enabled', 'value' => '1', 'cast_type' => 'bool', 'input_type' => 'bool', 'sort' => 1000, 'updated_at' => now()],
+            ['name' => '调度清理天数', 'key' => 'schedule.log_prunable_days', 'value' => '30', 'cast_type' => 'int', 'input_type' => 'int', 'sort' => 1000, 'updated_at' => now()],
+            ['name' => '网站标题', 'key' => 'system.title', 'value' => 'T', 'cast_type' => 'string', 'input_type' => 'string', 'sort' => 1000, 'updated_at' => now()],
+            ['name' => '密码最小长度', 'key' => 'password.strength.min', 'value' => '8', 'cast_type' => 'int', 'input_type' => 'int', 'sort' => 1000, 'updated_at' => now()],
+            ['name' => '每页条数', 'key' => 'user.token_expiration', 'value' => '60', 'cast_type' => 'int', 'input_type' => 'int', 'sort' => 1000, 'updated_at' => now()],
+        ], ['key'], ['name', 'value', 'cast_type', 'input_type', 'sort', 'updated_at']);
+
+        $response = $this->actingAsAdmin()->getJson('/admin/settings/groups');
+
+        $response->assertOk();
+
+        $keys = array_column($response->json('groups'), 'key');
+        $this->assertNotFalse(array_search('schedule', $keys), 'schedule 分组应存在于返回列表');
+        $this->assertSame(array_key_last($keys), array_search('schedule', $keys), 'schedule 必须排在分组列表最后');
+        $this->assertLessThan(array_search('schedule', $keys), array_search('password', $keys), 'password 应在 schedule 之前');
+        $this->assertLessThan(array_search('password', $keys), array_search('user', $keys), 'user 应在 password 之前');
+    }
+
+    #[Test]
+    #[TestDox('未在排序表内的分组以字母序追加在已知分组之后')]
+    public function admin_get_setting_groups_appends_unknown_groups_by_key(): void
+    {
+        Setting::query()->upsert([
+            ['name' => '自定义项', 'key' => 'custom.foo', 'value' => 'v', 'cast_type' => 'string', 'input_type' => 'string', 'sort' => 1000, 'updated_at' => now()],
+            ['name' => 'Alpha 项', 'key' => 'alpha.foo', 'value' => 'v', 'cast_type' => 'string', 'input_type' => 'string', 'sort' => 1000, 'updated_at' => now()],
+            ['name' => '调度项', 'key' => 'schedule.log_enabled', 'value' => '1', 'cast_type' => 'bool', 'input_type' => 'bool', 'sort' => 1000, 'updated_at' => now()],
+        ], ['key'], ['name', 'value', 'cast_type', 'input_type', 'sort', 'updated_at']);
+
+        $response = $this->actingAsAdmin()->getJson('/admin/settings/groups');
+
+        $response->assertOk();
+
+        $keys = array_column($response->json('groups'), 'key');
+        $positionAlpha = array_search('alpha', $keys);
+        $positionCustom = array_search('custom', $keys);
+        $positionSchedule = array_search('schedule', $keys);
+
+        // schedule 在已知分组（按 groupOrder()）内排最后；未知分组 alpha/custom
+        // 按 strcmp 字母序追加在 schedule 之后
+        $this->assertNotFalse($positionAlpha);
+        $this->assertNotFalse($positionCustom);
+        $this->assertLessThan($positionAlpha, $positionSchedule, 'schedule（已知分组）应排在 alpha 之前');
+        $this->assertLessThan($positionCustom, $positionSchedule, 'schedule（已知分组）应排在 custom 之前');
+        $this->assertLessThan($positionCustom, $positionAlpha, '字母序：custom 应在 alpha 之前（strcmp）');
+    }
+
+    #[Test]
     #[TestDox('批量更新配置成功并刷新缓存')]
     public function admin_can_batch_update_settings(): void
     {
