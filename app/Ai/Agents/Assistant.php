@@ -24,8 +24,6 @@ use App\Ai\Tools\Users\ResetUserPassword;
 use App\Ai\Tools\Users\SetUserStatus;
 use App\Ai\Tools\Web\WebFetch;
 use Laravel\Ai\Attributes\MaxSteps;
-use Laravel\Ai\Attributes\Model;
-use Laravel\Ai\Attributes\Provider;
 use Laravel\Ai\Attributes\Temperature;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
@@ -41,8 +39,6 @@ use Stringable;
  * 通过自然语言协助后台管理员完成前台用户查询/管理、系统配置查看/修改、
  * 以及平台数据概览等日常运维工作。
  */
-#[Model('ep-20260809190412-bkx2g')]
-#[Provider('volc')]
 #[MaxSteps(12)]
 #[Temperature(0.3)]
 class Assistant implements Agent, Conversational, HasTools

@@ -19,10 +19,10 @@ return [
 
     'default' => 'volc',
     'default_for_images' => 'volc',
-    'default_for_audio' => 'volc',
-    'default_for_transcription' => 'volc',
+    'default_for_audio' => 'volc',//不支持音频相关功能
+    'default_for_transcription' => 'volc', //不支持转录相关功能
     'default_for_embeddings' => 'volc',
-    'default_for_reranking' => 'volc',
+    'default_for_reranking' => 'volc', //不支持排序相关功能
 
     /*
     |--------------------------------------------------------------------------
@@ -54,20 +54,25 @@ return [
     */
 
     'providers' => [
-        'qwen' => [
-            'driver' => 'openai-compatible',
-            'url' => env('QWEN_URL2', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
-            'key' => env('QWEN_API_KEY', ''),
-        ],
         'volc' => [
-            'driver' => 'openai-compatible',
+            'driver' => 'openai',
             'url' => env('VOLC_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
             'key' => env('VOLC_API_KEY', ''),
-        ],
-        'volc2' => [
-            'driver' => 'openai-compatible',
-            'url' => env('VOLC_URL2', 'https://ark.cn-beijing.volces.com/api/v3'),
-            'key' => env('VOLC_API_KEY2', ''),
+            'store' => false,
+            // 模型配置
+            'models' => [
+                'text' => [
+                    'default' => env('VOLC_TEXT_MODEL', 'doubao-seed-2-0-lite-260428'),
+                ],
+                'image' => [
+                    'default' => env('VOLC_IMAGE_MODEL', 'doubao-seedream-5-0-pro-260628'),
+                ],
+            ],
+            // 向量模型
+            'embeddings' => [
+                'default' => env('VOLC_EMBEDDINGS_MODEL', 'doubao-embedding-vision-250615'),
+                'dimensions' => env('VOLC_EMBEDDINGS_DIMENSIONS', 2048), // 向量维度：支持传入dimensions参数降维1024使用
+            ],
         ],
     ],
 
