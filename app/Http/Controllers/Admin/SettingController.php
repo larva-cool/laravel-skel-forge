@@ -232,6 +232,7 @@ class SettingController extends Controller
             'openai' => 'OpenAI 配置',
             'broadcast' => '点播设置',
             'wallet' => '钱包设置',
+            'password' => '密码设置',
         ];
     }
 }
