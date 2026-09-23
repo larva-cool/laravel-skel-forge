@@ -95,9 +95,6 @@ class CommonController extends Controller
      */
     public function dictItems(string $code): AnonymousResourceCollection
     {
-        // 白名单：仅允许公开访问的字典编码
-        abort_unless(in_array($code, ['feedback_type'], true), 404);
-
         $items = Dict::getActiveItemsByCode($code);
 
         return PublicDictItemResource::collection($items);
