@@ -61,12 +61,6 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     });
 
     /**
-     * 用户反馈（公开提交，登录用户可查看自己的反馈）
-     */
-    Route::post('feedbacks', [\App\Http\Controllers\Api\V1\FeedbackController::class, 'store'])->name('feedbacks.store'); // 提交反馈
-    Route::get('feedbacks/my', [\App\Http\Controllers\Api\V1\FeedbackController::class, 'my'])->name('feedbacks.my'); // 我的反馈列表（需登录）
-
-    /**
      * 评论
      */
     Route::apiResource('comments', \App\Http\Controllers\Api\V1\Content\CommentController::class)->only(['index', 'store', 'destroy']); // 评论列表 / 发布评论 / 删除评论
@@ -115,7 +109,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         /**
          * 通知
          */
-        Route::group(['prefix' => 'notifications', 'as' => 'notifications.'], function (Registrar $registrar) {
+        $registrar->group(['prefix' => 'notifications', 'as' => 'notifications.'], function (Registrar $registrar) {
             $registrar->get('', [\App\Http\Controllers\Api\V1\User\NotificationController::class, 'index'])->name('index'); // 通知列表
             $registrar->get('unread', [\App\Http\Controllers\Api\V1\User\NotificationController::class, 'unread'])->name('unread'); // 未读通知列表
             $registrar->post('mark-all-read', [\App\Http\Controllers\Api\V1\User\NotificationController::class, 'markAllAsRead'])->name('mark_all_as_read'); // 标记所有未读通知为已读
@@ -129,6 +123,11 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->put('address/{address}/default', [\App\Http\Controllers\Api\V1\User\AddressController::class, 'setDefault']); // 设为默认地址
         $registrar->apiResource('address', \App\Http\Controllers\Api\V1\User\AddressController::class); // 收货地址
 
+        /**
+         * 用户反馈（公开提交，登录用户可查看自己的反馈）
+         */
+        $registrar->post('feedbacks', [\App\Http\Controllers\Api\V1\User\FeedbackController::class, 'store'])->name('feedbacks.store'); // 提交反馈
+        $registrar->get('feedbacks/my', [\App\Http\Controllers\Api\V1\User\FeedbackController::class, 'my'])->name('feedbacks.my'); // 我的反馈列表（需登录）
 
         $registrar->get('', [\App\Http\Controllers\Api\V1\UserController::class, 'baseProfile'])->name('profile'); // 获取基本信息
         $registrar->post('profile', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyProfile'])->name('modify_profile'); // 修改个人资料
@@ -146,7 +145,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         /**
          * 钱包
          */
-        Route::group(['prefix' => 'wallet', 'as' => 'wallet.'], function (Registrar $registrar) {
+        $registrar->group(['prefix' => 'wallet', 'as' => 'wallet.'], function (Registrar $registrar) {
             $registrar->get('', [\App\Http\Controllers\Api\V1\Wallet\WalletController::class, 'index'])->name('index'); // 钱包概览
             $registrar->get('trades', [\App\Http\Controllers\Api\V1\Wallet\WalletController::class, 'trades'])->name('trades'); // 钱包流水
 

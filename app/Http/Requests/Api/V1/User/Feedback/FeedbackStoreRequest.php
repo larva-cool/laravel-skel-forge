@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace App\Http\Requests\Api\V1\Feedback;
+namespace App\Http\Requests\Api\V1\User\Feedback;
 
 use App\Models\System\Dict;
 use App\Rules\SensitiveTextRule;

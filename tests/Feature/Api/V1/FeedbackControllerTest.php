@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
-use App\Http\Controllers\Api\V1\FeedbackController;
+use App\Http\Controllers\Api\V1\User\FeedbackController;
 use App\Models\System\Feedback;
 use App\Models\User;
 use Database\Factories\FeedbackFactory;
