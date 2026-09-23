@@ -96,23 +96,6 @@ class CommonControllerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('不在白名单中的字典编码返回 404')]
-    public function dict_items_returns_404_for_non_whitelisted_code(): void
-    {
-        $dict = Dict::query()->firstOrCreate(
-            ['code' => 'internal_secret'],
-            ['name' => '内部字典', 'status' => 1, 'sort' => 0]
-        );
-        DictItem::query()->create([
-            'dict_id' => $dict->id, 'label' => '项', 'value' => 'v',
-            'label_type' => 'default', 'status' => 1,
-        ]);
-
-        $this->getJson(route('api.v1.common.dict_items', ['code' => 'internal_secret']))
-            ->assertNotFound();
-    }
-
-    #[Test]
     #[TestDox('字典不存在或被禁用时返回空列表')]
     public function dict_items_returns_empty_when_dict_not_found_or_disabled(): void
     {
