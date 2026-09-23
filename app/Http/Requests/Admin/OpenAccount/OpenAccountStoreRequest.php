@@ -28,7 +28,6 @@ use Illuminate\Validation\Rules\Password;
  * @property-read string|null $contact_phone 联系电话
  * @property-read string|null $contact_email 联系邮箱
  * @property-read int $rate_limit 每分钟请求上限
- * @property-read string|null $remark 备注
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
@@ -52,7 +51,6 @@ class OpenAccountStoreRequest extends FormRequest
             'contact_phone' => ['nullable', 'string', new PhoneRule],
             'contact_email' => ['nullable', 'email', 'max:100'],
             'rate_limit' => ['nullable', 'integer', 'min:0', 'max:100000'],
-            'remark' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

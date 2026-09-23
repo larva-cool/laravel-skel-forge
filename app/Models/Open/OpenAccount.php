@@ -45,7 +45,6 @@ use Laravel\Sanctum\NewAccessToken;
  * @property float $balance 可用余额（真实货币，元）
  * @property float $frozen_balance 冻结余额（真实货币，元）
  * @property UserStatus $status 账户状态（正常/已冻结）
- * @property string|null $remark 备注
  * @property string|null $password 密码
  * @property string|null $remember_token 记住我令牌
  * @property int|null $login_count 登录次数
@@ -65,7 +64,7 @@ use Laravel\Sanctum\NewAccessToken;
 #[Fillable([
     'username', 'email', 'phone', 'name', 'avatar', 'app_id', 'contact_name', 'contact_phone', 'contact_email',
     'rate_limit', 'available_points', 'available_coins', 'balance', 'frozen_balance',
-    'status', 'remark', 'password', 'remember_token', 'login_count', 'last_login_ip', 'last_active_at', 'last_login_at', 'identity_type', 'identity_verified', 'identity_status',
+    'status', 'password', 'remember_token', 'login_count', 'last_login_ip', 'last_active_at', 'last_login_at', 'identity_type', 'identity_verified', 'identity_status',
 ])]
 #[Hidden(['deleted_at'])]
 class OpenAccount extends Authenticatable
@@ -122,7 +121,6 @@ class OpenAccount extends Authenticatable
             'identity_type' => IdentityType::class,
             'identity_status' => IdentityStatus::class,
             'identity_verified' => 'boolean',
-            'remark' => 'string',
             'password' => 'hashed',
             'remember_token' => 'string',
             'login_count' => 'integer',

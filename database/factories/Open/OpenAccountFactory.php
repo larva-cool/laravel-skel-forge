@@ -51,7 +51,6 @@ class OpenAccountFactory extends Factory
             'balance' => 0,
             'frozen_balance' => 0,
             'status' => UserStatus::ACTIVE,
-            'remark' => null,
             'password' => Hash::make('12345678'),
             'login_count' => 0,
             'identity_verified' => false,

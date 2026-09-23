@@ -44,7 +44,6 @@ return new class extends Migration
             $table->ipAddress('last_login_ip')->nullable()->comment('最后登录IP地址');
             $table->timestamp('last_active_at')->nullable()->comment('最后活动时间');
             $table->timestamp('last_login_at')->nullable()->comment('最后登录时间');
-            $table->string('remark', 500)->nullable()->comment('备注');
             $table->timestamp('last_request_at')->nullable()->comment('最近调用时间');
             $table->ipAddress('last_request_ip')->nullable()->comment('最近调用IP');
             $table->timestamps();

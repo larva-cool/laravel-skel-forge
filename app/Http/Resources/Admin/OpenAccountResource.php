@@ -50,7 +50,6 @@ class OpenAccountResource extends JsonResource
             'identity_status' => $this->identity_status,
             'identity_status_label' => $this->identity_status?->label(),
             'identity_verified' => $this->identity_verified,
-            'remark' => $this->remark,
             'login_count' => $this->login_count,
             'last_login_ip' => $this->last_login_ip,
             'last_login_at' => $this->last_login_at?->toDateTimeString(),
