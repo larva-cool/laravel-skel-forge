@@ -188,7 +188,7 @@ class WalletHelperTest extends TestCase
         WalletHelper::freeze($this->user, 100, $this->user, '冻结');
 
         $this->assertSame(150.0, WalletHelper::getBalance($this->user));
-        $this->assertSame(100.0, WalletHelper::getFrozenBalance($this->user->id));
+        $this->assertSame(100.0, WalletHelper::getFrozenBalance($this->user));
     }
 
     #[Test]
