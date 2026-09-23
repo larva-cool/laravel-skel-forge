@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace Tests\Feature\Api\V1;
+namespace Tests\Feature\Api\V1\User;
 
 use App\Http\Controllers\Api\V1\User\AddressController;
 use App\Models\User;

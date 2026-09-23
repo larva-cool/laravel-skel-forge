@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace Tests\Feature\Api\V1;
+namespace Tests\Feature\Api\V1\Content;
 
 use App\Http\Controllers\Api\V1\Content\CollectionController;
 use App\Models\Content\Collection;

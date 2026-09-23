@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace Tests\Feature\Api\V1;
+namespace Tests\Feature\Api\V1\Wallet;
 
 use App\Enums\WalletTradeType;
 use App\Http\Controllers\Api\V1\Wallet\WithdrawController;
