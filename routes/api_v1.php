@@ -68,12 +68,12 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     /**
      * 收藏
      */
-    Route::apiResource('collections', \App\Http\Controllers\Api\V1\CollectionController::class)->only(['index', 'store', 'destroy']); // 收藏列表 / 添加收藏 / 取消收藏
+    Route::apiResource('collections', \App\Http\Controllers\Api\V1\Content\CollectionController::class)->only(['index', 'store', 'destroy']); // 收藏列表 / 添加收藏 / 取消收藏
 
     /**
      * 点赞
      */
-    Route::apiResource('likes', \App\Http\Controllers\Api\V1\LikeController::class)->only(['index', 'store', 'destroy']); // 点赞列表 / 添加点赞 / 取消点赞
+    Route::apiResource('likes', \App\Http\Controllers\Api\V1\Content\LikeController::class)->only(['index', 'store', 'destroy']); // 点赞列表 / 添加点赞 / 取消点赞
 
     /**
      * 邀请

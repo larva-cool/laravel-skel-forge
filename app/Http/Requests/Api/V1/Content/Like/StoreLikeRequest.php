@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace App\Http\Requests\Api\V1\Like;
+namespace App\Http\Requests\Api\V1\Content\Like;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
