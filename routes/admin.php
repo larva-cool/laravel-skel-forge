@@ -345,3 +345,10 @@ Route::group(['prefix' => 'identity-verifications', 'as' => 'identity-verificati
     $registrar->post('{verification}/approve', [\App\Http\Controllers\Admin\IdentityVerificationController::class, 'approve'])->name('approve');
     $registrar->post('{verification}/reject', [\App\Http\Controllers\Admin\IdentityVerificationController::class, 'reject'])->name('reject');
 });
+
+// 开放平台账户管理
+Route::group(['prefix' => 'open-accounts', 'as' => 'open-accounts.'], function (Registrar $registrar) {
+    $registrar->put('{open_account}/toggle-status', [\App\Http\Controllers\Admin\OpenAccountController::class, 'toggleStatus'])->name('toggle-status');
+    $registrar->post('{open_account}/rotate-token', [\App\Http\Controllers\Admin\OpenAccountController::class, 'rotateToken'])->name('rotate-token');
+});
+Route::apiResource('open-accounts', \App\Http\Controllers\Admin\OpenAccountController::class);

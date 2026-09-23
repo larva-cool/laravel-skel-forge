@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Admin\Admin;
+use App\Models\Open\OpenAccount;
 use App\Models\User;
 
 return [
@@ -47,6 +48,10 @@ return [
             'driver' => 'sanctum',
             'provider' => 'admins',
         ],
+        'open' => [
+            'driver' => 'sanctum',
+            'provider' => 'open_accounts',
+        ],
     ],
 
     /*
@@ -74,6 +79,10 @@ return [
         'admins' => [
             'driver' => 'eloquent',
             'model' => Admin::class,
+        ],
+        'open_accounts' => [
+            'driver' => 'eloquent',
+            'model' => OpenAccount::class,
         ],
 
         // 'users' => [
