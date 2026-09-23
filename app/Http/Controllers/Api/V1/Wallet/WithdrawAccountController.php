@@ -71,14 +71,7 @@ class WithdrawAccountController extends Controller
             throw ValidationException::withMessages(['account_no' => '该收款账号已绑定']);
         }
 
-        $account = $user->withdrawAccounts()->create([
-            'account_type' => $data['account_type'],
-            'real_name' => $data['real_name'],
-            'account_no' => $data['account_no'],
-            'bank_name' => $data['bank_name'] ?? null,
-            'bank_branch' => $data['bank_branch'] ?? null,
-            'is_verified' => true,
-        ]);
+        $account = $user->withdrawAccounts()->create($data);
 
         // 首个账户自动设为默认
         if ($user->withdrawAccounts()->count() === 1) {
@@ -99,19 +92,9 @@ class WithdrawAccountController extends Controller
     {
         $this->authorize('update', $withdrawAccount);
 
-        $data = $request->validated();
+        $withdrawAccount->update($request->updateData());
 
-        $updateData = array_filter([
-            'real_name' => $data['real_name'] ?? null,
-            'account_no' => $data['account_no'] ?? null,
-            'bank_name' => $data['bank_name'] ?? null,
-            'bank_branch' => $data['bank_branch'] ?? null,
-            'status' => $data['status'] ?? null,
-        ], fn ($value) => $value !== null);
-
-        $withdrawAccount->update($updateData);
-
-        if (! empty($data['is_default'])) {
+        if ($request->boolean('is_default')) {
             $withdrawAccount->setDefault();
         }
 

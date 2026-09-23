@@ -26,6 +26,14 @@ use Illuminate\Validation\Rule;
 class AnnouncementSaveRequest extends FormRequest
 {
     /**
+     * 注入创建人管理员 ID，使控制器可直接用 validated() 写入模型。
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['admin_id' => $this->user('admin')?->id]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, mixed>
@@ -39,6 +47,7 @@ class AnnouncementSaveRequest extends FormRequest
             'cover_image' => ['sometimes', 'nullable', 'string', 'max:500'],
             'status' => ['sometimes', 'string', Rule::enum(AnnouncementStatus::class)],
             'sort' => ['sometimes', 'integer', 'min:0'],
+            'admin_id' => ['nullable', 'integer'],
         ];
     }
 }

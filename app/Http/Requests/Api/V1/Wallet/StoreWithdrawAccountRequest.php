@@ -34,6 +34,15 @@ class StoreWithdrawAccountRequest extends FormRequest
     }
 
     /**
+     * 新增账户默认已经过实名认证（实名状态由上层实名流程保证），
+     * 这里把它注入到校验后数据中，使控制器可以直接使用 validated() 写入模型。
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['is_verified' => true]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, mixed>
@@ -47,6 +56,7 @@ class StoreWithdrawAccountRequest extends FormRequest
             'bank_name' => ['required_if:account_type,bank', 'nullable', 'string', 'max:64'],
             'bank_branch' => ['nullable', 'string', 'max:128'],
             'is_default' => ['nullable', 'boolean'],
+            'is_verified' => ['sometimes', 'boolean'],
         ];
     }
 

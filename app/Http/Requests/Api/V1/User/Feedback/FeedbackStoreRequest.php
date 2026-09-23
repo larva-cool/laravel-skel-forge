@@ -22,11 +22,27 @@ use Illuminate\Validation\Rule;
  * @property-read string $type 反馈类型（字典项 value）
  * @property-read string|null $contact_name 联系人
  * @property-read string|null $contact_info 联系方式
+ * @property-read string|null $user_agent 浏览器UA（自动注入）
+ * @property-read string|null $ip_address 提交IP（自动注入）
+ * @property-read int|null $user_id 登录用户ID（自动注入）
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
 class FeedbackStoreRequest extends FormRequest
 {
+    /**
+     * 注入 user_agent / ip_address / user_id 上下文字段，
+     * 让控制器只需调用 validated() 即可获得完整数据。
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'user_agent' => $this->userAgent(),
+            'ip_address' => $this->ip(),
+            'user_id' => $this->user()?->id,
+        ]);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -51,6 +67,9 @@ class FeedbackStoreRequest extends FormRequest
             'type' => ['required', 'string', 'max:50', Rule::in($typeValues)],
             'contact_name' => ['nullable', 'string', 'max:50'],
             'contact_info' => ['nullable', 'string', 'max:100'],
+            'user_agent' => ['nullable', 'string', 'max:500'],
+            'ip_address' => ['nullable', 'ip'],
+            'user_id' => ['nullable', 'integer'],
         ];
     }
 

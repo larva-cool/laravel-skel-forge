@@ -35,16 +35,7 @@ class FeedbackController extends Controller
      */
     public function store(FeedbackStoreRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['user_agent'] = $request->userAgent();
-        $data['ip_address'] = $request->ip();
-
-        // 已登录用户自动绑定 user_id
-        if ($user = $request->user()) {
-            $data['user_id'] = $user->id;
-        }
-
-        $feedback = Feedback::create($data);
+        $feedback = Feedback::create($request->validated());
 
         return response()->json([
             'code' => $feedback->code,

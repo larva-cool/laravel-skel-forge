@@ -49,4 +49,17 @@ class UpdateWithdrawAccountRequest extends FormRequest
             'is_default' => ['nullable', 'boolean'],
         ];
     }
+
+    /**
+     * 获取用于更新的字段集（自动剔除空值，避免覆盖现有数据）。
+     *
+     * @return array<string, mixed>
+     */
+    public function updateData(): array
+    {
+        return array_filter(
+            $this->validated(),
+            fn ($value) => $value !== null,
+        );
+    }
 }

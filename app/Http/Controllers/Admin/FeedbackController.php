@@ -97,14 +97,7 @@ class FeedbackController extends Controller
     public function update(FeedbackUpdateRequest $request, int $id): FeedbackResource
     {
         $feedback = Feedback::query()->findOrFail($id);
-        $data = $request->validated();
-
-        // 自动记录处理人
-        if (isset($data['status']) && $feedback->admin_id === null) {
-            $data['admin_id'] = $request->user('admin')?->id;
-        }
-
-        $feedback->update($data);
+        $feedback->update($request->validated());
         $feedback->load('admin');
 
         return new FeedbackResource($feedback);

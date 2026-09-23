@@ -10,6 +10,7 @@ namespace App\Http\Requests\Admin\Setting;
 use App\Models\System\Setting;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 
 /**
  * 批量保存配置请求
@@ -61,5 +62,35 @@ class StoreConfigRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /**
+     * 转换为待写入数据库的批量项：
+     * - bool: 归一为 '1' / '0'
+     * - array: json_encode 为字符串
+     * - 其他: (string) 统一为字符串
+     *
+     * @return array<int, array{key: string, value: string, updated_at: Carbon}>
+     */
+    public function itemsData(): array
+    {
+        $data = $this->validated();
+        $castTypes = settings()->castTypes();
+        $updatedAt = Carbon::now();
+
+        $items = [];
+        foreach ($data as $key => $val) {
+            $castType = $castTypes[$key] ?? 'string';
+
+            if ($castType === 'bool' || $castType === 'boolean') {
+                $val = $val ? '1' : '0';
+            } elseif (is_array($val)) {
+                $val = json_encode($val, JSON_UNESCAPED_UNICODE);
+            }
+
+            $items[] = ['key' => $key, 'value' => (string) $val, 'updated_at' => $updatedAt];
+        }
+
+        return $items;
     }
 }

@@ -33,6 +33,18 @@ use Illuminate\Validation\Rule;
 class AppVersionSaveRequest extends FormRequest
 {
     /**
+     * 注入 app_release_id（来自路由参数）和 created_by（当前管理员），
+     * 让控制器可以直接 validated() 后写入模型。
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'app_release_id' => (int) $this->route('app'),
+            'created_by' => $this->user('admin')?->id,
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, mixed>
@@ -60,6 +72,8 @@ class AppVersionSaveRequest extends FormRequest
             'file_size' => ['nullable', 'integer', 'min:0'],
             'file_hash' => ['nullable', 'string', 'max:128'],
             'status' => ['sometimes', Rule::in(ReleaseStatus::values())],
+            'app_release_id' => ['required', 'integer'],
+            'created_by' => ['nullable', 'integer'],
         ];
     }
 }

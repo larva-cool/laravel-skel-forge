@@ -146,12 +146,7 @@ class SensitiveWordController extends Controller
 
                     continue;
                 }
-                SensitiveWord::query()->create(array_merge([
-                    'category' => SensitiveCategory::OTHER,
-                    'level' => SensitiveLevel::REVIEW,
-                    'replacement' => '*',
-                    'status' => true,
-                ], $item));
+                SensitiveWord::query()->create($item);
                 $created++;
             }
         });

@@ -55,12 +55,7 @@ class AppVersionController extends Controller
     public function store(AppVersionSaveRequest $request, int $app): JsonResponse
     {
         $appRelease = AppRelease::query()->findOrFail($app);
-
-        $data = $request->validated();
-        $data['app_release_id'] = $appRelease->id;
-        $data['created_by'] = $request->user('admin')?->id;
-
-        $version = AppVersion::create($data);
+        $version = AppVersion::create($request->validated());
 
         return response()->json(new AppVersionResource($version), 201);
     }

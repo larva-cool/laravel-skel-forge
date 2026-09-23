@@ -15,7 +15,6 @@ use App\Models\System\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Carbon;
 
 /**
  * 后台配置管理控制器
@@ -230,21 +229,7 @@ class SettingController extends Controller
      */
     public function batchUpdate(StoreConfigRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $castTypes = settings()->castTypes();
-        $updateTime = Carbon::now();
-
-        $items = [];
-        foreach ($data as $key => $val) {
-            // 将布尔值转为字符串存储
-            $castType = $castTypes[$key] ?? 'string';
-            if ($castType === 'bool' || $castType === 'boolean') {
-                $val = $val ? '1' : '0';
-            } elseif (is_array($val)) {
-                $val = json_encode($val, JSON_UNESCAPED_UNICODE);
-            }
-            $items[] = ['key' => $key, 'value' => (string) $val, 'updated_at' => $updateTime];
-        }
+        $items = $request->itemsData();
 
         // 没有任何可写入的配置项时明确报错，避免静默失败让前端误以为保存成功
         if (empty($items)) {

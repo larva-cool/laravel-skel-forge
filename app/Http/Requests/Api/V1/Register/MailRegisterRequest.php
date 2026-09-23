@@ -27,6 +27,16 @@ use Illuminate\Validation\Rules\Password;
 class MailRegisterRequest extends FormRequest
 {
     /**
+     * 仅在填写了 username 时将其纳入校验数据，保持 optional 语义。
+     */
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('username')) {
+            $this->merge(['username' => null]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      */
     public function rules(): array

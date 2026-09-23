@@ -62,20 +62,17 @@ class RegisterController extends Controller
     {
         $this->authorize('register', User::class);
         $this->authorize('emailRegister', User::class);
-        $data = [
-            'email' => $request->email,
-            'password' => $request->password,
-        ];
-        if ($request->username) {
-            $data['username'] = $request->username;
-        }
+
+        $data = $request->only(['username', 'email', 'password']);
         $user = User::create($data);
+
         // 创建 Token
         $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
         $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Registered($user));
-        if ($request->invite_code) {
-            Event::dispatch(new InviteRegistered($user, $request->invite_code));
+
+        if ($inviteCode = $request->validated('invite_code')) {
+            Event::dispatch(new InviteRegistered($user, $inviteCode));
         }
         Event::dispatch(new Login('sanctum', $user, false));
         Event::dispatch(new LoginSucceeded($user, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));
@@ -94,16 +91,16 @@ class RegisterController extends Controller
     {
         $this->authorize('register', User::class);
         $this->authorize('phoneRegister', User::class);
-        $user = User::create([
-            'phone' => $request->phone,
-            'password' => $request->password,
-        ]);
+
+        $user = User::create($request->only(['phone', 'password']));
+
         // 创建 Token
         $minutes = (int) settings('user.token_expiration', config('sanctum.expiration'));
         $token = $user->createToken('user-token', ['user'], Carbon::now()->addMinutes($minutes));
         Event::dispatch(new Registered($user));
-        if ($request->invite_code) {
-            Event::dispatch(new InviteRegistered($user, $request->invite_code));
+
+        if ($inviteCode = $request->validated('invite_code')) {
+            Event::dispatch(new InviteRegistered($user, $inviteCode));
         }
         Event::dispatch(new Login('sanctum', $user, false));
         Event::dispatch(new LoginSucceeded($user, $request->ip(), $request->server('REMOTE_PORT'), $request->userAgent()));

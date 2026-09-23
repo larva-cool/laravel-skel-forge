@@ -82,8 +82,8 @@ class UserController extends Controller
     public function modifyProfile(ModifyProfileRequest $request): UserResource
     {
         $user = $request->user();
-        $user->update(['name' => $request->name]);
-        $user->profile->update($request->except(['name']));
+        $user->update($request->userData());
+        $user->profile->update($request->profileData());
 
         $user->refresh()->loadMissing('profile');
         UserProfileUpdated::dispatch($user);

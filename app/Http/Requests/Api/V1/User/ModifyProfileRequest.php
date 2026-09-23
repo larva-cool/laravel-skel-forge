@@ -60,6 +60,32 @@ class ModifyProfileRequest extends FormRequest
     }
 
     /**
+     * 用户主表需要写入的字段集。
+     *
+     * @return array<string, mixed>
+     */
+    public function userData(): array
+    {
+        return array_filter(
+            ['name' => $this->validated('name')],
+            fn ($value) => $value !== null && $value !== '',
+        );
+    }
+
+    /**
+     * 用户附属资料需要写入的字段集（剔除主表字段）。
+     *
+     * @return array<string, mixed>
+     */
+    public function profileData(): array
+    {
+        $data = $this->validated();
+        unset($data['name']);
+
+        return array_filter($data, fn ($value) => $value !== null && $value !== '');
+    }
+
+    /**
      * 校验通过后对文本字段做敏感词替换
      */
     protected function passedValidation(): void
