@@ -53,7 +53,7 @@ class LikeControllerTest extends TestCase
     {
         parent::setUp();
 
-        Relation::morphMap(['api_likeable_stub' => \Tests\Feature\Api\V1\ApiLikeableStub::class]);
+        Relation::morphMap(['api_likeable_stub' => \Tests\Feature\Api\V1\Content\ApiLikeableStub::class]);
 
         Schema::create('api_likeable_stubs', function ($table) {
             $table->id();
@@ -75,9 +75,9 @@ class LikeControllerTest extends TestCase
         Sanctum::actingAs($this->user);
     }
 
-    private function createSource(): \Tests\Feature\Api\V1\ApiLikeableStub
+    private function createSource(): \Tests\Feature\Api\V1\Content\ApiLikeableStub
     {
-        return \Tests\Feature\Api\V1\ApiLikeableStub::create([]);
+        return \Tests\Feature\Api\V1\Content\ApiLikeableStub::create([]);
     }
 
     #[Test]

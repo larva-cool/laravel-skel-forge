@@ -33,7 +33,7 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('游客可提交反馈')]
     public function guest_can_submit_feedback(): void
     {
-        $response = $this->postJson('/api/v1/feedbacks', [
+        $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '测试反馈',
             'content' => '这是一条测试反馈内容',
             'type' => 'feature',
@@ -58,7 +58,7 @@ class FeedbackControllerTest extends TestCase
         $user = User::factory()->create();
         Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/v1/feedbacks', [
+        $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '登录用户的反馈',
             'content' => '内容',
             'type' => 'bug',
@@ -77,7 +77,7 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('提交反馈时自动生成 FDB 前缀编号')]
     public function submitted_feedback_has_auto_generated_code(): void
     {
-        $response = $this->postJson('/api/v1/feedbacks', [
+        $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '编号测试',
             'content' => '内容',
             'type' => 'other',
@@ -91,7 +91,7 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('缺少必填字段返回验证错误')]
     public function submit_requires_title_content_type(): void
     {
-        $response = $this->postJson('/api/v1/feedbacks', []);
+        $response = $this->postJson('/api/v1/user/feedbacks', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['title', 'content', 'type']);
@@ -101,7 +101,7 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('无效类型返回验证错误')]
     public function invalid_type_returns_validation_error(): void
     {
-        $response = $this->postJson('/api/v1/feedbacks', [
+        $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '测试',
             'content' => '内容',
             'type' => 'invalid_type_not_exists',
@@ -115,7 +115,7 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('未登录用户无法访问我的反馈列表')]
     public function guest_cannot_access_my_feedbacks(): void
     {
-        $this->getJson('/api/v1/feedbacks/my')->assertUnauthorized();
+        $this->getJson('/api/v1/user/feedbacks/my')->assertUnauthorized();
     }
 
     #[Test]
@@ -128,7 +128,7 @@ class FeedbackControllerTest extends TestCase
         FeedbackFactory::new()->count(2)->create(['user_id' => $user->id]);
         FeedbackFactory::new()->create(['user_id' => User::factory()->create()->id]);
 
-        $response = $this->getJson('/api/v1/feedbacks/my');
+        $response = $this->getJson('/api/v1/user/feedbacks/my');
 
         $response->assertOk()
             ->assertJsonPath('meta.total', 2);
@@ -138,7 +138,7 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('提交反馈时标题超长返回验证错误')]
     public function title_max_length_validation(): void
     {
-        $response = $this->postJson('/api/v1/feedbacks', [
+        $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => str_repeat('a', 201),
             'content' => '内容',
             'type' => 'feature',
@@ -157,7 +157,7 @@ class FeedbackControllerTest extends TestCase
             'https://cdn.example.com/feedback/2.jpg',
         ];
 
-        $response = $this->postJson('/api/v1/feedbacks', [
+        $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '带图片的反馈',
             'content' => '内容',
             'type' => 'bug',
@@ -180,7 +180,7 @@ class FeedbackControllerTest extends TestCase
             range(1, 10)
         );
 
-        $response = $this->postJson('/api/v1/feedbacks', [
+        $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '图片太多',
             'content' => '内容',
             'type' => 'bug',
@@ -195,7 +195,7 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('图片项不是合法URL返回验证错误')]
     public function invalid_image_url_returns_validation_error(): void
     {
-        $response = $this->postJson('/api/v1/feedbacks', [
+        $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '图片URL无效',
             'content' => '内容',
             'type' => 'bug',
