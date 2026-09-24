@@ -33,8 +33,6 @@ class OpenAccountResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'name' => $this->name,
-            'avatar' => $this->avatar,
-            'app_id' => $this->app_id,
             'contact_name' => $this->contact_name,
             'contact_phone' => $this->contact_phone,
             'contact_email' => $this->contact_email,

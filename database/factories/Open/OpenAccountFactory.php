@@ -41,7 +41,6 @@ class OpenAccountFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'phone' => fake()->unique()->numerify('13#########'),
             'name' => fake()->company(),
-            'avatar' => null,
             'contact_name' => fake()->name(),
             'contact_phone' => fake()->numerify('13#########'),
             'contact_email' => fake()->safeEmail(),
@@ -53,7 +52,6 @@ class OpenAccountFactory extends Factory
             'status' => UserStatus::ACTIVE,
             'password' => Hash::make('12345678'),
             'login_count' => 0,
-            'identity_verified' => false,
             'identity_status' => IdentityStatus::UNSUBMITTED,
         ];
     }

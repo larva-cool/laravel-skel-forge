@@ -15,7 +15,7 @@ use Illuminate\Validation\Rule;
 /**
  * 开放平台账户列表请求（管理端）
  *
- * @property-read string|null $keyword 关键词（名称/用户名/邮箱/手机号/app_id）
+ * @property-read string|null $keyword 关键词（名称/用户名/邮箱/手机号）
  * @property-read int|null $status 状态
  * @property-read string|null $identity_status 实名认证状态
  * @property-read string|null $start_date 创建起始日期

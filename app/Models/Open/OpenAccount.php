@@ -16,6 +16,7 @@ use Database\Factories\Open\OpenAccountFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -34,8 +35,6 @@ use Laravel\Sanctum\NewAccessToken;
  * @property string|null $email 邮箱
  * @property string|null $phone 手机号
  * @property string|null $name 名称
- * @property string|null $avatar 头像
- * @property string $app_id 对外账户编号
  * @property string|null $contact_name 联系人
  * @property string|null $contact_phone 联系电话
  * @property string|null $contact_email 联系邮箱
@@ -62,9 +61,9 @@ use Laravel\Sanctum\NewAccessToken;
  */
 #[Table('open_accounts')]
 #[Fillable([
-    'username', 'email', 'phone', 'name', 'avatar', 'app_id', 'contact_name', 'contact_phone', 'contact_email',
+    'username', 'email', 'phone', 'name', 'contact_name', 'contact_phone', 'contact_email',
     'rate_limit', 'available_points', 'available_coins', 'balance', 'frozen_balance',
-    'status', 'password', 'remember_token', 'login_count', 'last_login_ip', 'last_active_at', 'last_login_at', 'identity_type', 'identity_verified', 'identity_status',
+    'status', 'password', 'remember_token', 'login_count', 'last_login_ip', 'last_active_at', 'last_login_at', 'identity_type', 'identity_status',
 ])]
 #[Hidden(['deleted_at'])]
 class OpenAccount extends Authenticatable
@@ -90,7 +89,6 @@ class OpenAccount extends Authenticatable
         'balance' => 0,
         'frozen_balance' => 0,
         'status' => UserStatus::FROZEN,
-        'identity_verified' => false,
         'identity_status' => IdentityStatus::UNSUBMITTED,
     ];
 
@@ -107,8 +105,6 @@ class OpenAccount extends Authenticatable
             'email' => 'string',
             'phone' => 'string',
             'name' => 'string',
-            'avatar' => 'string',
-            'app_id' => 'string',
             'contact_name' => 'string',
             'contact_phone' => 'string',
             'contact_email' => 'string',
@@ -120,7 +116,6 @@ class OpenAccount extends Authenticatable
             'status' => UserStatus::class,
             'identity_type' => IdentityType::class,
             'identity_status' => IdentityStatus::class,
-            'identity_verified' => 'boolean',
             'password' => 'hashed',
             'remember_token' => 'string',
             'login_count' => 'integer',
@@ -133,31 +128,6 @@ class OpenAccount extends Authenticatable
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
-    }
-
-    /**
-     * Perform any actions required after the model boots.
-     */
-    protected static function booted(): void
-    {
-        // 创建时自动生成对外账户编号
-        static::creating(function (OpenAccount $account): void {
-            if (empty($account->app_id)) {
-                $account->app_id = static::generateAppId();
-            }
-        });
-    }
-
-    /**
-     * 生成唯一的 10 位数字账户编号（首位非 0，冲突时重试）
-     */
-    public static function generateAppId(): string
-    {
-        do {
-            $appId = (string) random_int(1_000_000_000, 9_999_999_999);
-        } while (static::withTrashed()->where('app_id', $appId)->exists());
-
-        return $appId;
     }
 
     /**
@@ -182,6 +152,24 @@ class OpenAccount extends Authenticatable
     public function markFrozen(): bool
     {
         return $this->updateQuietly(['status' => UserStatus::FROZEN]);
+    }
+
+    /**
+     * 是否已通过实名认证
+     */
+    public function isVerified(): bool
+    {
+        return $this->identity_status === IdentityStatus::APPROVED;
+    }
+
+    /**
+     * identity_verified 访问器（逻辑属性，由 identity_status 派生）
+     */
+    protected function identityVerified(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value, array $attributes) => ($attributes['identity_status'] ?? null) === IdentityStatus::APPROVED->value
+        );
     }
 
     /**

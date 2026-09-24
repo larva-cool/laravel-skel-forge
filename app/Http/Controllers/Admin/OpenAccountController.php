@@ -53,8 +53,7 @@ class OpenAccountController extends Controller
                 $q->where('name', 'like', "%{$keyword}%")
                     ->orWhere('username', 'like', "%{$keyword}%")
                     ->orWhere('email', 'like', "%{$keyword}%")
-                    ->orWhere('phone', 'like', "%{$keyword}%")
-                    ->orWhere('app_id', 'like', "%{$keyword}%");
+                    ->orWhere('phone', 'like', "%{$keyword}%");
             });
         }
 
@@ -154,7 +153,6 @@ class OpenAccountController extends Controller
         $token = $openAccount->rotateToken();
 
         return response()->json([
-            'app_id' => $openAccount->app_id,
             'token' => $token->plainTextToken,
             'message' => '令牌已轮换，旧令牌已失效，请妥善保管新令牌。',
         ]);

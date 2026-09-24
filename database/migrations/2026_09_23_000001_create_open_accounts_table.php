@@ -24,8 +24,6 @@ return new class extends Migration
             $table->string('email')->unique()->nullable()->comment('邮箱');
             $table->string('phone', 30)->unique()->nullable()->comment('手机号（支持国际格式，如+8613800138000）');
             $table->string('name', 50)->nullable()->comment('合作方名称');
-            $table->string('avatar', 1000)->nullable()->comment('头像');
-            $table->string('app_id', 20)->unique()->comment('对外账户编号');
             $table->string('contact_name')->nullable()->comment('联系人');
             $table->string('contact_phone', 30)->nullable()->comment('联系电话');
             $table->string('contact_email')->nullable()->comment('联系邮箱');
@@ -37,7 +35,6 @@ return new class extends Migration
             $table->unsignedTinyInteger('status')->default(UserStatus::FROZEN->value)->comment('状态：0、frozen，1、active');
             $table->string('identity_type', 16)->nullable()->comment('实名认证类型：personal / enterprise');
             $table->string('identity_status', 16)->default(IdentityStatus::UNSUBMITTED->value)->index()->comment('实名认证状态：unsubmitted 未提交 / pending 待审核 / approved 已通过 / rejected 已驳回');
-            $table->boolean('identity_verified')->default(false)->comment('是否已通过实名认证');
             $table->string('password')->nullable()->comment('密码');
             $table->rememberToken()->comment('记住我token');
             $table->unsignedBigInteger('login_count')->nullable()->default(0)->comment('登录次数');
