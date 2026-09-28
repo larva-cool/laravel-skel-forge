@@ -12,10 +12,12 @@ use App\Models\Model;
 use App\Models\Traits\HasLikeable;
 use App\Models\Traits\HasUser;
 use App\Models\User;
+use App\Observers\CommentObserver;
 use App\Policies\CommentPolicy;
 use Database\Factories\Content\CommentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -48,6 +50,7 @@ use Illuminate\Support\Carbon;
 #[Fillable(['user_id', 'source_id', 'source_type', 'is_top', 'like_count', 'comment_count', 'status', 'content',
     'ip_address', 'mentioned_users'])]
 #[Hidden(['user_id'])]
+#[ObservedBy([CommentObserver::class])]
 #[UsePolicy(CommentPolicy::class)]
 class Comment extends Model
 {
