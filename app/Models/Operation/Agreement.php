@@ -139,7 +139,10 @@ class Agreement extends Model
             return null;
         }
 
-        return static::newFromBuilder($data);
+        $instance = new static;
+        $instance->setRawAttributes($data, true);
+
+        return $instance;
     }
     private const string CACHE_KEY = 'agreements:%s';
 }
