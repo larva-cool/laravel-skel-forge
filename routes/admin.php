@@ -293,6 +293,12 @@ Route::group(['prefix' => 'announcements', 'as' => 'announcements.'], function (
 });
 Route::apiResource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
 
+// 协议管理（运营管理）
+Route::group(['prefix' => 'agreements', 'as' => 'agreements.'], function (Registrar $registrar) {
+    $registrar->put('{agreement}/toggle-status', [\App\Http\Controllers\Admin\AgreementController::class, 'toggleStatus'])->name('toggle-status');
+});
+Route::apiResource('agreements', \App\Http\Controllers\Admin\AgreementController::class);
+
 // 敏感词管理（运营管理 / 内容安全）
 Route::group(['prefix' => 'sensitive-words', 'as' => 'sensitive-words.'], function (Registrar $registrar) {
     $registrar->post('import', [\App\Http\Controllers\Admin\SensitiveWordController::class, 'import'])->name('import');

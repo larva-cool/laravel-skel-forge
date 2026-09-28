@@ -95,6 +95,13 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     Route::get('announcements/{id}', [\App\Http\Controllers\Api\V1\AnnouncementController::class, 'show'])->name('announcements.show');
 
     /**
+     * 协议（公开，无需认证）
+     *
+     * 前端传类别编码（如 user_agreement），直接返回该类别最新已发布版本。
+     */
+    Route::get('agreements/{category}', [\App\Http\Controllers\Api\V1\AgreementController::class, 'showByCategory'])->name('agreements.show');
+
+    /**
      * 任务中心
      */
     Route::group(['prefix' => 'tasks', 'as' => 'tasks.'], function (Registrar $registrar) {

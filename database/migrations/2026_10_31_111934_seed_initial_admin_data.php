@@ -645,6 +645,23 @@ return new class extends Migration
                         ],
                     ],
                     [
+                        'key' => 'operation.agreement',
+                        'path' => 'agreement',
+                        'name' => 'Agreement',
+                        'component' => '/operation/agreement/index',
+                        'title' => '协议管理',
+                        'icon' => 'ri:file-text-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 4,
+                        'keep_alive' => true,
+                        'permission' => 'agreements.index',
+                        'buttons' => [
+                            ['title' => '新增协议', 'permission' => 'agreements.create'],
+                            ['title' => '编辑协议', 'permission' => 'agreements.edit'],
+                            ['title' => '删除协议', 'permission' => 'agreements.delete'],
+                        ],
+                    ],
+                    [
                         'key' => 'operation.sensitive-word',
                         'path' => 'sensitive-word',
                         'name' => 'SensitiveWord',
