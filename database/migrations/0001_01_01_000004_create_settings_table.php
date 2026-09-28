@@ -570,7 +570,7 @@ return new class extends Migration
             [
                 'name' => '密码最小长度',
                 'key' => 'password.strength.min',
-                'value' => 8,
+                'value' => 6,
                 'cast_type' => SettingType::CAST_TYPE_INT,
                 'input_type' => SettingType::CAST_TYPE_INT,
                 'param' => '{"min": 6, "max": 64}',
@@ -580,7 +580,7 @@ return new class extends Migration
             [
                 'name' => '密码最大长度',
                 'key' => 'password.strength.max',
-                'value' => 32,
+                'value' => 20,
                 'cast_type' => SettingType::CAST_TYPE_INT,
                 'input_type' => SettingType::CAST_TYPE_INT,
                 'param' => '{"min": 8, "max": 128}',
@@ -590,7 +590,7 @@ return new class extends Migration
             [
                 'name' => '要求大小写混合',
                 'key' => 'password.strength.mixed_case',
-                'value' => 1,
+                'value' => 0,
                 'cast_type' => SettingType::CAST_TYPE_BOOL,
                 'input_type' => SettingType::CAST_TYPE_BOOL,
                 'remark' => '开启后，密码必须同时包含大小写字母（Password::mixedCase）。',

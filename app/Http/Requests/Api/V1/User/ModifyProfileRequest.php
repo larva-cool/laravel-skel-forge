@@ -54,49 +54,29 @@ class ModifyProfileRequest extends FormRequest
             'city_id' => ['nullable', 'integer', Rule::exists(Area::class, 'id')],
             'district_id' => ['nullable', 'integer', Rule::exists(Area::class, 'id')],
             'website' => ['nullable', 'url', 'max:200'],
-            'intro' => ['nullable', 'string', 'max:200', new SensitiveTextRule],
-            'bio' => ['nullable', 'string', 'max:100', new SensitiveTextRule],
+            'intro' => ['nullable', 'string', 'max:200', new SensitiveTextRule('block', false)],
+            'bio' => ['nullable', 'string', 'max:100', new SensitiveTextRule('block', false)],
         ];
     }
 
     /**
-     * 用户主表需要写入的字段集。
+     * 验证前对 intro/bio 做敏感词替换。
      *
-     * @return array<string, mixed>
+     * name 字段使用 strict 模式，所有敏感词均由 SensitiveTextRule 拦截，无需替换。
+     * intro/bio 使用 block 模式：replace 级别的词在此提前替换，block 级别的词
+     * 仍由 SensitiveTextRule 拦截。替换发生在验证前，确保 $request->safe() 能
+     * 拿到替换后的文本。
      */
-    public function userData(): array
-    {
-        return array_filter(
-            ['name' => $this->validated('name')],
-            fn ($value) => $value !== null && $value !== '',
-        );
-    }
-
-    /**
-     * 用户附属资料需要写入的字段集（剔除主表字段）。
-     *
-     * @return array<string, mixed>
-     */
-    public function profileData(): array
-    {
-        $data = $this->validated();
-        unset($data['name']);
-
-        return array_filter($data, fn ($value) => $value !== null && $value !== '');
-    }
-
-    /**
-     * 校验通过后对文本字段做敏感词替换
-     */
-    protected function passedValidation(): void
+    protected function prepareForValidation(): void
     {
         $service = app(SensitiveWordService::class);
         $merge = [];
         $hitWords = [];
 
-        foreach (['name', 'intro', 'bio'] as $field) {
-            if ($this->has($field) && is_string($this->input($field))) {
-                $result = $service->detect($this->input($field));
+        foreach (['intro', 'bio'] as $field) {
+            $value = $this->input($field);
+            if (is_string($value) && $value !== '') {
+                $result = $service->detect($value);
                 $merge[$field] = $result->filtered;
                 $hitWords = array_merge($hitWords, $result->hitWords());
             }

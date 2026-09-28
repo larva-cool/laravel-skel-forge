@@ -18,6 +18,7 @@ use App\Http\Resources\Api\V1\CoinResource;
 use App\Http\Resources\Api\V1\LoginHistoryResource;
 use App\Http\Resources\Api\V1\PointResource;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -81,9 +82,12 @@ class UserController extends Controller
      */
     public function modifyProfile(ModifyProfileRequest $request): UserResource
     {
+        /** @var User $user */
         $user = $request->user();
-        $user->update($request->userData());
-        $user->profile->update($request->profileData());
+        if ($request->filled('name')) {
+            $user->update($request->safe()->only('name'));
+        }
+        $user->profile->update($request->safe()->except('name'));
 
         $user->refresh()->loadMissing('profile');
         UserProfileUpdated::dispatch($user);

@@ -3,7 +3,6 @@
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
-
 declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\User;
@@ -35,8 +34,8 @@ class ModifyPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'old_password' => ['required', 'string', 'min:8', 'current_password:sanctum'],
-            'password' => ['required', 'string', Password::min(8)->uncompromised()],
+            'old_password' => ['required', 'string', 'current_password:sanctum'],
+            'password' => ['required', 'string', Password::defaults()],
         ];
     }
 }

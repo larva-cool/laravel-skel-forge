@@ -348,7 +348,10 @@ Route::group(['prefix' => 'identity-verifications', 'as' => 'identity-verificati
 
 // 开放平台账户管理
 Route::group(['prefix' => 'open-accounts', 'as' => 'open-accounts.'], function (Registrar $registrar) {
+    $registrar->get('trash', [\App\Http\Controllers\Admin\OpenAccountController::class, 'trash'])->name('trash');
+    $registrar->put('{open_account}/restore', [\App\Http\Controllers\Admin\OpenAccountController::class, 'restore'])->name('restore');
+    $registrar->delete('{open_account}/force-delete', [\App\Http\Controllers\Admin\OpenAccountController::class, 'forceDelete'])->name('force-delete');
     $registrar->put('{open_account}/toggle-status', [\App\Http\Controllers\Admin\OpenAccountController::class, 'toggleStatus'])->name('toggle-status');
-    $registrar->post('{open_account}/rotate-token', [\App\Http\Controllers\Admin\OpenAccountController::class, 'rotateToken'])->name('rotate-token');
+    $registrar->post('{open_account}/rotate-token', [\App\Http\Controllers\Admin\OpenAccountController::class, 'rotateToken'])->name('rotateToken');
 });
 Route::apiResource('open-accounts', \App\Http\Controllers\Admin\OpenAccountController::class);

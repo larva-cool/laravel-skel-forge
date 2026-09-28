@@ -31,10 +31,10 @@ class OpenAccountController extends Controller
     public function __construct()
     {
         $this->middleware('auth:admin');
-        $this->middleware('permission:open_accounts.index')->only(['index', 'show']);
+        $this->middleware('permission:open_accounts.index')->only(['index', 'show', 'trash']);
         $this->middleware('permission:open_accounts.create')->only(['store']);
-        $this->middleware('permission:open_accounts.edit')->only(['update', 'toggleStatus', 'rotateToken']);
-        $this->middleware('permission:open_accounts.delete')->only(['destroy']);
+        $this->middleware('permission:open_accounts.edit')->only(['update', 'toggleStatus', 'rotateToken', 'restore']);
+        $this->middleware('permission:open_accounts.delete')->only(['destroy', 'forceDelete']);
     }
 
     /**
@@ -123,6 +123,66 @@ class OpenAccountController extends Controller
     {
         $openAccount->tokens()->delete();
         $openAccount->delete();
+
+        return response()->json(status: 204);
+    }
+
+    /**
+     * 回收站列表（已软删除的开放平台账户）
+     */
+    public function trash(OpenAccountIndexRequest $request): AnonymousResourceCollection
+    {
+        $perPage = per_page($request);
+        $filters = $request->filters();
+
+        $query = OpenAccount::onlyTrashed();
+
+        if (! empty($filters['keyword'])) {
+            $keyword = $filters['keyword'];
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                    ->orWhere('username', 'like', "%{$keyword}%")
+                    ->orWhere('email', 'like', "%{$keyword}%")
+                    ->orWhere('phone', 'like', "%{$keyword}%");
+            });
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', (int) $filters['status']);
+        }
+
+        if (! empty($filters['start_date'])) {
+            $query->whereDate('deleted_at', '>=', $filters['start_date']);
+        }
+
+        if (! empty($filters['end_date'])) {
+            $query->whereDate('deleted_at', '<=', $filters['end_date']);
+        }
+
+        $items = $query->latest('deleted_at')->paginate($perPage);
+
+        return OpenAccountResource::collection($items);
+    }
+
+    /**
+     * 恢复软删除的开放平台账户
+     */
+    public function restore(int $openAccount): JsonResponse
+    {
+        $trashed = OpenAccount::onlyTrashed()->findOrFail($openAccount);
+        $trashed->restore();
+
+        return response()->json(status: 204);
+    }
+
+    /**
+     * 彻底删除开放平台账户（不可恢复）
+     */
+    public function forceDelete(int $openAccount): JsonResponse
+    {
+        $trashed = OpenAccount::onlyTrashed()->findOrFail($openAccount);
+        $trashed->tokens()->delete();
+        $trashed->forceDelete();
 
         return response()->json(status: 204);
     }

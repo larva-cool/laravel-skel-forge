@@ -3,7 +3,6 @@
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
-
 declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Auth;
@@ -34,7 +33,7 @@ class ResetPasswordByPhoneRequest extends FormRequest
         return [
             'phone' => ['required', new PhoneRule, Rule::exists(User::class)],
             'verify_code' => ['required', 'min:4', 'max:6', new SmsCaptchaRule('phone', $this->getClientIp())],
-            'password' => ['required', 'string', Password::min(6)->max(20)->uncompromised()],
+            'password' => ['required', 'string', Password::defaults()],
         ];
     }
 }
