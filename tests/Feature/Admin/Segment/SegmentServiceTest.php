@@ -555,4 +555,184 @@ class SegmentServiceTest extends TestCase
         $this->assertSame($expected, $matched);
         $this->assertFalse(in_array($recent->id, $matched, true));
     }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 gender=1 过滤：仅男性用户被纳入分群')]
+    public function sync_rule_segment_filters_by_gender_eq(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'gender', 'op' => '=', 'value' => 1],
+                ],
+            ],
+        ]);
+
+        $male = $this->makeUser();
+        $male->profile()->update(['gender' => 1]);
+
+        $female = $this->makeUser();
+        $female->profile()->update(['gender' => 2]);
+
+        $unknown = $this->makeUser(); // 默认 gender=0
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(1, $result['added']);
+        $this->assertSame(0, $result['removed']);
+        $this->assertSame(1, $result['total']);
+        $this->assertTrue(
+            Membership::where('segment_id', $seg->id)->where('user_id', $male->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $female->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $unknown->id)->exists()
+        );
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 gender in [1,2] 过滤：含所有已设置性别的用户')]
+    public function sync_rule_segment_filters_by_gender_in(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'gender', 'op' => 'in', 'value' => [1, 2]],
+                ],
+            ],
+        ]);
+
+        $male = $this->makeUser();
+        $male->profile()->update(['gender' => 1]);
+
+        $female = $this->makeUser();
+        $female->profile()->update(['gender' => 2]);
+
+        $unknown = $this->makeUser(); // 默认 gender=0
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(2, $result['added']);
+        $this->assertSame(2, $result['total']);
+        $matched = Membership::where('segment_id', $seg->id)->pluck('user_id')->all();
+        sort($matched);
+        $expected = [$female->id, $male->id];
+        sort($expected);
+        $this->assertSame($expected, $matched);
+        $this->assertFalse(in_array($unknown->id, $matched, true));
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 birthday > 2000-01-01 过滤：仅 2000 年后出生用户被纳入分群')]
+    public function sync_rule_segment_filters_by_birthday_gt(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'birthday', 'op' => '>', 'value' => '2000-01-01'],
+                ],
+            ],
+        ]);
+
+        $young = $this->makeUser();
+        $young->profile()->update(['birthday' => '2005-06-15']);
+
+        $old = $this->makeUser();
+        $old->profile()->update(['birthday' => '1990-01-01']);
+
+        $noBirthday = $this->makeUser(); // birthday=null
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(1, $result['added']);
+        $this->assertSame(1, $result['total']);
+        $this->assertTrue(
+            Membership::where('segment_id', $seg->id)->where('user_id', $young->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $old->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $noBirthday->id)->exists()
+        );
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 birthday is_null 过滤：仅未填生日的用户被纳入分群')]
+    public function sync_rule_segment_filters_by_birthday_is_null(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'birthday', 'op' => 'is_null', 'value' => null],
+                ],
+            ],
+        ]);
+
+        $withBirthday = $this->makeUser();
+        $withBirthday->profile()->update(['birthday' => '1995-03-20']);
+
+        $noBirthdayA = $this->makeUser();
+        $noBirthdayB = $this->makeUser();
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(2, $result['added']);
+        $this->assertSame(2, $result['total']);
+        $matched = Membership::where('segment_id', $seg->id)->pluck('user_id')->all();
+        sort($matched);
+        $expected = [$noBirthdayA->id, $noBirthdayB->id];
+        sort($expected);
+        $this->assertSame($expected, $matched);
+        $this->assertFalse(in_array($withBirthday->id, $matched, true));
+    }
+
+    #[Test]
+    #[TestDox('syncRuleSegment 按 gender=2 AND birthday < 2000-01-01 过滤：组合 profile 关联字段')]
+    public function sync_rule_segment_filters_by_gender_and_birthday(): void
+    {
+        $seg = Segment::factory()->rule()->create([
+            'rule' => [
+                'version' => 1,
+                'logic' => 'and',
+                'conditions' => [
+                    ['field' => 'gender', 'op' => '=', 'value' => 2],
+                    ['field' => 'birthday', 'op' => '<', 'value' => '2000-01-01'],
+                ],
+            ],
+        ]);
+
+        $match = $this->makeUser();
+        $match->profile()->update(['gender' => 2, 'birthday' => '1995-03-20']);
+
+        $wrongGender = $this->makeUser();
+        $wrongGender->profile()->update(['gender' => 1, 'birthday' => '1995-03-20']);
+
+        $wrongBirthday = $this->makeUser();
+        $wrongBirthday->profile()->update(['gender' => 2, 'birthday' => '2005-01-01']);
+
+        $result = $this->service->syncRuleSegment($seg);
+
+        $this->assertSame(1, $result['added']);
+        $this->assertSame(1, $result['total']);
+        $this->assertTrue(
+            Membership::where('segment_id', $seg->id)->where('user_id', $match->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $wrongGender->id)->exists()
+        );
+        $this->assertFalse(
+            Membership::where('segment_id', $seg->id)->where('user_id', $wrongBirthday->id)->exists()
+        );
+    }
 }

@@ -34,6 +34,8 @@ enum SegmentRuleField: string implements \JsonSerializable
     case AVAILABLE_POINTS = 'available_points';
     case AVAILABLE_COINS = 'available_coins';
     case LOGIN_COUNT = 'login_count';
+    case GENDER = 'gender';
+    case BIRTHDAY = 'birthday';
 
     /**
      * 数据库列名
@@ -44,14 +46,27 @@ enum SegmentRuleField: string implements \JsonSerializable
     }
 
     /**
+     * 关联关系名（null 表示字段在 users 主表上）
+     *
+     * gender / birthday 位于 user_profiles 表，通过 profile 关联
+     */
+    public function relation(): ?string
+    {
+        return match ($this) {
+            self::GENDER, self::BIRTHDAY => 'profile',
+            default => null,
+        };
+    }
+
+    /**
      * 值类型：int / string / datetime
      */
     public function valueType(): string
     {
         return match ($this) {
-            self::STATUS, self::AVAILABLE_POINTS, self::AVAILABLE_COINS, self::LOGIN_COUNT => 'int',
+            self::STATUS, self::GENDER, self::AVAILABLE_POINTS, self::AVAILABLE_COINS, self::LOGIN_COUNT => 'int',
             self::IDENTITY_STATUS, self::IDENTITY_TYPE => 'string',
-            self::VIP_EXPIRES_AT, self::LAST_LOGIN_AT, self::LAST_ACTIVE_AT, self::CREATED_AT => 'datetime',
+            self::VIP_EXPIRES_AT, self::LAST_LOGIN_AT, self::LAST_ACTIVE_AT, self::CREATED_AT, self::BIRTHDAY => 'datetime',
         };
     }
 
@@ -111,6 +126,23 @@ enum SegmentRuleField: string implements \JsonSerializable
                 SegmentRuleOperator::IS_NULL,
                 SegmentRuleOperator::IS_NOT_NULL,
             ],
+            self::GENDER => [
+                SegmentRuleOperator::EQ,
+                SegmentRuleOperator::NEQ,
+                SegmentRuleOperator::IN,
+                SegmentRuleOperator::NOT_IN,
+                SegmentRuleOperator::IS_NULL,
+                SegmentRuleOperator::IS_NOT_NULL,
+            ],
+            self::BIRTHDAY => [
+                SegmentRuleOperator::GT,
+                SegmentRuleOperator::GTE,
+                SegmentRuleOperator::LT,
+                SegmentRuleOperator::LTE,
+                SegmentRuleOperator::BETWEEN,
+                SegmentRuleOperator::IS_NULL,
+                SegmentRuleOperator::IS_NOT_NULL,
+            ],
         };
     }
 
@@ -130,6 +162,8 @@ enum SegmentRuleField: string implements \JsonSerializable
             self::AVAILABLE_POINTS => '可用积分',
             self::AVAILABLE_COINS => '可用金币',
             self::LOGIN_COUNT => '累计登录次数',
+            self::GENDER => '性别',
+            self::BIRTHDAY => '生日',
         };
     }
 

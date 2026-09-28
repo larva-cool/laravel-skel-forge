@@ -133,14 +133,21 @@ class SegmentRuleEvaluator
             throw new InvalidArgumentException("字段 {$fieldEnum->value} 不支持操作符 {$operator->value}");
         }
 
+        // 关联字段（如 gender / birthday 位于 user_profiles 表）通过 whereHas 包装
+        $relation = $fieldEnum->relation();
+
         if ($operator->isNullCheck()) {
-            return static function (Builder $q) use ($column, $operator): void {
+            $inner = static function (Builder $q) use ($column, $operator): void {
                 if ($operator === SegmentRuleOperator::IS_NULL) {
                     $q->whereNull($column);
                 } else {
                     $q->whereNotNull($column);
                 }
             };
+
+            return $relation !== null
+                ? static fn (Builder $q) => $q->whereHas($relation, fn (Builder $sub) => $inner($sub))
+                : $inner;
         }
 
         if ($operator->requiresMultipleValues()) {
@@ -149,7 +156,7 @@ class SegmentRuleEvaluator
             }
             $resolved = $fieldEnum->resolveValue($rawValue);
 
-            return match ($operator) {
+            $inner = match ($operator) {
                 SegmentRuleOperator::BETWEEN => static function (Builder $q) use ($column, $resolved): void {
                     if (count($resolved) !== 2) {
                         throw new InvalidArgumentException('between 需要恰好 2 个值');
@@ -165,12 +172,16 @@ class SegmentRuleEvaluator
                 },
                 default => throw new InvalidArgumentException("未实现的多值操作符: {$operator->value}"),
             };
+
+            return $relation !== null
+                ? static fn (Builder $q) => $q->whereHas($relation, fn (Builder $sub) => $inner($sub))
+                : $inner;
         }
 
         // 单值比较
         $resolved = $fieldEnum->resolveValue($rawValue);
 
-        return match ($operator) {
+        $inner = match ($operator) {
             SegmentRuleOperator::EQ => static fn (Builder $q) => $q->where($column, '=', $resolved),
             SegmentRuleOperator::NEQ => static fn (Builder $q) => $q->where($column, '!=', $resolved),
             SegmentRuleOperator::GT => static fn (Builder $q) => $q->where($column, '>', $resolved),
@@ -179,6 +190,10 @@ class SegmentRuleEvaluator
             SegmentRuleOperator::LTE => static fn (Builder $q) => $q->where($column, '<=', $resolved),
             default => throw new InvalidArgumentException("未实现的操作符: {$operator->value}"),
         };
+
+        return $relation !== null
+            ? static fn (Builder $q) => $q->whereHas($relation, fn (Builder $sub) => $inner($sub))
+            : $inner;
     }
 
     /**

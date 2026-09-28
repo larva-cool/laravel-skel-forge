@@ -392,4 +392,94 @@ class SegmentRuleEvaluatorTest extends TestCase
         $this->assertContains(SegmentRuleOperator::IN, $ops);
         $this->assertNotContains(SegmentRuleOperator::GT, $ops);
     }
+
+    #[Test]
+    #[TestDox('gender / birthday 字段基础属性：relation 返回 profile')]
+    public function profile_field_basics(): void
+    {
+        $this->assertSame('int', SegmentRuleField::GENDER->valueType());
+        $this->assertSame('datetime', SegmentRuleField::BIRTHDAY->valueType());
+        $this->assertSame('性别', SegmentRuleField::GENDER->label());
+        $this->assertSame('生日', SegmentRuleField::BIRTHDAY->label());
+
+        // relation：gender / birthday 位于 profile 关联
+        $this->assertSame('profile', SegmentRuleField::GENDER->relation());
+        $this->assertSame('profile', SegmentRuleField::BIRTHDAY->relation());
+
+        // users 主表字段 relation 返回 null
+        $this->assertNull(SegmentRuleField::STATUS->relation());
+        $this->assertNull(SegmentRuleField::AVAILABLE_POINTS->relation());
+    }
+
+    #[Test]
+    #[TestDox('gender 字段编译为 whereHas profile 闭包')]
+    public function gender_field_compiles_to_where_has(): void
+    {
+        $male = $this->makeUser();
+        $male->profile()->update(['gender' => 1]);
+
+        $female = $this->makeUser();
+        $female->profile()->update(['gender' => 2]);
+
+        $unknown = $this->makeUser(); // 默认 gender=0
+
+        $rule = [
+            'version' => 1,
+            'logic' => 'and',
+            'conditions' => [
+                ['field' => 'gender', 'op' => '=', 'value' => 1],
+            ],
+        ];
+
+        $this->assertSame([$male->id], $this->idsMatching($rule));
+    }
+
+    #[Test]
+    #[TestDox('birthday 字段编译为 whereHas profile 闭包')]
+    public function birthday_field_compiles_to_where_has(): void
+    {
+        $young = $this->makeUser();
+        $young->profile()->update(['birthday' => '2005-06-15']);
+
+        $old = $this->makeUser();
+        $old->profile()->update(['birthday' => '1990-01-01']);
+
+        $noBirthday = $this->makeUser(); // birthday=null
+
+        $rule = [
+            'version' => 1,
+            'logic' => 'and',
+            'conditions' => [
+                ['field' => 'birthday', 'op' => '>', 'value' => '2000-01-01'],
+            ],
+        ];
+
+        $this->assertSame([$young->id], $this->idsMatching($rule));
+    }
+
+    #[Test]
+    #[TestDox('gender 与 users 主表字段 AND 组合：跨表查询正确')]
+    public function gender_combined_with_main_table_field(): void
+    {
+        $match = $this->makeUser();
+        $match->profile()->update(['gender' => 2]);
+
+        $wrongGender = $this->makeUser();
+        $wrongGender->profile()->update(['gender' => 1]);
+
+        $frozenFemale = $this->makeUser();
+        $frozenFemale->profile()->update(['gender' => 2]);
+        $frozenFemale->forceFill(['status' => 0])->saveQuietly();
+
+        $rule = [
+            'version' => 1,
+            'logic' => 'and',
+            'conditions' => [
+                ['field' => 'status', 'op' => '=', 'value' => 1],
+                ['field' => 'gender', 'op' => '=', 'value' => 2],
+            ],
+        ];
+
+        $this->assertSame([$match->id], $this->idsMatching($rule));
+    }
 }
