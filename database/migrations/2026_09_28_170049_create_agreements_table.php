@@ -65,8 +65,6 @@ return new class extends Migration
             return;
         }
 
-        $now = now();
-
         // upsert 字典类型
         $dict = Dict::query()->where('code', self::AGREEMENT_CATEGORY_CODE)->first();
         if (! $dict) {
@@ -80,8 +78,8 @@ return new class extends Migration
         $dict->save();
 
         $items = [
-            ['value' => 'user_agreement', 'label' => '用户协议', 'label_type' => DictLabelType::PRIMARY, 'sort' => 100],
-            ['value' => 'privacy_policy', 'label' => '隐私政策', 'label_type' => DictLabelType::INFO, 'sort' => 200],
+            ['value' => 'user_agreement', 'label' => '用户协议', 'label_type' => DictLabelType::PRIMARY->value, 'sort' => 100],
+            ['value' => 'privacy_policy', 'label' => '隐私政策', 'label_type' => DictLabelType::INFO->value, 'sort' => 200],
         ];
 
         foreach ($items as $item) {
