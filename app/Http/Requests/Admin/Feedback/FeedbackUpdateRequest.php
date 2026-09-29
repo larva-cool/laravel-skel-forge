@@ -29,14 +29,16 @@ class FeedbackUpdateRequest extends FormRequest
      * 处理人字段自动注入：
      * 当请求中携带 status 且该反馈尚未指派处理人时，将当前管理员 ID 注入到 validated() 中。
      * 控制器可直接使用 validated() 写入模型。
+     *
+     * 路由参数 {feedback} 已通过隐式模型绑定解析为 Feedback 实例。
      */
     protected function prepareForValidation(): void
     {
         if ($this->has('status')) {
+            /** @var Feedback $feedback */
             $feedback = $this->route('feedback');
-            $feedback ??= Feedback::query()->find((int) $this->route('id'));
 
-            if ($feedback instanceof Feedback && $feedback->admin_id === null) {
+            if ($feedback->admin_id === null) {
                 $this->merge(['admin_id' => $this->user('admin')?->id]);
             }
         }

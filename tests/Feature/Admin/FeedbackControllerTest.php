@@ -174,6 +174,23 @@ class FeedbackControllerTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('反馈已有处理人时再次更新状态不会覆盖原处理人')]
+    public function updating_feedback_with_existing_admin_keeps_original_admin(): void
+    {
+        $feedback = FeedbackFactory::new()->create([
+            'status' => 0,
+            'admin_id' => 999,
+        ]);
+
+        $this->actingAsAdmin()->putJson("/admin/feedbacks/{$feedback->id}", [
+            'status' => 4,
+        ])->assertOk();
+
+        $feedback->refresh();
+        $this->assertSame(999, $feedback->admin_id);
+    }
+
+    #[Test]
     #[TestDox('将反馈标记为已解决时自动记录解决时间')]
     public function resolving_feedback_sets_resolved_at(): void
     {

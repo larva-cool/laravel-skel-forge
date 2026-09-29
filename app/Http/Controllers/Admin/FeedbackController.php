@@ -94,9 +94,8 @@ class FeedbackController extends Controller
     /**
      * 更新反馈（处理反馈：状态/优先级/备注）
      */
-    public function update(FeedbackUpdateRequest $request, int $id): FeedbackResource
+    public function update(FeedbackUpdateRequest $request, Feedback $feedback): FeedbackResource
     {
-        $feedback = Feedback::query()->findOrFail($id);
         $feedback->update($request->validated());
         $feedback->load('admin');
 
