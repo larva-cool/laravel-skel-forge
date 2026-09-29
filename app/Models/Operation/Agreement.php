@@ -101,11 +101,11 @@ class Agreement extends Model
 
         // 清除缓存
         static::saved(function (self $agreement): void {
-            Cache::forget(CacheKey::key(self::CACHE_KEY, $agreement->category));
+            Cache::forget(CacheKey::key(CacheKey::AGREEMENTS, $agreement->category));
         });
 
         static::deleted(function (self $agreement): void {
-            Cache::forget(CacheKey::key(self::CACHE_KEY, $agreement->category));
+            Cache::forget(CacheKey::key(CacheKey::AGREEMENTS, $agreement->category));
         });
     }
 
@@ -122,7 +122,7 @@ class Agreement extends Model
      */
     public static function getPublishedByCategory(string $category): ?self
     {
-        $cacheKey = CacheKey::key(self::CACHE_KEY, $category);
+        $cacheKey = CacheKey::key(CacheKey::AGREEMENTS, $category);
 
         /** @var array<string, mixed>|null $data */
         $data = Cache::remember($cacheKey, Carbon::now()->addHours(2), function () use ($category) {
@@ -144,5 +144,4 @@ class Agreement extends Model
 
         return $instance;
     }
-    private const string CACHE_KEY = 'agreements:%s';
 }

@@ -33,10 +33,10 @@ use Illuminate\Support\Carbon;
  * @property int $added_count 实际新增/解绑数
  * @property SegmentTaskStatus $status 任务状态
  * @property string|null $error_message 失败原因
- * @property Carbon|null $started_at
- * @property Carbon|null $finished_at
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property Carbon|null $started_at 开始时间
+ * @property Carbon|null $finished_at 完成时间
+ * @property Carbon $created_at 创建时间
+ * @property Carbon $updated_at 更新时间
  *
  * 关系
  * @property-read Admin $admin

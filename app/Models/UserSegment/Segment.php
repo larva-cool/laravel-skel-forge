@@ -34,8 +34,8 @@ use Illuminate\Support\Carbon;
  * @property array<string,mixed>|null $rule 规则定义（仅 type=RULE）
  * @property Carbon|null $last_synced_at 最近一次规则刷新时间
  * @property int|null $last_synced_user_count 最近一次规则匹配用户数
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property Carbon $created_at 创建时间
+ * @property Carbon $updated_at 更新时间
  *
  * 关系
  * @property-read BelongsToMany<User> $users

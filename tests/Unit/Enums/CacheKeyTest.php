@@ -43,11 +43,19 @@ class CacheKeyTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('AGREEMENTS 常量值正确')]
+    public function agreements_constant(): void
+    {
+        $this->assertSame('agreements:%s', CacheKey::AGREEMENTS);
+    }
+
+    #[Test]
     #[TestDox('key 方法用参数替换占位符')]
     public function key_method_replaces_placeholders(): void
     {
         $this->assertSame('system:dicts:user', CacheKey::key(CacheKey::DICT_TYPE, 'user'));
         $this->assertSame('system:areas:tree', CacheKey::key(CacheKey::AREA_TREE, 'tree'));
+        $this->assertSame('agreements:privacy', CacheKey::key(CacheKey::AGREEMENTS, 'privacy'));
     }
 
     #[Test]

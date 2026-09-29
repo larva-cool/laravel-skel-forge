@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int $segment_id 分群 ID
  * @property int $user_id 用户 ID
  * @property int $source 打标来源：1=手动 2=规则
- * @property Carbon|null $created_at
+ * @property Carbon|null $created_at 创建时间
  *
  * 关系
  * @property-read Segment $segment
