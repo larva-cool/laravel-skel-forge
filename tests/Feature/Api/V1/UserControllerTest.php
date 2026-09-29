@@ -7,11 +7,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
+use App\Events\User\UserProfileUpdated;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -111,6 +113,7 @@ class UserControllerTest extends TestCase
     {
         Storage::fake('public');
         settings()->set('upload.storage', 'public');
+        Event::fake([UserProfileUpdated::class]);
 
         $paddedId = str_pad((string) $this->user->id, 9, '0', STR_PAD_LEFT);
         $expectedPath = 'avatar/'.substr($paddedId, 0, 3).'/'.substr($paddedId, 3, 4).'/'.$this->user->id.'.webp';
@@ -128,6 +131,7 @@ class UserControllerTest extends TestCase
         // RIFF 为 webp 文件头，证明图片已完成格式转换
         $this->assertSame('RIFF', substr(Storage::disk('public')->get($expectedPath), 0, 4));
         $this->assertSame($expectedPath, $this->user->fresh()->avatar);
+        Event::assertDispatched(UserProfileUpdated::class, fn ($event) => $event->user->id === $this->user->id);
         $this->assertDatabaseHas('attachments', [
             'path' => $expectedPath,
             'uploader_id' => $this->user->id,

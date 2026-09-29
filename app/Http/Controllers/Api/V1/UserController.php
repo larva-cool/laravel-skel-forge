@@ -107,6 +107,8 @@ class UserController extends Controller
 
         $user->update(['avatar' => $upload['file_path']]);
 
+        UserProfileUpdated::dispatch($user);
+
         return response()->json([
             'message' => __('user.avatar_modification_completed'),
             'path' => $upload['file_path'],
