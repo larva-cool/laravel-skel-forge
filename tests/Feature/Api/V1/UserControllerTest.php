@@ -7,8 +7,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
+use App\Enums\SocialProvider;
 use App\Events\User\UserProfileUpdated;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Models\System\Social;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -360,6 +362,101 @@ class UserControllerTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('获取第三方绑定返回分页结构且 openid 已脱敏')]
+    public function authenticated_user_can_list_socials_with_masked_openid(): void
+    {
+        Social::create([
+            'user_id' => $this->user->id,
+            'user_type' => 'user',
+            'provider' => SocialProvider::WECHAT_MP,
+            'openid' => 'openid_abcdef_12345678',
+            'unionid' => 'unionid_xyz_87654321',
+            'access_token' => 'secret-access-token',
+            'refresh_token' => 'secret-refresh-token',
+            'expiry_at' => now()->addHour(),
+        ]);
+
+        $this->actingAsUser()
+            ->getJson('/api/v1/user/socials')
+            ->assertOk()
+            ->assertJsonStructure(['data', 'links', 'meta'])
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.provider.value', SocialProvider::WECHAT_MP->value)
+            ->assertJsonPath('data.0.provider.label', '微信公众号')
+            ->assertJsonPath('data.0.provider_label', '微信公众号')
+            ->assertJsonPath('data.0.openid_masked', 'open****78')
+            ->assertJsonPath('data.0.unionid_masked', 'unio****21')
+            // 关键：敏感字段不允许泄漏
+            ->assertJsonMissingPath('data.0.openid')
+            ->assertJsonMissingPath('data.0.unionid')
+            ->assertJsonMissingPath('data.0.access_token')
+            ->assertJsonMissingPath('data.0.refresh_token')
+            ->assertJsonMissingPath('data.0.user_id')
+            ->assertJsonMissingPath('data.0.user_type');
+    }
+
+    #[Test]
+    #[TestDox('未绑定第三方时返回空分页')]
+    public function authenticated_user_with_no_socials_gets_empty_pagination(): void
+    {
+        $this->actingAsUser()
+            ->getJson('/api/v1/user/socials')
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonStructure(['data', 'links', 'meta']);
+    }
+
+    #[Test]
+    #[TestDox('按 provider 过滤第三方绑定')]
+    public function socials_can_be_filtered_by_provider(): void
+    {
+        Social::create([
+            'user_id' => $this->user->id,
+            'user_type' => 'user',
+            'provider' => SocialProvider::WECHAT_MP,
+            'openid' => 'openid_wechat_111',
+        ]);
+        Social::create([
+            'user_id' => $this->user->id,
+            'user_type' => 'user',
+            'provider' => SocialProvider::APPLE,
+            'openid' => 'openid_apple_222',
+        ]);
+
+        $this->actingAsUser()
+            ->getJson('/api/v1/user/socials?provider=apple')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.provider.value', SocialProvider::APPLE->value);
+    }
+
+    #[Test]
+    #[TestDox('只能查询到当前登录用户本人的绑定记录')]
+    public function socials_only_returns_current_user_bindings(): void
+    {
+        $other = User::factory()->create();
+
+        Social::create([
+            'user_id' => $this->user->id,
+            'user_type' => 'user',
+            'provider' => SocialProvider::WECHAT_MP,
+            'openid' => 'openid_self_11111',
+        ]);
+        Social::create([
+            'user_id' => $other->id,
+            'user_type' => 'user',
+            'provider' => SocialProvider::WECHAT_MP,
+            'openid' => 'openid_other_222',
+        ]);
+
+        $this->actingAsUser()
+            ->getJson('/api/v1/user/socials')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.openid_masked', 'open****11');
+    }
+
+    #[Test]
     #[TestDox('注销账户返回 204 且软删除')]
     public function authenticated_user_can_destroy_account(): void
     {
@@ -391,6 +488,7 @@ class UserControllerTest extends TestCase
             '获取登录历史' => ['getJson', '/api/v1/user/login-histories'],
             '获取积分记录' => ['getJson', '/api/v1/user/points'],
             '获取金币记录' => ['getJson', '/api/v1/user/coins'],
+            '获取第三方绑定' => ['getJson', '/api/v1/user/socials'],
             '注销账户' => ['deleteJson', '/api/v1/user'],
         ];
     }

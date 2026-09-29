@@ -18,6 +18,7 @@ use App\Http\Requests\Api\V1\User\ModifyUsernameRequest;
 use App\Http\Resources\Api\V1\CoinResource;
 use App\Http\Resources\Api\V1\LoginHistoryResource;
 use App\Http\Resources\Api\V1\PointResource;
+use App\Http\Resources\Api\V1\SocialResource;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -164,6 +165,23 @@ class UserController extends Controller
         $items = $request->user()->coins()->orderByDesc('id')->paginate(per_page($request));
 
         return CoinResource::collection($items);
+    }
+
+    /**
+     * 获取当前用户绑定的第三方社交账号列表
+     *
+     * 仅返回当前登录用户本人的绑定记录，openid/unionid 已在资源层脱敏。
+     * 可通过 `provider` 查询参数按渠道过滤。
+     */
+    public function socials(Request $request): AnonymousResourceCollection
+    {
+        $query = $request->user()->socials();
+
+        if ($provider = $request->query('provider')) {
+            $query->where('provider', $provider);
+        }
+
+        return SocialResource::collection($query->paginate(per_page($request)));
     }
 
     /**

@@ -147,6 +147,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->get('login-histories', [\App\Http\Controllers\Api\V1\UserController::class, 'loginHistories'])->name('login_histories'); // 获取登录历史
         $registrar->get('points', [\App\Http\Controllers\Api\V1\UserController::class, 'points'])->name('points'); // 获取用户积分记录
         $registrar->get('coins', [\App\Http\Controllers\Api\V1\UserController::class, 'coins'])->name('coins'); // 获取用户金币记录
+        $registrar->get('socials', [\App\Http\Controllers\Api\V1\UserController::class, 'socials'])->name('socials'); // 获取当前用户绑定的第三方账号列表
         $registrar->delete('', [\App\Http\Controllers\Api\V1\UserController::class, 'destroy'])->name('destroy'); // 注销并删除自己的账户
 
         /**
