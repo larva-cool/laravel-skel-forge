@@ -176,7 +176,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 公告 | `/api/v1/announcements` | 公告公开列表与详情（无需认证，仅已发布内容） |
 | 通知 | `/api/v1/notifications` | 客户端通知列表、未读数、已读 |
 | 地址 | `/api/v1/addresses` | 收货地址管理 |
-| 反馈 | `/api/v1/feedbacks` | 用户提交反馈 |
+| 反馈 | `/api/v1/user/feedbacks` | 提交反馈、我的反馈列表（均需登录，提交成功返回反馈单号） |
 | 微信 | `/api/v1/wechat` | 微信公众号与小程序绑定 |
 
 ## 队列与定时任务
