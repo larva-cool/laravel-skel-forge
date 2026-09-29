@@ -44,6 +44,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -280,9 +281,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * 最新实名认证记录（多态一对一）
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphOne<IdentityVerification>
+     * @return MorphOne<IdentityVerification>
      */
-    public function latestIdentity()
+    public function latestIdentity(): MorphOne
     {
         return $this->morphOne(IdentityVerification::class, 'verifiable')
             ->orderByDesc('id');
