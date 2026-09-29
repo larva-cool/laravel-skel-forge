@@ -29,7 +29,7 @@ class UserInfoResource extends JsonResource
     {
         return [
             'user_id' => $this->id,
-            'user_name' => $this->username,
+            'user_name' => $this->username ?? '',
             'email' => $this->email ?? '',
             'phone' => $this->phone ?? '',
             'avatar' => $this->avatar,
