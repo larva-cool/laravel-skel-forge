@@ -73,7 +73,7 @@ class WechatController extends Controller
             Log::warning($e->getMessage(), $e->getTrace());
         }
 
-        return response()->json(['error' => 'Unauthorized'], 401);
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
 
     /**
