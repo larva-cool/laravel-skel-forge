@@ -33,6 +33,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         // $middleware->authenticateSessions();
         $middleware->throttleApi(redis: false);
+        // 允许同站请求
+        $middleware->preventRequestForgery(allowSameSite: true);
         $middleware->alias([
             'abilities' => Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
             'ability' => Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
