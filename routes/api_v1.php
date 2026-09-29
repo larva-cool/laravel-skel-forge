@@ -131,9 +131,9 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->apiResource('address', \App\Http\Controllers\Api\V1\User\AddressController::class); // 收货地址
 
         /**
-         * 用户反馈（公开提交，登录用户可查看自己的反馈）
+         * 用户反馈（需登录，提交与查看均绑定当前用户）
          */
-        $registrar->post('feedbacks', [\App\Http\Controllers\Api\V1\User\FeedbackController::class, 'store'])->name('feedbacks.store'); // 提交反馈
+        $registrar->post('feedbacks', [\App\Http\Controllers\Api\V1\User\FeedbackController::class, 'store'])->name('feedbacks.store'); // 提交反馈（需登录）
         $registrar->get('feedbacks/my', [\App\Http\Controllers\Api\V1\User\FeedbackController::class, 'my'])->name('feedbacks.my'); // 我的反馈列表（需登录）
 
         $registrar->get('', [\App\Http\Controllers\Api\V1\UserController::class, 'baseProfile'])->name('profile'); // 获取基本信息
