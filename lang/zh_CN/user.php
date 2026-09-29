@@ -33,6 +33,7 @@ return [
     'username_modification_completed' => '用户名修改完成',
     'email_modification_completed' => '邮箱修改完成',
     'phone_modification_completed' => '手机号修改完成',
+    'avatar_modification_completed' => '头像修改完成',
     'password_reset_complete' => '密码修改完成',
     'send_complete' => '发送完成',
 

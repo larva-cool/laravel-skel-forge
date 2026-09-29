@@ -34,6 +34,11 @@ abstract class UploadRequest extends FormRequest
     protected ?string $storageDisk = null;
 
     /**
+     * 上传文件的表单字段名
+     */
+    protected string $fileField = 'file';
+
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
@@ -58,13 +63,13 @@ abstract class UploadRequest extends FormRequest
     public function handleUpload(): array
     {
         /** @var UploadedFile $file */
-        $file = $this->file('file');
+        $file = $this->file($this->fileField);
         $fileName = $this->generateFileName($file);
         $filePath = $this->storeFile($file, $fileName);
 
         if ($filePath === false) {
             throw ValidationException::withMessages([
-                'file' => __('system.upload_failed'),
+                $this->fileField => __('system.upload_failed'),
             ]);
         }
 

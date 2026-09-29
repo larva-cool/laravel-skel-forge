@@ -11,8 +11,10 @@ use App\Http\Controllers\Api\V1\UserController;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -101,6 +103,62 @@ class UserControllerTest extends TestCase
             ->postJson('/api/v1/user/profile', ['website' => 'not-a-url'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['website']);
+    }
+
+    #[Test]
+    #[TestDox('修改头像成功并转换为 webp 落盘')]
+    public function authenticated_user_can_modify_avatar(): void
+    {
+        Storage::fake('public');
+        settings()->set('upload.storage', 'public');
+
+        $paddedId = str_pad((string) $this->user->id, 9, '0', STR_PAD_LEFT);
+        $expectedPath = 'avatar/'.substr($paddedId, 0, 3).'/'.substr($paddedId, 3, 4).'/'.$this->user->id.'.webp';
+
+        $this->actingAsUser()
+            ->post('/api/v1/user/avatar', [
+                'avatar' => UploadedFile::fake()->image('avatar.jpg', 500, 500),
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', __('user.avatar_modification_completed'))
+            ->assertJsonPath('path', $expectedPath)
+            ->assertJsonPath('avatar', $expectedPath);
+
+        Storage::disk('public')->assertExists($expectedPath);
+        // RIFF 为 webp 文件头，证明图片已完成格式转换
+        $this->assertSame('RIFF', substr(Storage::disk('public')->get($expectedPath), 0, 4));
+        $this->assertSame($expectedPath, $this->user->fresh()->avatar);
+        $this->assertDatabaseHas('attachments', [
+            'path' => $expectedPath,
+            'uploader_id' => $this->user->id,
+            'mime_type' => 'image/webp',
+        ]);
+    }
+
+    #[Test]
+    #[TestDox('修改头像未上传文件返回 422')]
+    public function modify_avatar_without_file(): void
+    {
+        $this->actingAsUser()
+            ->post('/api/v1/user/avatar')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['avatar']);
+
+        $this->assertNull($this->user->fresh()->avatar);
+    }
+
+    #[Test]
+    #[TestDox('修改头像上传非图片文件返回 422')]
+    public function modify_avatar_with_non_image_file(): void
+    {
+        $this->actingAsUser()
+            ->post('/api/v1/user/avatar', [
+                'avatar' => UploadedFile::fake()->create('avatar.txt', 100, 'text/plain'),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['avatar']);
+
+        $this->assertNull($this->user->fresh()->avatar);
     }
 
     #[Test]
@@ -323,6 +381,7 @@ class UserControllerTest extends TestCase
             '修改用户名' => ['postJson', '/api/v1/user/username'],
             '修改邮箱' => ['postJson', '/api/v1/user/email'],
             '修改手机号' => ['postJson', '/api/v1/user/phone'],
+            '修改头像' => ['postJson', '/api/v1/user/avatar'],
             '修改密码' => ['postJson', '/api/v1/user/password'],
             '发送验证邮件' => ['postJson', '/api/v1/user/verification-mail'],
             '获取登录历史' => ['getJson', '/api/v1/user/login-histories'],

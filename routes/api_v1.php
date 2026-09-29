@@ -141,7 +141,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->post('username', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyUsername'])->name('modify_username'); // 修改账号
         $registrar->post('email', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyEMail'])->name('modify_email'); // 修改邮箱
         $registrar->post('phone', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyPhone'])->name('modify_phone'); // 修改手机号码
-        // $registrar->post('avatar', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyAvatar'])->name('modify_avatar'); // 修改头像
+        $registrar->post('avatar', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyAvatar'])->name('modify_avatar'); // 修改头像
         $registrar->post('password', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyPassword'])->name('modify_password'); // 修改密码
         $registrar->post('verification-mail', [\App\Http\Controllers\Api\V1\UserController::class, 'sendVerificationMail'])->name('send_verification_mail'); // 发送验证邮件
         $registrar->get('login-histories', [\App\Http\Controllers\Api\V1\UserController::class, 'loginHistories'])->name('login_histories'); // 获取登录历史

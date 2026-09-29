@@ -33,6 +33,7 @@ return [
     'username_modification_completed' => 'Username modification completed.',
     'email_modification_completed' => 'Email modification completed.',
     'phone_modification_completed' => 'Phone number modification completed.',
+    'avatar_modification_completed' => 'Avatar modification completed.',
     'password_reset_complete' => 'Password modification completed.',
     'send_complete' => 'Sent successfully.',
 

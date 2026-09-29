@@ -9,6 +9,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Events\User\UserProfileUpdated;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\User\ModifyAvatarRequest;
 use App\Http\Requests\Api\V1\User\ModifyMailRequest;
 use App\Http\Requests\Api\V1\User\ModifyPasswordRequest;
 use App\Http\Requests\Api\V1\User\ModifyPhoneRequest;
@@ -93,6 +94,24 @@ class UserController extends Controller
         UserProfileUpdated::dispatch($user);
 
         return new UserResource($user);
+    }
+
+    /**
+     * 修改头像
+     */
+    public function modifyAvatar(ModifyAvatarRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $upload = $request->handleUpload();
+
+        $user->update(['avatar' => $upload['file_path']]);
+
+        return response()->json([
+            'message' => __('user.avatar_modification_completed'),
+            'path' => $upload['file_path'],
+            'avatar' => $user->refresh()->avatar,
+        ]);
     }
 
     /**
