@@ -26,8 +26,7 @@ class FeedbackController extends Controller
      */
     public function __construct()
     {
-        // 用户反馈接口允许游客提交，若已登录则自动绑定用户
-        $this->middleware('auth:sanctum')->only(['my']);
+        $this->middleware('auth:sanctum');
     }
 
     /**
