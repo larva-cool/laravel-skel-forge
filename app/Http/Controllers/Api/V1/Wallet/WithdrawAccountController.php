@@ -68,7 +68,7 @@ class WithdrawAccountController extends Controller
             ->exists();
 
         if ($exists) {
-            throw ValidationException::withMessages(['account_no' => '该收款账号已绑定']);
+            throw ValidationException::withMessages(['account_no' => __('user.withdraw_account_bound')]);
         }
 
         $account = $user->withdrawAccounts()->create($data);

@@ -68,7 +68,7 @@ class WithdrawController extends Controller
         $account = WithdrawAccount::find($data['withdraw_account_id']);
 
         if (! $account) {
-            throw ValidationException::withMessages(['withdraw_account_id' => '收款账户不存在']);
+            throw ValidationException::withMessages(['withdraw_account_id' => __('user.withdraw_account_not_found')]);
         }
 
         $withdraw = $this->withdrawService->submit(

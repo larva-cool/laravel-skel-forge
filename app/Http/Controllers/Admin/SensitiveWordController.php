@@ -169,7 +169,7 @@ class SensitiveWordController extends Controller
         $service->refreshDict();
 
         return response()->json([
-            'message' => '字典已刷新',
+            'message' => __('admin.sensitive_dict_refreshed'),
             'total' => SensitiveWord::enabled()->count(),
         ]);
     }

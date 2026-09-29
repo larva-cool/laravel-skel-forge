@@ -80,4 +80,42 @@ return [
     'debug_recording_paused' => '已暂停记录',
     'debug_recording_resumed' => '已恢复记录',
     'debug_clear_success' => '调试记录已清空',
+
+    // AI 聊天
+    'chat_conversation_not_found' => '会话不存在',
+
+    // 敏感词管理
+    'sensitive_dict_refreshed' => '字典已刷新',
+
+    // 任务中心
+    'task_group_has_tasks' => '该分组下存在任务，无法删除',
+
+    // 开放平台
+    'open_account_token_rotated' => '令牌已轮换，旧令牌已失效，请妥善保管新令牌。',
+
+    // 用户余额调整
+    'balance_adjust_recharge' => '后台充值',
+    'balance_adjust_deduct' => '后台扣减',
+
+    // 仪表盘
+    'dashboard_default_username' => '用户:id',
+
+    // 通用源类型选项
+    'source_type_user' => '用户',
+    'source_type_admin' => '管理员',
+    'source_type_comment' => '评论',
+    'source_type_point' => '积分记录',
+
+    // 系统设置分组
+    'setting_group_system' => '基本信息',
+    'setting_group_admin' => '后台设置',
+    'setting_group_sms_captcha' => '短信设置',
+    'setting_group_email_captcha' => '邮件设置',
+    'setting_group_user' => '会员设置',
+    'setting_group_upload' => '上传设置',
+    'setting_group_schedule' => '调度设置',
+    'setting_group_openai' => 'OpenAI 配置',
+    'setting_group_broadcast' => '点播设置',
+    'setting_group_wallet' => '钱包设置',
+    'setting_group_password' => '密码设置',
 ];

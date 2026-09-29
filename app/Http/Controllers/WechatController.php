@@ -178,7 +178,7 @@ class WechatController extends Controller
         });
 
         $server->with(function (Message $message, \Closure $next) {
-            return '[Doge]系统繁忙，请稍后再试...';
+            return __('system.wechat_fallback_busy');
         });
 
         return $server->serve();

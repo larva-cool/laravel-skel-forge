@@ -141,7 +141,7 @@ class DashboardController extends Controller
             ->get(['id', 'username', 'name', 'avatar', 'created_at'])
             ->map(fn (User $user) => [
                 'id' => $user->id,
-                'username' => $user->username ?? $user->name ?? '用户'.$user->id,
+                'username' => $user->username ?? $user->name ?? __('admin.dashboard_default_username', ['id' => $user->id]),
                 'avatar' => $user->avatar,
                 'created_at' => $user->created_at?->toDateTimeString(),
             ])

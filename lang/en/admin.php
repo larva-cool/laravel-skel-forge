@@ -80,4 +80,42 @@ return [
     'debug_recording_paused' => 'Recording paused.',
     'debug_recording_resumed' => 'Recording resumed.',
     'debug_clear_success' => 'Debug entries cleared.',
+
+    // AI chat
+    'chat_conversation_not_found' => 'Conversation not found.',
+
+    // Sensitive words
+    'sensitive_dict_refreshed' => 'Sensitive word dictionary refreshed.',
+
+    // Task center
+    'task_group_has_tasks' => 'Tasks exist under this group and cannot be deleted.',
+
+    // Open platform
+    'open_account_token_rotated' => 'Token rotated. The previous token has been revoked. Please keep the new token safe.',
+
+    // User balance adjustment
+    'balance_adjust_recharge' => 'Admin recharge',
+    'balance_adjust_deduct' => 'Admin deduction',
+
+    // Dashboard
+    'dashboard_default_username' => 'User :id',
+
+    // Generic source type options
+    'source_type_user' => 'User',
+    'source_type_admin' => 'Administrator',
+    'source_type_comment' => 'Comment',
+    'source_type_point' => 'Points log',
+
+    // Setting groups
+    'setting_group_system' => 'Basic information',
+    'setting_group_admin' => 'Admin settings',
+    'setting_group_sms_captcha' => 'SMS settings',
+    'setting_group_email_captcha' => 'Email settings',
+    'setting_group_user' => 'Member settings',
+    'setting_group_upload' => 'Upload settings',
+    'setting_group_schedule' => 'Schedule settings',
+    'setting_group_openai' => 'OpenAI settings',
+    'setting_group_broadcast' => 'Broadcast settings',
+    'setting_group_wallet' => 'Wallet settings',
+    'setting_group_password' => 'Password settings',
 ];

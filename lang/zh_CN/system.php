@@ -18,6 +18,7 @@ return [
 
     'successful_operation' => '操作成功',
     'server_busy' => '服务器繁忙，请稍后再试',
+    'wechat_fallback_busy' => '[Doge]系统繁忙，请稍后再试...',
     'cache_clear_success' => '缓存清理成功',
     'upload_failed' => '上传失败，请重试',
 

@@ -35,4 +35,16 @@ return [
     'phone_modification_completed' => '手机号修改完成',
     'password_reset_complete' => '密码修改完成',
     'send_complete' => '发送完成',
+
+    // 任务中心
+    'task_not_found_or_inactive' => '任务不存在或已失效',
+    'task_not_claimable' => '任务未完成或已领取',
+    'task_claim_success' => '领取成功',
+
+    // 用户协议
+    'agreement_not_found' => '协议不存在或未发布',
+
+    // 提现账户
+    'withdraw_account_bound' => '该收款账号已绑定',
+    'withdraw_account_not_found' => '收款账户不存在',
 ];

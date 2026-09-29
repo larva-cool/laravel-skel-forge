@@ -54,7 +54,7 @@ class TaskController extends Controller
         $task = Task::find($taskId);
         if (! $task || ! $task->isActive()) {
             throw ValidationException::withMessages([
-                'task_id' => '任务不存在或已失效',
+                'task_id' => __('user.task_not_found_or_inactive'),
             ]);
         }
 
@@ -64,14 +64,14 @@ class TaskController extends Controller
 
         if (! $progress) {
             throw ValidationException::withMessages([
-                'task_id' => '任务未完成或已领取',
+                'task_id' => __('user.task_not_claimable'),
             ]);
         }
 
         $user->refresh();
 
         return response()->json([
-            'message' => '领取成功',
+            'message' => __('user.task_claim_success'),
             'reward_type' => $task->reward_type->value,
             'reward_type_label' => $task->reward_type->label(),
             'reward_amount' => $task->reward_amount,

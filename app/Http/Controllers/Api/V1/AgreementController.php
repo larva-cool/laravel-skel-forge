@@ -29,7 +29,7 @@ class AgreementController extends Controller
         $agreement = Agreement::getPublishedByCategory($category);
 
         if (! $agreement) {
-            return response()->json(['message' => '协议不存在或未发布'], 404);
+            return response()->json(['message' => __('user.agreement_not_found')], 404);
         }
 
         return (new AgreementResource($agreement))

@@ -32,10 +32,10 @@ class CommonController extends Controller
     public function sourceTypes(): JsonResponse
     {
         $labels = [
-            'user' => '用户',
-            'admin' => '管理员',
-            'comment' => '评论',
-            'point' => '积分记录',
+            'user' => __('admin.source_type_user'),
+            'admin' => __('admin.source_type_admin'),
+            'comment' => __('admin.source_type_comment'),
+            'point' => __('admin.source_type_point'),
         ];
 
         $types = [];

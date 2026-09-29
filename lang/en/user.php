@@ -35,4 +35,16 @@ return [
     'phone_modification_completed' => 'Phone number modification completed.',
     'password_reset_complete' => 'Password modification completed.',
     'send_complete' => 'Sent successfully.',
+
+    // Task center
+    'task_not_found_or_inactive' => 'Task does not exist or is inactive.',
+    'task_not_claimable' => 'Task is not completed or the reward has already been claimed.',
+    'task_claim_success' => 'Reward claimed successfully.',
+
+    // Agreements
+    'agreement_not_found' => 'The agreement does not exist or has not been published.',
+
+    // Withdrawal accounts
+    'withdraw_account_bound' => 'This withdrawal account is already bound.',
+    'withdraw_account_not_found' => 'The withdrawal account does not exist.',
 ];

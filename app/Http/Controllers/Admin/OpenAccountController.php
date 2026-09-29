@@ -214,7 +214,7 @@ class OpenAccountController extends Controller
 
         return response()->json([
             'token' => $token->plainTextToken,
-            'message' => '令牌已轮换，旧令牌已失效，请妥善保管新令牌。',
+            'message' => __('admin.open_account_token_rotated'),
         ]);
     }
 }

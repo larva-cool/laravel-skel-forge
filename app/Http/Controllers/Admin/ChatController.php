@@ -67,7 +67,7 @@ class ChatController extends Controller
         $conversation = $user->conversations()->find($conversationId);
 
         if (! $conversation) {
-            throw new NotFoundHttpException('会话不存在');
+            throw new NotFoundHttpException(__('admin.chat_conversation_not_found'));
         }
 
         $messages = $conversation->messages()
@@ -110,7 +110,7 @@ class ChatController extends Controller
         if ($conversationId) {
             $conversation = $user->conversations()->find($conversationId);
             if (! $conversation) {
-                throw new NotFoundHttpException('会话不存在');
+                throw new NotFoundHttpException(__('admin.chat_conversation_not_found'));
             }
             $agent->continue($conversationId, as: $user);
         } else {
@@ -138,7 +138,7 @@ class ChatController extends Controller
 
         $conversation = $user->conversations()->find($conversationId);
         if (! $conversation) {
-            throw new NotFoundHttpException('会话不存在');
+            throw new NotFoundHttpException(__('admin.chat_conversation_not_found'));
         }
 
         $decision = $approved
@@ -163,7 +163,7 @@ class ChatController extends Controller
         $conversation = $user->conversations()->find($conversationId);
 
         if (! $conversation) {
-            throw new NotFoundHttpException('会话不存在');
+            throw new NotFoundHttpException(__('admin.chat_conversation_not_found'));
         }
 
         $conversation->delete();

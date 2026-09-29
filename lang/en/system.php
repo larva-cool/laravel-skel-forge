@@ -18,6 +18,7 @@ return [
 
     'successful_operation' => 'Operation successful.',
     'server_busy' => 'The server is busy, please try again later.',
+    'wechat_fallback_busy' => '[Doge] The system is busy, please try again later...',
     'cache_clear_success' => 'Cache cleared successfully.',
     'upload_failed' => 'Upload failed, please try again.',
 

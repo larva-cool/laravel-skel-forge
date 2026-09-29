@@ -249,24 +249,24 @@ class SettingController extends Controller
     }
 
     /**
-     * 分组中文标题映射
+     * 分组标题映射（语言包 key 后缀与分组 key 一致）
      *
      * @return array<string, string>
      */
     protected function groupTitles(): array
     {
         return [
-            'system' => '基本信息',
-            'admin' => '后台设置',
-            'sms_captcha' => '短信设置',
-            'email_captcha' => '邮件设置',
-            'user' => '会员设置',
-            'upload' => '上传设置',
-            'schedule' => '调度设置',
-            'openai' => 'OpenAI 配置',
-            'broadcast' => '点播设置',
-            'wallet' => '钱包设置',
-            'password' => '密码设置',
+            'system' => __('admin.setting_group_system'),
+            'admin' => __('admin.setting_group_admin'),
+            'sms_captcha' => __('admin.setting_group_sms_captcha'),
+            'email_captcha' => __('admin.setting_group_email_captcha'),
+            'user' => __('admin.setting_group_user'),
+            'upload' => __('admin.setting_group_upload'),
+            'schedule' => __('admin.setting_group_schedule'),
+            'openai' => __('admin.setting_group_openai'),
+            'broadcast' => __('admin.setting_group_broadcast'),
+            'wallet' => __('admin.setting_group_wallet'),
+            'password' => __('admin.setting_group_password'),
         ];
     }
 }

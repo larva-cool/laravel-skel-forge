@@ -262,7 +262,7 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $amount = (int) $data['amount'];
-        $desc = $data['description'] ?? ($amount > 0 ? '后台充值' : '后台扣减');
+        $desc = $data['description'] ?? ($amount > 0 ? __('admin.balance_adjust_recharge') : __('admin.balance_adjust_deduct'));
 
         if ($data['type'] === 'points') {
             $type = $amount > 0 ? PointType::TYPE_ADMIN_RECHARGE : PointType::TYPE_ADMIN_DEDUCT;

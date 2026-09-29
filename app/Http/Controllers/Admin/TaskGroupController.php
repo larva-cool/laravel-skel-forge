@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
@@ -95,7 +96,7 @@ class TaskGroupController extends Controller
     {
         $group = TaskGroup::query()->findOrFail($id);
         if ($group->tasks()->count() > 0) {
-            return response()->json(['message' => '该分组下存在任务，无法删除'], 422);
+            return response()->json(['message' => __('admin.task_group_has_tasks')], 422);
         }
         $group->delete();
 
