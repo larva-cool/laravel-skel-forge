@@ -30,8 +30,8 @@ class FeedbackControllerTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    #[TestDox('游客可提交反馈')]
-    public function guest_can_submit_feedback(): void
+    #[TestDox('游客提交反馈返回未授权')]
+    public function guest_cannot_submit_feedback(): void
     {
         $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '测试反馈',
@@ -41,13 +41,10 @@ class FeedbackControllerTest extends TestCase
             'contact_info' => 'test@example.com',
         ]);
 
-        $response->assertCreated()
-            ->assertJsonStructure(['code', 'message']);
+        $response->assertUnauthorized();
 
-        $this->assertDatabaseHas('feedbacks', [
+        $this->assertDatabaseMissing('feedbacks', [
             'title' => '测试反馈',
-            'type' => 'feature',
-            'user_id' => null,
         ]);
     }
 
@@ -62,6 +59,8 @@ class FeedbackControllerTest extends TestCase
             'title' => '登录用户的反馈',
             'content' => '内容',
             'type' => 'bug',
+            'contact_name' => '测试用户',
+            'contact_info' => 'test@example.com',
         ]);
 
         $response->assertCreated();
@@ -69,6 +68,8 @@ class FeedbackControllerTest extends TestCase
         $feedback = Feedback::query()->where('title', '登录用户的反馈')->first();
         $this->assertNotNull($feedback);
         $this->assertSame($user->id, $feedback->user_id);
+        $this->assertSame('测试用户', $feedback->contact_name);
+        $this->assertSame('test@example.com', $feedback->contact_info);
         $this->assertNotNull($feedback->ip_address);
         $this->assertNotNull($feedback->user_agent);
     }
@@ -77,6 +78,8 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('提交反馈时自动生成 FDB 前缀编号')]
     public function submitted_feedback_has_auto_generated_code(): void
     {
+        $this->actingAsUser();
+
         $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '编号测试',
             'content' => '内容',
@@ -91,6 +94,8 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('缺少必填字段返回验证错误')]
     public function submit_requires_title_content_type(): void
     {
+        $this->actingAsUser();
+
         $response = $this->postJson('/api/v1/user/feedbacks', []);
 
         $response->assertStatus(422)
@@ -101,6 +106,8 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('无效类型返回验证错误')]
     public function invalid_type_returns_validation_error(): void
     {
+        $this->actingAsUser();
+
         $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '测试',
             'content' => '内容',
@@ -138,6 +145,8 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('提交反馈时标题超长返回验证错误')]
     public function title_max_length_validation(): void
     {
+        $this->actingAsUser();
+
         $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => str_repeat('a', 201),
             'content' => '内容',
@@ -152,6 +161,8 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('可携带图片列表提交反馈')]
     public function submit_feedback_with_images(): void
     {
+        $this->actingAsUser();
+
         $images = [
             'https://cdn.example.com/feedback/1.jpg',
             'https://cdn.example.com/feedback/2.jpg',
@@ -175,6 +186,8 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('图片超过最大数量返回验证错误')]
     public function images_exceed_max_limit_returns_validation_error(): void
     {
+        $this->actingAsUser();
+
         $images = array_map(
             fn (int $i) => "https://cdn.example.com/feedback/{$i}.jpg",
             range(1, 10)
@@ -195,6 +208,8 @@ class FeedbackControllerTest extends TestCase
     #[TestDox('图片项不是合法URL返回验证错误')]
     public function invalid_image_url_returns_validation_error(): void
     {
+        $this->actingAsUser();
+
         $response = $this->postJson('/api/v1/user/feedbacks', [
             'title' => '图片URL无效',
             'content' => '内容',
@@ -204,5 +219,16 @@ class FeedbackControllerTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['images.0']);
+    }
+
+    /**
+     * 模拟一个已登录用户，返回用户实例
+     */
+    private function actingAsUser(): User
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        return $user;
     }
 }
