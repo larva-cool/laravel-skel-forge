@@ -10,7 +10,6 @@ namespace Tests\Feature\Admin;
 use App\Http\Controllers\Admin\ReportController;
 use App\Models\Admin\Admin;
 use App\Models\Content\Comment;
-use App\Models\Content\Report;
 use App\Models\User as UserModel;
 use Database\Factories\Content\ReportFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -246,7 +245,8 @@ class ReportControllerIndexTest extends TestCase
     #[TestDox('举报详情快照按 reportable 类型返回（comment 含 content）')]
     public function detail_snapshot_for_comment_contains_content(): void
     {
-        $comment = Comment::factory()->create(['content' => '违规评论内容']);
+        $comment = $this->makeComment();
+        $comment->update(['content' => '违规评论内容']);
         $report = ReportFactory::new()->forTarget($comment)->create();
 
         $response = $this->actingAsAdmin()->getJson("/admin/reports/{$report->id}");
