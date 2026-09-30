@@ -242,14 +242,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * 提交的举报（自身作为举报人）
-     */
-    public function reports(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(\App\Models\Content\Report::class, 'user_id');
-    }
-
-    /**
      * Get the login histories relation.
      */
     public function loginHistories(): MorphMany
