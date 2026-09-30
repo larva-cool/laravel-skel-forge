@@ -76,6 +76,11 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     Route::apiResource('likes', \App\Http\Controllers\Api\V1\Content\LikeController::class)->only(['index', 'store', 'destroy']); // 点赞列表 / 添加点赞 / 取消点赞
 
     /**
+     * 访问记录
+     */
+    Route::post('visits', [\App\Http\Controllers\Api\V1\VisitController::class, 'record'])->name('visits.record'); // 记录一次访问（需登录）
+
+    /**
      * 邀请
      */
     Route::group(['prefix' => 'invite', 'as' => 'invite.'], function (Registrar $registrar) {
@@ -148,6 +153,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->get('points', [\App\Http\Controllers\Api\V1\UserController::class, 'points'])->name('points'); // 获取用户积分记录
         $registrar->get('coins', [\App\Http\Controllers\Api\V1\UserController::class, 'coins'])->name('coins'); // 获取用户金币记录
         $registrar->get('socials', [\App\Http\Controllers\Api\V1\UserController::class, 'socials'])->name('socials'); // 获取当前用户绑定的第三方账号列表
+        $registrar->get('visits', [\App\Http\Controllers\Api\V1\VisitController::class, 'myVisits'])->name('visits'); // 我的访问记录
         $registrar->delete('', [\App\Http\Controllers\Api\V1\UserController::class, 'destroy'])->name('destroy'); // 注销并删除自己的账户
 
         /**
