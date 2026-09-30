@@ -308,6 +308,13 @@ Route::group(['prefix' => 'sensitive-words', 'as' => 'sensitive-words.'], functi
 });
 Route::apiResource('sensitive-words', \App\Http\Controllers\Admin\SensitiveWordController::class);
 
+// 举报管理（运营管理 / 内容安全）
+Route::group(['prefix' => 'reports', 'as' => 'reports.'], function (Registrar $registrar) {
+    $registrar->get('stats', [\App\Http\Controllers\Admin\ReportController::class, 'stats'])->name('stats');
+    $registrar->get('export', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('export');
+});
+Route::apiResource('reports', \App\Http\Controllers\Admin\ReportController::class)->except(['store', 'destroy']);
+
 // 任务分组管理（运营管理）
 Route::group(['prefix' => 'task-groups', 'as' => 'task-groups.'], function (Registrar $registrar) {
     $registrar->get('options', [\App\Http\Controllers\Admin\TaskGroupController::class, 'options'])->name('options');

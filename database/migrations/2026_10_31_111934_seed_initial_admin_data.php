@@ -681,6 +681,22 @@ return new class extends Migration
                         ],
                     ],
                     [
+                        'key' => 'operation.report',
+                        'path' => 'report',
+                        'name' => 'ReportManage',
+                        'component' => '/operation/report',
+                        'title' => '举报管理',
+                        'icon' => 'ri:flag-2-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 5,
+                        'keep_alive' => true,
+                        'permission' => 'reports.index',
+                        'buttons' => [
+                            ['title' => '处理举报', 'permission' => 'reports.edit'],
+                            ['title' => '导出举报', 'permission' => 'reports.export'],
+                        ],
+                    ],
+                    [
                         'key' => 'operation.task',
                         'path' => 'task',
                         'name' => 'TaskManage',
