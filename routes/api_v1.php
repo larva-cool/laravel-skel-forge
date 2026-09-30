@@ -141,6 +141,12 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
         $registrar->post('feedbacks', [\App\Http\Controllers\Api\V1\User\FeedbackController::class, 'store'])->name('feedbacks.store'); // 提交反馈（需登录）
         $registrar->get('feedbacks/my', [\App\Http\Controllers\Api\V1\User\FeedbackController::class, 'my'])->name('feedbacks.my'); // 我的反馈列表（需登录）
 
+        /**
+         * 用户举报（需登录，提交与查看均绑定当前用户）
+         */
+        $registrar->post('reports', [\App\Http\Controllers\Api\V1\ReportController::class, 'store'])->name('reports.store'); // 提交举报
+        $registrar->get('reports/my', [\App\Http\Controllers\Api\V1\ReportController::class, 'index'])->name('reports.index'); // 我的举报列表
+
         $registrar->get('', [\App\Http\Controllers\Api\V1\UserController::class, 'baseProfile'])->name('profile'); // 获取基本信息
         $registrar->post('profile', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyProfile'])->name('modify_profile'); // 修改个人资料
         $registrar->post('username', [\App\Http\Controllers\Api\V1\UserController::class, 'modifyUsername'])->name('modify_username'); // 修改账号
