@@ -151,6 +151,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 反馈管理 | `/admin/feedbacks` | 用户反馈列表、统计、详情、处理、删除，列表可导出 Excel |
 | 实名认证 | `/admin/identity-verifications` | 用户实名认证审核（个人/企业），支持通过/驳回、统计、详情查看证件附件 |
 | 评论管理 | `/admin/comments` | 评论列表（按审核状态/源类型/关键词/用户过滤）、详情（含 IP 与上级评论摘要）、回复链分页查询、审核（通过/驳回/审核中）、删除，列表可导出 Excel |
+| 举报管理 | `/admin/reports` | 举报列表（按状态/分类/对象类型/时间/关键词过滤）、详情（含被举报对象快照）、处理（resolved/rejected + 联动处置动作）、统计、可导出 Excel。联动处置：hide_comment（隐藏评论）/ delete_comment（删除评论）/ freeze_user（冻结用户，可指定天数或永久） |
 | Banner 管理 | `/admin/banners` | 轮播图 CRUD、状态切换、批量排序、展示位置选项（`positions`） |
 | 公告管理 | `/admin/announcements` | 公告 CRUD 与状态流转（草稿/已发布/归档），支持状态切换 |
 | 任务系统 | `/admin/task-groups`、`/admin/tasks`、`/admin/task-logs` | 任务分组 CRUD（含 options/状态切换）、任务 CRUD（6 种任务类型 + 3 种奖励 + 自动/手动领取模式，含状态切换）、任务完成日志（只读，列表/详情，支持任务/奖励类型/关键词/时间筛选） |
@@ -178,6 +179,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 通知 | `/api/v1/notifications` | 客户端通知列表、未读数、已读 |
 | 地址 | `/api/v1/addresses` | 收货地址管理 |
 | 反馈 | `/api/v1/user/feedbacks` | 提交反馈、我的反馈列表（均需登录，提交成功返回反馈单号） |
+| 举报 | `/api/v1/user/reports` | 提交举报（仅基础提交接口，目标类型支持 `comment` / `user`，需登录）与我的举报列表。同一人对同一目标在未结案前不可重复提交（防刷由后端校验，必要时可在网关层加 `throttle`） |
 | 微信 | `/api/v1/wechat` | 微信公众号与小程序绑定 |
 
 ## 队列与定时任务
