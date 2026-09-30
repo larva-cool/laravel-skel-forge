@@ -10,6 +10,7 @@ namespace App\Models\Content;
 use App\Enums\ReviewStatus;
 use App\Models\Model;
 use App\Models\Traits\HasLikeable;
+use App\Models\Traits\HasReportable;
 use App\Models\Traits\HasUser;
 use App\Models\User;
 use App\Observers\CommentObserver;
@@ -55,7 +56,7 @@ use Illuminate\Support\Carbon;
 class Comment extends Model
 {
     /** @use HasFactory<CommentFactory> */
-    use HasFactory, HasLikeable, HasUser;
+    use HasFactory, HasLikeable, HasReportable, HasUser;
 
     // 时间定义
     public const UPDATED_AT = null;

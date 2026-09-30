@@ -21,6 +21,7 @@ use App\Models\System\LoginHistory;
 use App\Models\System\Social;
 use App\Models\Traits\DateTimeFormatter;
 use App\Models\Traits\HasInvitation;
+use App\Models\Traits\HasReportable;
 use App\Models\Traits\HasTaskProgress;
 use App\Models\Traits\HasWalletBalance;
 use App\Models\User\IdentityVerification;
@@ -117,6 +118,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasApiTokens, HasFactory, Notifiable, Searchable, SoftDeletes;
 
     use HasInvitation;
+    use HasReportable;
     use HasTaskProgress;
     use HasWalletBalance;
 
