@@ -71,7 +71,7 @@ class ReportService
      * @param  array{
      *     status: string,
      *     remark: ?string,
-     *     actions: array<int, array{type: string, duration?: int, reason?: string}>
+     *     actions: array<int, array{type: string, reason?: string}>
      * }  $payload
      */
     public function process(Report $report, Admin $admin, array $payload): Report
@@ -108,7 +108,7 @@ class ReportService
             match ($type) {
                 'hide_comment' => $this->hideComment($report),
                 'delete_comment' => $this->deleteComment($report),
-                'freeze_user' => $this->freezeUser($report, (int) ($action['duration'] ?? 0)),
+                'freeze_user' => $this->freezeUser($report),
                 default => null,
             };
         }
@@ -142,9 +142,8 @@ class ReportService
      * 处置：冻结被举报用户
      *
      * 设计为永久冻结（仅修改 status=FROZEN），需由管理员人工解冻（UserController::toggleStatus）。
-     * `duration` 字段仅作为审计日志记录保留，不影响任何字段值（用户表未保存冻结截止时间）。
      */
-    protected function freezeUser(Report $report, int $durationDays = 0): void
+    protected function freezeUser(Report $report): void
     {
         $user = null;
         if ($report->reportable instanceof User) {

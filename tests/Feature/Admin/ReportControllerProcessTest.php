@@ -174,7 +174,7 @@ class ReportControllerProcessTest extends TestCase
 
         $this->actingAsAdmin()->patchJson("/admin/reports/{$report->id}", [
             'status' => 'resolved',
-            'actions' => [['type' => 'freeze_user', 'duration' => 7]],
+            'actions' => [['type' => 'freeze_user']],
         ])->assertOk();
 
         $target->refresh();
@@ -182,19 +182,22 @@ class ReportControllerProcessTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('联动处置 freeze_user duration 仅作为审计日志备注，不影响 status')]
-    public function action_freeze_user_duration_is_audit_only(): void
+    #[TestDox('联动处置 freeze_user 协议不含 duration 字段，客户端传入会被剥离')]
+    public function action_freeze_user_duration_is_stripped(): void
     {
         $target = UserModel::factory()->create();
         $report = ReportFactory::new()->forTarget($target)->create();
 
         $this->actingAsAdmin()->patchJson("/admin/reports/{$report->id}", [
             'status' => 'resolved',
-            'actions' => [['type' => 'freeze_user', 'duration' => 0]],
+            'actions' => [['type' => 'freeze_user', 'duration' => 7]],
         ])->assertOk();
 
         $target->refresh();
         $this->assertSame(UserStatus::FROZEN, $target->status);
+
+        $persisted = Report::query()->find($report->id);
+        $this->assertArrayNotHasKey('duration', $persisted->process_actions[0]);
     }
 
     #[Test]
@@ -207,7 +210,7 @@ class ReportControllerProcessTest extends TestCase
 
         $this->actingAsAdmin()->patchJson("/admin/reports/{$report->id}", [
             'status' => 'resolved',
-            'actions' => [['type' => 'freeze_user', 'duration' => 3]],
+            'actions' => [['type' => 'freeze_user']],
         ])->assertOk();
 
         $author->refresh();
@@ -242,7 +245,7 @@ class ReportControllerProcessTest extends TestCase
             'status' => 'resolved',
             'actions' => [
                 ['type' => 'hide_comment'],
-                ['type' => 'freeze_user', 'duration' => 7],
+                ['type' => 'freeze_user'],
             ],
         ])->assertOk();
 
@@ -292,7 +295,7 @@ class ReportControllerProcessTest extends TestCase
             'status' => 'resolved',
             'actions' => [
                 ['type' => 'hide_comment'],
-                ['type' => 'freeze_user', 'duration' => 30],
+                ['type' => 'freeze_user'],
             ],
         ])->assertOk();
 
@@ -300,6 +303,6 @@ class ReportControllerProcessTest extends TestCase
         $this->assertCount(2, $persisted->process_actions);
         $this->assertSame('hide_comment', $persisted->process_actions[0]['type']);
         $this->assertSame('freeze_user', $persisted->process_actions[1]['type']);
-        $this->assertSame(30, $persisted->process_actions[1]['duration']);
+        $this->assertArrayNotHasKey('duration', $persisted->process_actions[1]);
     }
 }

@@ -34,7 +34,6 @@ class ReportProcessRequest extends FormRequest
             'remark' => ['nullable', 'string', 'max:500'],
             'actions' => ['nullable', 'array'],
             'actions.*.type' => ['required_with:actions', 'string', 'in:hide_comment,delete_comment,freeze_user'],
-            'actions.*.duration' => ['nullable', 'integer', 'min:0', 'max:365'],
             'actions.*.reason' => ['nullable', 'string', 'max:200'],
         ];
     }
