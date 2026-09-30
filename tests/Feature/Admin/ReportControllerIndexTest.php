@@ -214,9 +214,20 @@ class ReportControllerIndexTest extends TestCase
     public function stats_returns_four_fields(): void
     {
         $comment = $this->makeComment();
-        ReportFactory::new()->forTarget($comment)->count(2)->create(['status' => 'pending']);
-        ReportFactory::new()->forTarget($comment)->count(3)->create(['status' => 'resolved']);
-        ReportFactory::new()->forTarget($comment)->count(1)->create(['status' => 'rejected']);
+        // 历史数据（非今日 created_at）
+        ReportFactory::new()->forTarget($comment)->count(2)->create([
+            'status' => 'pending',
+            'created_at' => now()->subDays(3),
+        ]);
+        ReportFactory::new()->forTarget($comment)->count(3)->create([
+            'status' => 'resolved',
+            'created_at' => now()->subDays(2),
+        ]);
+        ReportFactory::new()->forTarget($comment)->count(1)->create([
+            'status' => 'rejected',
+            'created_at' => now()->subDays(1),
+        ]);
+        // 今日新增 pending
         ReportFactory::new()->forTarget($comment)->count(1)->create([
             'status' => 'pending',
             'created_at' => now(),
@@ -226,9 +237,9 @@ class ReportControllerIndexTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('total', 7)
-            ->assertJsonPath('pending', 3)  // 2 pending + 1 today_pending
+            ->assertJsonPath('pending', 3)
             ->assertJsonPath('today', 1)
-            ->assertJsonPath('closed', 4);  // 3 resolved + 1 rejected
+            ->assertJsonPath('closed', 4);
     }
 
     #[Test]

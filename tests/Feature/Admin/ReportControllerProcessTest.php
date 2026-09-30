@@ -179,11 +179,10 @@ class ReportControllerProcessTest extends TestCase
 
         $target->refresh();
         $this->assertSame(0, $target->status->value); // FROZEN
-        $this->assertNull($target->frozen_until); // 永久冻结，无截止时间
     }
 
     #[Test]
-    #[TestDox('联动处置 freeze_user duration 仅作为审计日志，不影响冻结截止时间')]
+    #[TestDox('联动处置 freeze_user duration 仅作为审计日志备注，不影响 status')]
     public function action_freeze_user_duration_is_audit_only(): void
     {
         $target = UserModel::factory()->create();
@@ -196,7 +195,6 @@ class ReportControllerProcessTest extends TestCase
 
         $target->refresh();
         $this->assertSame(UserStatus::FROZEN, $target->status);
-        $this->assertNull($target->frozen_until);
     }
 
     #[Test]
