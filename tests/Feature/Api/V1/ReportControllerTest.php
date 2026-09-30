@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\V1\ReportController;
 use App\Models\Content\Comment;
 use App\Models\Content\Report;
 use App\Models\User as UserModel;
-use Database\Factories\Content\CommentFactory;
 use Database\Factories\Content\ReportFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -76,7 +75,9 @@ class ReportControllerTest extends TestCase
             'evidence' => ['https://cdn.example.com/a.jpg'],
         ]);
 
-        $response->assertCreated();
+        $response->assertCreated()
+            ->assertJsonPath('target_type', $comment->getMorphClass())
+            ->assertJsonPath('target_id', $comment->id);
 
         $report = Report::query()->first();
         $this->assertNotNull($report);
@@ -242,7 +243,9 @@ class ReportControllerTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('meta.total', 1)
-            ->assertJsonPath('data.0.id', Report::query()->where('user_id', $this->user->id)->first()->id);
+            ->assertJsonPath('data.0.id', Report::query()->where('user_id', $this->user->id)->first()->id)
+            ->assertJsonPath('data.0.target_type', $comment->getMorphClass())
+            ->assertJsonPath('data.0.target_id', $comment->id);
     }
 
     #[Test]

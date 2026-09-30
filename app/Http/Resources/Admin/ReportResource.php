@@ -12,6 +12,7 @@ use App\Models\Content\Comment;
 use App\Models\Content\Report;
 use App\Models\System\Dict;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
@@ -42,7 +43,7 @@ class ReportResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'username' => $this->whenLoaded('user', fn () => $this->user?->username),
-                'name' => $this->whenLoaded('user', fn () => $this->user?->name),
+            'name' => $this->whenLoaded('user', fn () => $this->user?->name),
             // User 模型当前未提供 nickname 字段，列表形态仅暴露 username
             'category' => $this->category,
             'category_label' => $categoryItem['label'] ?? $this->category,
@@ -74,15 +75,16 @@ class ReportResource extends JsonResource
         if (! $type) {
             return '';
         }
-        $alias = (new Report)->getMorphClass();
-        if ($type === Comment::class || str_ends_with($type, '\\Comment')) {
+        // enforceMorphMap 下 reportable_type 存储的是 morph alias（comment / user），先解析为类名再判断
+        $class = Relation::getMorphedModel($type) ?: $type;
+        if ($class === Comment::class || str_ends_with($class, '\\Comment')) {
             return '评论';
         }
-        if ($type === User::class || str_ends_with($type, '\\User')) {
+        if ($class === User::class || str_ends_with($class, '\\User')) {
             return '用户';
         }
 
-        return class_basename($type);
+        return class_basename($class);
     }
 
     /**

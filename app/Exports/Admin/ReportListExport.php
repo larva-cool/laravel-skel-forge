@@ -12,6 +12,7 @@ use App\Exports\AbstractExport;
 use App\Models\Content\Comment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * 后台举报列表导出
@@ -77,14 +78,19 @@ class ReportListExport extends AbstractExport
 
     private function humanType(?string $type): string
     {
-        if ($type === Comment::class || str_ends_with((string) $type, '\\Comment')) {
+        if (! $type) {
+            return '';
+        }
+        // enforceMorphMap 下 reportable_type 存储的是 morph alias（comment / user），先解析为类名再判断
+        $class = Relation::getMorphedModel($type) ?: $type;
+        if ($class === Comment::class || str_ends_with($class, '\\Comment')) {
             return '评论';
         }
-        if ($type === User::class || str_ends_with((string) $type, '\\User')) {
+        if ($class === User::class || str_ends_with($class, '\\User')) {
             return '用户';
         }
 
-        return (string) ($type ?? '');
+        return class_basename($class);
     }
 
     private function categoryLabel(?string $value): string

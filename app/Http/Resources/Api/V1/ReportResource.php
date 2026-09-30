@@ -10,6 +10,7 @@ namespace App\Http\Resources\Api\V1;
 use App\Enums\CacheKey;
 use App\Models\Content\Report;
 use App\Models\System\Dict;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
@@ -49,7 +50,9 @@ class ReportResource extends JsonResource
     }
 
     /**
-     * 将 reportable_type 全限定类名转回 alias（comment / user）
+     * 返回被举报对象 morph alias（comment / user）
+     *
+     * enforceMorphMap 下 reportable_type 存储的本身就是 alias；兼容历史全限定类名存储时反查 alias。
      */
     protected function targetAlias(): ?string
     {
@@ -57,9 +60,16 @@ class ReportResource extends JsonResource
         if (! $type) {
             return null;
         }
-        $alias = array_search($type, \Illuminate\Database\Eloquent\Relations\Relation::morphMap(), true);
 
-        return $alias !== false ? (string) $alias : null;
+        // 本身就是 morph alias（enforceMorphMap 下的常态）
+        if (Relation::getMorphedModel($type)) {
+            return $type;
+        }
+
+        // 兼容全限定类名存储：类名反查 alias
+        $alias = array_search($type, Relation::morphMap(), true);
+
+        return $alias !== false ? (string) $alias : $type;
     }
 
     /**

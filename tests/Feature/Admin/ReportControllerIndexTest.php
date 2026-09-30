@@ -94,8 +94,8 @@ class ReportControllerIndexTest extends TestCase
         $this->assertArrayHasKey('category_label_type', $item);
         $this->assertArrayHasKey('status_label', $item);
         $this->assertArrayHasKey('status_label_type', $item);
-        $this->assertArrayHasKey('reportable_type', $item);
-        $this->assertArrayHasKey('reportable_type_label', $item);
+        $this->assertSame($comment->getMorphClass(), $item['reportable_type']);
+        $this->assertSame('评论', $item['reportable_type_label']);
     }
 
     #[Test]
