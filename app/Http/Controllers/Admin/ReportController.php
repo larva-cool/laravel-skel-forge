@@ -77,7 +77,11 @@ class ReportController extends Controller
             abort(422, '该举报已结案，不能再次处理');
         }
 
-        $newStatus = ReportStatus::from($request->validated()['status']);
+        // 仅允许 resolved / rejected（不允许 pending / processing 通过此端点写回）
+        $newStatus = ReportStatus::tryFrom($request->validated()['status']);
+        if (! $newStatus || ! in_array($newStatus, [ReportStatus::RESOLVED, ReportStatus::REJECTED], true)) {
+            abort(422, '处理结果必须为 resolved 或 rejected');
+        }
 
         // 默认把状态先推进到 processing，避免多人重复操作
         if ($report->status === ReportStatus::PENDING) {

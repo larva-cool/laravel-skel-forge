@@ -17,4 +17,5 @@ return [
     'invite_code' => \App\Models\Invite\InviteCode::class,
     'task' => \App\Models\Task\Task::class,
     'open_account' => \App\Models\Open\OpenAccount::class,
+    'report' => \App\Models\Content\Report::class,
 ];

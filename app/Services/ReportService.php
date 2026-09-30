@@ -16,6 +16,7 @@ use App\Models\Content\Report;
 use App\Models\Model;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -31,13 +32,15 @@ class ReportService
     /**
      * 提交举报（C 端用户）
      *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user  举报人
+     * @param  EloquentModel  $target  被举报对象
      * @param  array<string, mixed>  $data  至少包含 category / reason / evidence
      */
-    public function submit(User $user, Model $target, array $data): Report
+    public function submit($user, EloquentModel $target, array $data): Report
     {
         // 防止同一用户对同一对象的多次举报（待处理 / 处理中）
         $exists = Report::query()
-            ->where('user_id', $user->id)
+            ->where('user_id', $user->getAuthIdentifier())
             ->where('reportable_id', $target->getKey())
             ->where('reportable_type', $target->getMorphClass())
             ->whereIn('status', [ReportStatus::PENDING->value, ReportStatus::PROCESSING->value])
@@ -48,11 +51,17 @@ class ReportService
         }
 
         return DB::transaction(function () use ($user, $target, $data) {
-            return $user->reports()->create(array_merge([
-                'reportable_id' => $target->getKey(),
-                'reportable_type' => $target->getMorphClass(),
-                'status' => ReportStatus::PENDING,
-            ], $data));
+            $report = new Report;
+            $report->user_id = (int) $user->getAuthIdentifier();
+            $report->reportable_id = $target->getKey();
+            $report->reportable_type = $target->getMorphClass();
+            $report->status = ReportStatus::PENDING;
+            $report->category = (string) ($data['category'] ?? 'other');
+            $report->reason = $data['reason'] ?? null;
+            $report->evidence = $data['evidence'] ?? null;
+            $report->save();
+
+            return $report;
         });
     }
 
@@ -132,7 +141,8 @@ class ReportService
     /**
      * 处置：冻结被举报用户
      *
-     * @param  int  $durationDays  冻结天数，0 表示永久
+     * 设计为永久冻结（仅修改 status=FROZEN），需由管理员人工解冻（UserController::toggleStatus）。
+     * `duration` 字段仅作为审计日志记录保留，不影响任何字段值（用户表未保存冻结截止时间）。
      */
     protected function freezeUser(Report $report, int $durationDays = 0): void
     {
@@ -146,10 +156,8 @@ class ReportService
             return;
         }
 
-        $frozenUntil = $durationDays > 0 ? Carbon::now()->addDays($durationDays) : null;
         $user->forceFill([
             'status' => UserStatus::FROZEN,
-            'frozen_until' => $frozenUntil,
         ])->saveQuietly();
     }
 
@@ -170,8 +178,7 @@ class ReportService
                 $q->where('reason', 'like', $like)
                     ->orWhere('id', (int) $keyword)
                     ->orWhereHas('user', function (Builder $uq) use ($like) {
-                        $uq->where('username', 'like', $like)
-                            ->orWhere('nickname', 'like', $like);
+                        $uq->where('username', 'like', $like);
                     });
             });
         }

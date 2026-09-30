@@ -42,7 +42,8 @@ class ReportResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'username' => $this->whenLoaded('user', fn () => $this->user?->username),
-            'nickname' => $this->whenLoaded('user', fn () => $this->user?->nickname),
+                'name' => $this->whenLoaded('user', fn () => $this->user?->name),
+            // User 模型当前未提供 nickname 字段，列表形态仅暴露 username
             'category' => $this->category,
             'category_label' => $categoryItem['label'] ?? $this->category,
             'category_label_type' => $categoryItem['label_type'] ?? 'default',
@@ -114,7 +115,8 @@ class ReportResource extends JsonResource
                 'type' => 'user',
                 'id' => $target->id,
                 'username' => $target->username,
-                'nickname' => $target->nickname,
+                'name' => $target->name,
+                // User 模型当前未提供 nickname 字段
                 'avatar' => $target->avatar,
                 'status' => $target->status?->value,
                 'status_label' => $target->status?->label(),
