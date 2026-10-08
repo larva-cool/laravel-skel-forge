@@ -3,6 +3,7 @@
  * This is NOT a freeware, use is subject to license terms.
  */
 
+use Illuminate\Contracts\Routing\Registrar;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -11,6 +12,6 @@ use Illuminate\Support\Facades\Route;
  * Define the version of the interface that conforms to most of the
  * REST ful specification.
  */
-Route::group(['prefix' => 'open', 'as' => 'open.'], function () {
-
+Route::group(['prefix' => 'open', 'as' => 'open.v1.'], function (Registrar $registrar) {
+    $registrar->get('index', [\App\Http\Controllers\Open\V1\MainController::class, 'index'])->name('index');
 });

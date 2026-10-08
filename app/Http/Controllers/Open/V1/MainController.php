@@ -28,7 +28,7 @@ class MainController extends Controller
     /**
      * 默认接口（Open API V1）
      */
-    public function index()
+    public function index(): array
     {
         return ['hello' => 'world'];
     }

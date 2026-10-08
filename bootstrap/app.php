@@ -14,7 +14,10 @@ use Psr\Log\LogLevel;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
+        web: [
+            __DIR__.'/../routes/web.php',
+            __DIR__.'/../routes/open.php'
+        ],
         api: [
             __DIR__.'/../routes/api_v1.php',
             // __DIR__.'/../routes/api_v2.php',
@@ -81,6 +84,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->level(PDOException::class, LogLevel::CRITICAL);
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->is('admin/*') || $request->is('open/*'),
+            fn(Request $request) => $request->is('api/*') || $request->is('admin/*') || $request->is('open/*'),
         );
     })->create();
