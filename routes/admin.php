@@ -203,6 +203,18 @@ Route::group(['prefix' => 'debug', 'as' => 'debug.'], function (Registrar $regis
 Route::get('schedule-logs', [\App\Http\Controllers\Admin\ScheduleLogController::class, 'index'])->name('schedule-logs.index');
 Route::get('schedule-logs/{id}', [\App\Http\Controllers\Admin\ScheduleLogController::class, 'show'])->name('schedule-logs.show');
 
+// 定时任务管理
+Route::group(['prefix' => 'schedules', 'as' => 'schedules.'], function (Registrar $registrar) {
+    $registrar->get('', [\App\Http\Controllers\Admin\ScheduleController::class, 'index'])->name('index');
+    $registrar->get('commands', [\App\Http\Controllers\Admin\ScheduleController::class, 'commands'])->name('commands');
+    $registrar->get('{id}', [\App\Http\Controllers\Admin\ScheduleController::class, 'show'])->name('show');
+    $registrar->post('', [\App\Http\Controllers\Admin\ScheduleController::class, 'store'])->name('store');
+    $registrar->put('{id}', [\App\Http\Controllers\Admin\ScheduleController::class, 'update'])->name('update');
+    $registrar->patch('{id}/toggle', [\App\Http\Controllers\Admin\ScheduleController::class, 'toggle'])->name('toggle');
+    $registrar->post('{id}/execute', [\App\Http\Controllers\Admin\ScheduleController::class, 'execute'])->name('execute');
+    $registrar->delete('{id}', [\App\Http\Controllers\Admin\ScheduleController::class, 'destroy'])->name('destroy');
+});
+
 // 操作审计日志（仅列表、详情，只读）
 Route::group(['prefix' => 'audit-logs', 'as' => 'audit-logs.'], function (Registrar $registrar) {
     $registrar->get('', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('index');

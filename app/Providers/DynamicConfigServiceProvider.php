@@ -7,10 +7,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\System\Schedule;
 use App\Services\SettingManagerService;
+use Illuminate\Console\Scheduling\Schedule as BaseSchedule;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 
@@ -44,6 +47,59 @@ class DynamicConfigServiceProvider extends ServiceProvider
         } catch (\Exception $e) {
             Log::warning($e->getMessage());
         }
+
+        // 注册数据库中的动态定时任务到 Laravel 调度器
+        $this->registerDynamicSchedules();
+    }
+
+    /**
+     * 注册数据库中的动态定时任务
+     *
+     * 从 schedules 表读取启用的任务并注册到 Laravel 调度器。
+     * 执行日志由 ScheduleLogListener 自动记录。
+     */
+    protected function registerDynamicSchedules(): void
+    {
+        $this->app->resolving(BaseSchedule::class, function (BaseSchedule $schedule): void {
+            if (! Schema::hasTable('schedules')) {
+                return;
+            }
+
+            Schedule::query()
+                ->where('status', \App\Enums\ScheduleTaskStatus::ACTIVE)
+                ->each(function (Schedule $task) use ($schedule): void {
+                    if ($task->command === 'custom') {
+                        $event = $schedule->exec($task->command_custom ?? '');
+                    } else {
+                        $event = $schedule->command(
+                            $task->command,
+                            $task->getArguments() + $task->getOptions()
+                        );
+                    }
+
+                    $event->cron($task->expression);
+
+                    if (! empty($task->environments)) {
+                        $event->environments($task->environments);
+                    }
+
+                    if ($task->even_in_maintenance_mode) {
+                        $event->evenInMaintenanceMode();
+                    }
+
+                    if ($task->without_overlapping) {
+                        $event->withoutOverlapping();
+                    }
+
+                    if ($task->run_in_background) {
+                        $event->runInBackground();
+                    }
+
+                    if ($task->on_one_server) {
+                        $event->onOneServer();
+                    }
+                });
+        });
     }
 
     /**
