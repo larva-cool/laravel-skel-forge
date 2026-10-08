@@ -199,16 +199,19 @@ Route::group(['prefix' => 'debug', 'as' => 'debug.'], function (Registrar $regis
     $registrar->put('entries/{id}/resolve', [\App\Http\Controllers\Admin\DebugController::class, 'resolve'])->name('resolve');
 });
 
-// 调度任务日志（仅列表、详情，只读）
-Route::get('schedule-logs', [\App\Http\Controllers\Admin\ScheduleLogController::class, 'index'])->name('schedule-logs.index');
-Route::get('schedule-logs/{id}', [\App\Http\Controllers\Admin\ScheduleLogController::class, 'show'])->name('schedule-logs.show');
-
-// 定时任务管理
+// 定时任务管理（含调度日志）
 Route::group(['prefix' => 'schedules', 'as' => 'schedules.'], function (Registrar $registrar) {
+    // 定时任务 CRUD
     $registrar->get('', [\App\Http\Controllers\Admin\ScheduleController::class, 'index'])->name('index');
     $registrar->get('commands', [\App\Http\Controllers\Admin\ScheduleController::class, 'commands'])->name('commands');
-    $registrar->get('{id}', [\App\Http\Controllers\Admin\ScheduleController::class, 'show'])->name('show');
     $registrar->post('', [\App\Http\Controllers\Admin\ScheduleController::class, 'store'])->name('store');
+
+    // 调度日志（只读，放在 {id} 之前避免路由冲突）
+    $registrar->get('logs', [\App\Http\Controllers\Admin\ScheduleLogController::class, 'index'])->name('logs.index');
+    $registrar->get('logs/{id}', [\App\Http\Controllers\Admin\ScheduleLogController::class, 'show'])->name('logs.show');
+
+    // 定时任务操作（含 {id} 的路由放在静态段之后）
+    $registrar->get('{id}', [\App\Http\Controllers\Admin\ScheduleController::class, 'show'])->name('show');
     $registrar->put('{id}', [\App\Http\Controllers\Admin\ScheduleController::class, 'update'])->name('update');
     $registrar->patch('{id}/toggle', [\App\Http\Controllers\Admin\ScheduleController::class, 'toggle'])->name('toggle');
     $registrar->post('{id}/execute', [\App\Http\Controllers\Admin\ScheduleController::class, 'execute'])->name('execute');

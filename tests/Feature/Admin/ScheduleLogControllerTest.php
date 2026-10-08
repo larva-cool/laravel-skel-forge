@@ -47,7 +47,7 @@ class ScheduleLogControllerTest extends TestCase
     #[TestDox('未登录访问调度日志列表返回 401')]
     public function guest_cannot_list_schedule_logs(): void
     {
-        $this->getJson('/admin/schedule-logs')->assertUnauthorized();
+        $this->getJson('/admin/schedules/logs')->assertUnauthorized();
     }
 
     #[Test]
@@ -56,7 +56,7 @@ class ScheduleLogControllerTest extends TestCase
     {
         ScheduleLog::factory()->count(3)->create();
 
-        $this->actingAsAdmin()->getJson('/admin/schedule-logs')
+        $this->actingAsAdmin()->getJson('/admin/schedules/logs')
             ->assertOk()
             ->assertJsonStructure(['data', 'links', 'meta'])
             ->assertJsonPath('meta.total', 3);
@@ -69,7 +69,7 @@ class ScheduleLogControllerTest extends TestCase
         ScheduleLog::factory()->create(['name' => 'model:prune']);
         ScheduleLog::factory()->create(['name' => 'stats:user']);
 
-        $this->actingAsAdmin()->getJson('/admin/schedule-logs?name=prune')
+        $this->actingAsAdmin()->getJson('/admin/schedules/logs?name=prune')
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.name', 'model:prune');
@@ -82,7 +82,7 @@ class ScheduleLogControllerTest extends TestCase
         ScheduleLog::factory()->create(['name' => 'stats:user']);
         ScheduleLog::factory()->failed()->create(['name' => 'model:prune']);
 
-        $this->actingAsAdmin()->getJson('/admin/schedule-logs?status='.ScheduleStatus::FAILED->value)
+        $this->actingAsAdmin()->getJson('/admin/schedules/logs?status='.ScheduleStatus::FAILED->value)
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.name', 'model:prune');
@@ -92,7 +92,7 @@ class ScheduleLogControllerTest extends TestCase
     #[TestDox('非法状态参数返回 422')]
     public function invalid_status_returns_422(): void
     {
-        $this->actingAsAdmin()->getJson('/admin/schedule-logs?status=99')
+        $this->actingAsAdmin()->getJson('/admin/schedules/logs?status=99')
             ->assertUnprocessable();
     }
 
@@ -103,7 +103,7 @@ class ScheduleLogControllerTest extends TestCase
         ScheduleLog::factory()->create(['name' => 'old:task', 'started_at' => Carbon::now()->subDay()]);
         ScheduleLog::factory()->create(['name' => 'new:task', 'started_at' => Carbon::now()]);
 
-        $this->actingAsAdmin()->getJson('/admin/schedule-logs')
+        $this->actingAsAdmin()->getJson('/admin/schedules/logs')
             ->assertOk()
             ->assertJsonPath('data.0.name', 'new:task')
             ->assertJsonPath('data.1.name', 'old:task');
@@ -115,7 +115,7 @@ class ScheduleLogControllerTest extends TestCase
     {
         $log = ScheduleLog::factory()->failed()->create(['name' => 'detail:task']);
 
-        $this->actingAsAdmin()->getJson("/admin/schedule-logs/{$log->id}")
+        $this->actingAsAdmin()->getJson("/admin/schedules/logs/{$log->id}")
             ->assertOk()
             ->assertJsonPath('id', $log->id)
             ->assertJsonPath('name', 'detail:task')
@@ -127,6 +127,6 @@ class ScheduleLogControllerTest extends TestCase
     #[TestDox('获取不存在的调度日志返回 404')]
     public function view_nonexistent_schedule_log_returns_404(): void
     {
-        $this->actingAsAdmin()->getJson('/admin/schedule-logs/99999999')->assertNotFound();
+        $this->actingAsAdmin()->getJson('/admin/schedules/logs/99999999')->assertNotFound();
     }
 }
