@@ -8,13 +8,18 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AdminStatus;
+use App\Enums\RechargeStatus;
+use App\Enums\WithdrawStatus;
 use App\Models\Admin\Admin;
 use App\Models\System\LoginHistory;
 use App\Models\User;
 use App\Models\User\UserStat;
+use App\Models\Wallet\Recharge;
+use App\Models\Wallet\Withdraw;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 后台数据概览控制器
@@ -46,6 +51,7 @@ class DashboardController extends Controller
             'cards' => $this->cardStats($since),
             'user_trend' => $this->userTrend($since),
             'login_trend' => $this->loginTrend($since),
+            'finance' => $this->financeStats($since),
             'new_users' => $this->newUsers(),
             'recent_logins' => $this->recentLogins(),
         ]);
@@ -126,6 +132,88 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($item) => ['date' => $item->date, 'count' => (int) $item->count])
             ->all();
+    }
+
+    /**
+     * 财务维度统计（充值 / 提现汇总与趋势）
+     *
+     * 充值口径：已到账订单（amount + bonus_amount），按支付完成时间统计；
+     * 提现口径：打款成功订单的实际到账金额，按打款完成时间统计。
+     *
+     * @return array<string, mixed>
+     */
+    protected function financeStats(Carbon $since): array
+    {
+        $rechargeAmount = (float) Recharge::query()
+            ->where('pay_status', RechargeStatus::SUCCESS)
+            ->where('paid_at', '>=', $since)
+            ->sum(DB::raw('amount + bonus_amount'));
+
+        $withdrawAmount = (float) Withdraw::query()
+            ->where('status', WithdrawStatus::SUCCESS)
+            ->where('transfer_at', '>=', $since)
+            ->sum('actual_amount');
+
+        $todayRecharge = (float) Recharge::query()
+            ->where('pay_status', RechargeStatus::SUCCESS)
+            ->whereDate('paid_at', Carbon::today())
+            ->sum(DB::raw('amount + bonus_amount'));
+
+        $todayWithdraw = (float) Withdraw::query()
+            ->where('status', WithdrawStatus::SUCCESS)
+            ->whereDate('transfer_at', Carbon::today())
+            ->sum('actual_amount');
+
+        $rechargeCount = Recharge::query()
+            ->where('pay_status', RechargeStatus::SUCCESS)
+            ->where('paid_at', '>=', $since)
+            ->count();
+
+        $withdrawCount = Withdraw::query()
+            ->where('status', WithdrawStatus::SUCCESS)
+            ->where('transfer_at', '>=', $since)
+            ->count();
+
+        $rechargeTrend = Recharge::query()
+            ->selectRaw('DATE(paid_at) as date, SUM(amount + bonus_amount) as total')
+            ->where('pay_status', RechargeStatus::SUCCESS)
+            ->where('paid_at', '>=', $since)
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $withdrawTrend = Withdraw::query()
+            ->selectRaw('DATE(transfer_at) as date, SUM(actual_amount) as total')
+            ->where('status', WithdrawStatus::SUCCESS)
+            ->where('transfer_at', '>=', $since)
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $days = (int) $since->diffInDays(Carbon::now()) + 1;
+        $trend = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->toDateString();
+            $trend[] = [
+                'date' => $date,
+                'recharge' => round((float) ($rechargeTrend[$date]->total ?? 0), 2),
+                'withdraw' => round((float) ($withdrawTrend[$date]->total ?? 0), 2),
+            ];
+        }
+
+        return [
+            'total_recharge' => round($rechargeAmount, 2),
+            'total_withdraw' => round($withdrawAmount, 2),
+            'net_income' => round($rechargeAmount - $withdrawAmount, 2),
+            'today_recharge' => round($todayRecharge, 2),
+            'today_withdraw' => round($todayWithdraw, 2),
+            'recharge_count' => $rechargeCount,
+            'withdraw_count' => $withdrawCount,
+            'trend' => $trend,
+        ];
     }
 
     /**
