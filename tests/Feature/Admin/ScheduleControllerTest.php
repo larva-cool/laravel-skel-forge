@@ -57,7 +57,7 @@ class ScheduleControllerTest extends TestCase
         $this->actingAsAdmin()
             ->getJson('/admin/schedules')
             ->assertOk()
-            ->assertJsonPath('meta.total', 3)
+            ->assertJsonPath('meta.total', 11)
             ->assertJsonStructure([
                 'data' => [['id', 'name', 'command', 'expression', 'status', 'status_text', 'command_string']],
             ]);
