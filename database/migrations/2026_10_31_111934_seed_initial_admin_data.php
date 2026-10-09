@@ -883,18 +883,6 @@ return new class extends Migration
                         ],
                     ],
                     [
-                        'key' => 'monitor.schedule-log',
-                        'path' => 'schedule-log',
-                        'name' => 'ScheduleLog',
-                        'component' => '/monitor/schedule-log/index',
-                        'title' => '调度日志',
-                        'icon' => 'ri:time-line',
-                        'type' => MenuType::MENU,
-                        'sort' => 4,
-                        'keep_alive' => true,
-                        'permission' => 'schedule-logs.index',
-                    ],
-                    [
                         'key' => 'monitor.audit-log',
                         'path' => 'audit-log',
                         'name' => 'AuditLog',
