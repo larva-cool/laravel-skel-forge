@@ -7,14 +7,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ScheduleStatus;
 use App\Enums\ScheduleTaskStatus;
 use App\Http\Requests\Admin\Schedule\ScheduleIndexRequest;
 use App\Http\Requests\Admin\Schedule\ScheduleSaveRequest;
 use App\Http\Resources\Admin\ScheduleResource;
 use App\Models\System\Schedule;
+use App\Models\System\ScheduleLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * 后台定时任务管理控制器
@@ -152,14 +157,29 @@ class ScheduleController extends Controller
      */
     protected function executeArtisanCommand(Schedule $schedule): JsonResponse
     {
-        $exitCode = Artisan::call($schedule->command, $schedule->getArguments() + $schedule->getOptions());
-        $output = Artisan::output();
+        $log = $this->startManualLog($schedule, 'command');
+        $startedAt = microtime(true);
 
-        return response()->json([
-            'exit_code' => $exitCode,
-            'output' => $output,
-            'success' => $exitCode === 0,
-        ]);
+        try {
+            $exitCode = Artisan::call($schedule->command, $schedule->getArguments() + $schedule->getOptions());
+            $output = Artisan::output();
+
+            $log->markSuccess(microtime(true) - $startedAt, $exitCode);
+
+            return response()->json([
+                'exit_code' => $exitCode,
+                'output' => $output,
+                'success' => $exitCode === 0,
+            ]);
+        } catch (Throwable $e) {
+            $log->markFailed($e);
+
+            return response()->json([
+                'exit_code' => 1,
+                'output' => $e->getMessage(),
+                'success' => false,
+            ]);
+        }
     }
 
     /**
@@ -167,18 +187,48 @@ class ScheduleController extends Controller
      */
     protected function executeCustomCommand(Schedule $schedule): JsonResponse
     {
+        $log = $this->startManualLog($schedule, 'exec');
+        $startedAt = microtime(true);
+
         $command = $schedule->command_custom ?? '';
         $output = [];
         $exitCode = 0;
 
-        if ($command !== '') {
-            exec($command.' 2>&1', $output, $exitCode);
-        }
+        try {
+            if ($command !== '') {
+                exec($command.' 2>&1', $output, $exitCode);
+            }
 
-        return response()->json([
-            'exit_code' => $exitCode,
-            'output' => implode("\n", $output),
-            'success' => $exitCode === 0,
+            $log->markSuccess(microtime(true) - $startedAt, $exitCode);
+
+            return response()->json([
+                'exit_code' => $exitCode,
+                'output' => implode("\n", $output),
+                'success' => $exitCode === 0,
+            ]);
+        } catch (Throwable $e) {
+            $log->markFailed($e, $exitCode);
+
+            return response()->json([
+                'exit_code' => $exitCode,
+                'output' => $e->getMessage(),
+                'success' => false,
+            ]);
+        }
+    }
+
+    /**
+     * 为手动执行创建一条运行中的调度日志
+     */
+    protected function startManualLog(Schedule $schedule, string $type): ScheduleLog
+    {
+        return ScheduleLog::query()->create([
+            'name' => Str::limit($schedule->name, 255, ''),
+            'type' => $type,
+            'expression' => $schedule->expression,
+            'status' => ScheduleStatus::RUNNING,
+            'hostname' => Str::limit(gethostname() ?: '', 64, ''),
+            'started_at' => Carbon::now(),
         ]);
     }
 }
