@@ -20,7 +20,7 @@ use Illuminate\Console\Command;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-#[Signature('wallet:close-expired-recharges {--limit=500 : 单次处理上限}")]
+#[Signature('wallet:close-expired-recharges {--limit=500 : 单次处理上限}')]
 #[Description('关闭超时未支付的充值订单')]
 class CloseExpiredRechargesCommand extends Command
 {
