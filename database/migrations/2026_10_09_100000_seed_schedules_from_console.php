@@ -83,12 +83,12 @@ return new class extends Migration
         ];
 
         foreach ($tasks as $task) {
-            DB::table('schedules')->insert(array_merge([
+            DB::table('schedules')->insert([
                 'name' => $task['name'],
                 'command' => $task['command'],
                 'command_custom' => $task['command_custom'] ?? null,
                 'params' => null,
-                'options' => null,
+                'options' => $task['options'] ?? null,
                 'options_with_value' => $task['options_with_value'] ?? null,
                 'expression' => $task['expression'],
                 'environments' => $task['environments'] ?? null,
@@ -100,7 +100,7 @@ return new class extends Migration
                 'status' => ScheduleTaskStatus::ACTIVE->value,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]));
+            ]);
         }
     }
 
