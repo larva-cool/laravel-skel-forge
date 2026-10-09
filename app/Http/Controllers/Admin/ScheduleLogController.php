@@ -25,7 +25,8 @@ class ScheduleLogController extends Controller
     public function __construct()
     {
         $this->middleware('auth:admin');
-        $this->middleware('permission:schedule-logs.index')->only(['index', 'show']);
+        // 调度日志已整合到定时任务详情，复用定时任务的入口权限
+        $this->middleware('permission:schedules.index')->only(['index', 'show']);
     }
 
     /**
