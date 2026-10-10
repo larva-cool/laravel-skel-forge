@@ -11,7 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Visit\MyVisitsIndexRequest;
 use App\Http\Requests\Api\V1\Visit\RecordVisitRequest;
 use App\Http\Resources\Api\V1\VisitResource;
-use App\Models\Visit;
+use App\Models\Content\Visit;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**

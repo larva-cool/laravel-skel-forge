@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1;
 
 use App\Http\Controllers\Api\V1\VisitController;
+use App\Models\Content\Visit;
 use App\Models\Model;
 use App\Models\User;
-use App\Models\Visit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
