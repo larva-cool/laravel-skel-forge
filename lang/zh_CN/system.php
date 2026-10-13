@@ -25,9 +25,10 @@ return [
     // 反馈
     'feedback_submit_success' => '反馈提交成功，感谢您的反馈！',
 
-    // 点赞/收藏
+    // 点赞/收藏/关注
     'like_duplicate' => '已经点赞过该资源',
     'collection_duplicate' => '已经收藏过该资源',
+    'follow_duplicate' => '已经关注过该资源',
 
     // App 版本
     'version_published_cannot_delete' => '已发布的版本不可删除，请先撤回或废弃',

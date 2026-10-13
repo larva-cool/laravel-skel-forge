@@ -26,6 +26,7 @@ return [
 
     'like_duplicate' => 'You have already liked this resource.',
     'collection_duplicate' => 'You have already collected this resource.',
+    'follow_duplicate' => 'You have already followed this resource.',
 
     'version_published_cannot_delete' => 'Published versions cannot be deleted. Please withdraw or obsolete it first.',
     'version_only_published_withdraw' => 'Only published versions can be withdrawn.',

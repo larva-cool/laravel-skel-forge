@@ -76,6 +76,11 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
     Route::apiResource('likes', \App\Http\Controllers\Api\V1\Content\LikeController::class)->only(['index', 'store', 'destroy']); // 点赞列表 / 添加点赞 / 取消点赞
 
     /**
+     * 关注
+     */
+    Route::apiResource('follows', \App\Http\Controllers\Api\V1\Content\FollowController::class)->only(['index', 'store', 'destroy']); // 关注列表 / 添加关注 / 取消关注
+
+    /**
      * 访问记录
      */
     Route::post('visits', [\App\Http\Controllers\Api\V1\VisitController::class, 'record'])->name('visits.record'); // 记录一次访问（需登录）
