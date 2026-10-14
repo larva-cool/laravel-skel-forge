@@ -191,16 +191,29 @@ class UserObserverTest extends TestCase
         $comment = Comment::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
         $reply = Comment::factory()->forSource($comment)->create(['user_id' => $otherUser->id]);
 
-        // 互动行为（点赞目标需带 like_count 字段，使用评论作为来源）
-        $likeSource = Comment::factory()->forSource($otherUser)->create(['user_id' => $otherUser->id]);
-        Like::factory()->forSource($likeSource)->create(['user_id' => $user->id]);
-        Collection::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
-        Follow::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
+        // 互动行为
+        $otherComment = Comment::factory()->forSource($otherUser)->create(['user_id' => $otherUser->id]);
+        $interactable = ObserverInteractableStub::create([]);
+        Like::factory()->forSource($interactable)->create(['user_id' => $user->id]);
+        Collection::factory()->forSource($interactable)->create(['user_id' => $user->id]);
+        Follow::factory()->forSource($interactable)->create(['user_id' => $user->id]);
         Visit::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
 
         // 举报（作为举报人与被举报对象）
-        Report::factory()->withUser($user->id)->forTarget($otherUser)->create();
-        Report::factory()->withUser($otherUser->id)->forTarget($user)->create();
+        Report::create([
+            'user_id' => $user->id,
+            'reportable_id' => $otherUser->id,
+            'reportable_type' => $otherUser->getMorphClass(),
+            'category' => 'other',
+            'reason' => '测试举报',
+        ]);
+        Report::create([
+            'user_id' => $otherUser->id,
+            'reportable_id' => $user->id,
+            'reportable_type' => $user->getMorphClass(),
+            'category' => 'other',
+            'reason' => '测试举报',
+        ]);
 
         // 收货地址（含已软删的）
         Address::factory()->create(['user_id' => $user->id]);
@@ -239,7 +252,7 @@ class UserObserverTest extends TestCase
         $this->assertSame(0, Comment::forUser($user)->count());
         $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
         $this->assertDatabaseMissing('comments', ['id' => $reply->id]); // 回复被递归删除
-        $this->assertDatabaseHas('comments', ['id' => $likeSource->id]); // 他人独立评论不受影响
+        $this->assertDatabaseHas('comments', ['id' => $otherComment->id]); // 他人独立评论不受影响
         $this->assertSame(0, Like::forUser($user)->count());
         $this->assertSame(0, Collection::forUser($user)->count());
         $this->assertSame(0, Follow::forUser($user)->count());
