@@ -66,20 +66,6 @@ class Follow extends Model
     }
 
     /**
-     * Perform any actions required after the model boots.
-     */
-    protected static function booted(): void
-    {
-        parent::booted();
-        static::created(function (Follow $model): void {
-            $model->source()->increment('follow_count');
-        });
-        static::deleted(function (Follow $model): void {
-            $model->source()->decrement('follow_count');
-        });
-    }
-
-    /**
      * 多态关联
      */
     public function source(): MorphTo

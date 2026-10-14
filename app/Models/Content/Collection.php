@@ -66,20 +66,6 @@ class Collection extends Model
     }
 
     /**
-     * Perform any actions required after the model boots.
-     */
-    protected static function booted(): void
-    {
-        parent::booted();
-        static::created(function (Collection $model): void {
-            $model->source()->increment('collection_count');
-        });
-        static::deleted(function (Collection $model): void {
-            $model->source()->decrement('collection_count');
-        });
-    }
-
-    /**
      * 多态关联
      */
     public function source(): MorphTo

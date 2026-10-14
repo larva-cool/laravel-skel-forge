@@ -216,12 +216,28 @@ class UserObserverTest extends TestCase
         ]);
 
         // 收货地址（含已软删的）
-        Address::factory()->create(['user_id' => $user->id]);
-        $trashedAddress = Address::factory()->create(['user_id' => $user->id]);
+        $addressAttributes = [
+            'user_id' => $user->id,
+            'name' => '张三',
+            'province' => '浙江省',
+            'city' => '杭州市',
+            'district' => '西湖区',
+            'address' => '文三路 100 号',
+            'phone' => '13800000000',
+        ];
+        Address::create($addressAttributes);
+        $trashedAddress = Address::create($addressAttributes);
         $trashedAddress->delete();
 
         // 反馈
-        Feedback::factory()->create(['user_id' => $user->id]);
+        Feedback::create([
+            'title' => '功能建议',
+            'content' => '希望支持深色模式',
+            'type' => 'feature',
+            'contact_name' => '张三',
+            'contact_info' => 'test@example.com',
+            'user_id' => $user->id,
+        ]);
 
         // 站内通知
         DB::table('notifications')->insert([
