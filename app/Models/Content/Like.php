@@ -10,10 +10,12 @@ namespace App\Models\Content;
 use App\Models\Model;
 use App\Models\Traits\HasUser;
 use App\Models\User;
+use App\Observers\LikeObserver;
 use App\Policies\LikePolicy;
 use Database\Factories\Content\LikeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,6 +40,7 @@ use Illuminate\Support\Carbon;
 #[Table('likes')]
 #[Fillable(['user_id', 'source_id', 'source_type', 'extra'])]
 #[Hidden(['user_id'])]
+#[ObservedBy([LikeObserver::class])]
 #[UsePolicy(LikePolicy::class)]
 class Like extends Model
 {
@@ -60,20 +63,6 @@ class Like extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
-    }
-
-    /**
-     * Perform any actions required after the model boots.
-     */
-    protected static function booted(): void
-    {
-        parent::booted();
-        static::created(function (Like $model): void {
-            $model->source()->increment('like_count');
-        });
-        static::deleted(function (Like $model): void {
-            $model->source()->decrement('like_count');
-        });
     }
 
     /**

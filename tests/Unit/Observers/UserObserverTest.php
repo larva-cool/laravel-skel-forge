@@ -8,14 +8,27 @@ declare(strict_types=1);
 namespace Tests\Unit\Observers;
 
 use App\Enums\SocialProvider;
+use App\Models\Content\Collection;
+use App\Models\Content\Comment;
+use App\Models\Content\Follow;
+use App\Models\Content\Like;
+use App\Models\Content\Report;
+use App\Models\Content\Visit;
 use App\Models\Invite\InviteCode;
+use App\Models\Invite\InviteRecord;
+use App\Models\System\Feedback;
 use App\Models\System\LoginHistory;
 use App\Models\System\Social;
 use App\Models\User;
+use App\Models\User\Address;
 use App\Models\User\UserExtra;
 use App\Models\User\UserProfile;
+use App\Models\Wallet\WalletTrade;
+use App\Models\Wallet\WithdrawAccount;
 use App\Observers\UserObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -119,5 +132,103 @@ class UserObserverTest extends TestCase
         ]);
         $this->assertDatabaseMissing('login_histories', ['user_id' => $user->id]);
         $this->assertDatabaseMissing('socials', ['user_id' => $user->id]);
+    }
+
+    #[Test]
+    #[TestDox('forceDeleted 清理邀请关系、互动行为、举报、个人数据等全部关联信息')]
+    public function force_deleted_cleans_up_all_user_related_data(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        // 邀请关系（作为邀请人与被邀请人）
+        InviteRecord::factory()->forInviter($user)->forInvitee($otherUser)->create();
+        InviteRecord::factory()->forInviter($otherUser)->forInvitee($user)->create();
+
+        // 提现收款账户（含已软删的）
+        WithdrawAccount::factory()->forUser($user)->create();
+        $trashedAccount = WithdrawAccount::factory()->forUser($user)->create();
+        $trashedAccount->delete();
+
+        // 评论及他人回复
+        $comment = Comment::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
+        Comment::factory()->forSource($comment)->create(['user_id' => $otherUser->id]);
+
+        // 互动行为
+        Like::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
+        Collection::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
+        Follow::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
+        Visit::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
+
+        // 举报（作为举报人与被举报对象）
+        Report::factory()->withUser($user->id)->forTarget($otherUser)->create();
+        Report::factory()->withUser($otherUser->id)->forTarget($user)->create();
+
+        // 收货地址（含已软删的）
+        Address::factory()->create(['user_id' => $user->id]);
+        $trashedAddress = Address::factory()->create(['user_id' => $user->id]);
+        $trashedAddress->delete();
+
+        // 反馈
+        Feedback::factory()->create(['user_id' => $user->id]);
+
+        // 站内通知
+        DB::table('notifications')->insert([
+            'id' => (string) Str::uuid(),
+            'type' => 'App\\Notifications\\TestNotification',
+            'notifiable_type' => $user->getMorphClass(),
+            'notifiable_id' => $user->id,
+            'data' => json_encode(['title' => 'test']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 会话
+        DB::table('sessions')->insert([
+            'id' => (string) Str::random(40),
+            'user_id' => $user->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'payload' => base64_encode('test-payload'),
+            'last_activity' => now()->getTimestamp(),
+        ]);
+
+        $this->observer->forceDeleted($user);
+
+        $this->assertDatabaseMissing('invite_records', ['inviter_id' => $user->id]);
+        $this->assertDatabaseMissing('invite_records', ['invitee_id' => $user->id]);
+        $this->assertDatabaseMissing('withdraw_accounts', ['owner_id' => $user->id]);
+        $this->assertSame(0, Comment::forUser($user)->count());
+        $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
+        $this->assertSame(0, Comment::forUser($otherUser)->count()); // 回复被递归删除
+        $this->assertSame(0, Like::forUser($user)->count());
+        $this->assertSame(0, Collection::forUser($user)->count());
+        $this->assertSame(0, Follow::forUser($user)->count());
+        $this->assertSame(0, Visit::forUser($user)->count());
+        $this->assertDatabaseMissing('reports', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('reports', [
+            'reportable_id' => $user->id,
+            'reportable_type' => $user->getMorphClass(),
+        ]);
+        $this->assertDatabaseMissing('addresses', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('feedbacks', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('notifications', [
+            'notifiable_id' => $user->id,
+            'notifiable_type' => $user->getMorphClass(),
+        ]);
+        $this->assertDatabaseMissing('sessions', ['user_id' => $user->id]);
+    }
+
+    #[Test]
+    #[TestDox('forceDeleted 保留财务流水作为审计凭证')]
+    public function force_deleted_keeps_financial_trades(): void
+    {
+        $user = User::factory()->create();
+
+        WalletTrade::factory()->forUser($user->id, 100)->create();
+
+        $this->observer->forceDeleted($user);
+
+        $this->assertDatabaseHas('wallet_trades', ['owner_id' => $user->id]);
     }
 }

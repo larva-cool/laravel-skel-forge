@@ -9,6 +9,9 @@ namespace App\Observers;
 
 use App\Models\Content\Comment;
 
+/**
+ * 评论模型观察者
+ */
 class CommentObserver
 {
     /**
