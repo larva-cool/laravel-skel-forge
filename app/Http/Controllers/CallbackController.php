@@ -12,6 +12,4 @@ namespace App\Http\Controllers;
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
-class CallbackController extends Controller
-{
-}
+class CallbackController extends Controller {}

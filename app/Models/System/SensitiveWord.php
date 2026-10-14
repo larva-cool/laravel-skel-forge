@@ -39,6 +39,7 @@ class SensitiveWord extends Model
 {
     /** @use HasFactory<SensitiveWordFactory> */
     use HasFactory;
+
     use SoftDeletes;
 
     /** @var array<string, mixed> */

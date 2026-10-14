@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
-use App\Enums\ReportStatus;
 use App\Enums\ReviewStatus;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Admin\ReportController;

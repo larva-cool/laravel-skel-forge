@@ -13,7 +13,6 @@ use App\Enums\UserStatus;
 use App\Models\Admin\Admin;
 use App\Models\Content\Comment;
 use App\Models\Content\Report;
-use App\Models\Model;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
