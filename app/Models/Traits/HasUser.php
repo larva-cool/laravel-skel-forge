@@ -37,10 +37,10 @@ trait HasUser
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withDefault([
-            'name' => '账号已注销',
-            'username' => '',
-            'email' => '',
-            'phone' => null,
+            'name' => '******',
+            'username' => '******',
+            'email' => '******',
+            'phone' => '******',
         ]);
     }
 

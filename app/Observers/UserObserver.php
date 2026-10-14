@@ -96,7 +96,6 @@ class UserObserver
             Address::withTrashed()->forUser($user)->forceDelete();
             Feedback::where('user_id', $user->id)->delete();
             $user->notifications()->delete();
-            DB::table('sessions')->where('user_id', $user->id)->delete();
         });
     }
 }
