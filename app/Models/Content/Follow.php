@@ -10,10 +10,12 @@ namespace App\Models\Content;
 use App\Models\Model;
 use App\Models\Traits\HasUser;
 use App\Models\User;
+use App\Observers\FollowObserver;
 use App\Policies\FollowPolicy;
 use Database\Factories\Content\FollowFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,6 +40,7 @@ use Illuminate\Support\Carbon;
 #[Table('follows')]
 #[Fillable(['user_id', 'source_id', 'source_type', 'extra'])]
 #[Hidden(['user_id'])]
+#[ObservedBy([FollowObserver::class])]
 #[UsePolicy(FollowPolicy::class)]
 class Follow extends Model
 {

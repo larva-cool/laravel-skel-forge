@@ -8,6 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Observers;
 
 use App\Enums\SocialProvider;
+use App\Enums\WalletTradeStatus;
+use App\Enums\WalletTradeType;
 use App\Models\Content\Collection;
 use App\Models\Content\Comment;
 use App\Models\Content\Follow;
@@ -26,14 +28,32 @@ use App\Models\User\UserProfile;
 use App\Models\Wallet\WalletTrade;
 use App\Models\Wallet\WithdrawAccount;
 use App\Observers\UserObserver;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Tests\TestCase;
+
+/**
+ * 互动行为（点赞/收藏/关注）的测试目标模型
+ *
+ * @property int $id
+ * @property int $like_count
+ * @property int $collection_count
+ * @property int $follow_count
+ */
+class ObserverInteractableStub extends Model
+{
+    protected $table = 'observer_interactable_stubs';
+
+    protected $guarded = [];
+}
 
 /**
  * UserObserver 单元测试
@@ -50,7 +70,24 @@ class UserObserverTest extends TestCase
     {
         parent::setUp();
 
+        Relation::morphMap(['observer_interactable_stub' => ObserverInteractableStub::class]);
+
+        Schema::create('observer_interactable_stubs', function ($table): void {
+            $table->id();
+            $table->unsignedInteger('like_count')->default(0);
+            $table->unsignedInteger('collection_count')->default(0);
+            $table->unsignedInteger('follow_count')->default(0);
+            $table->timestamps();
+        });
+
         $this->observer = new UserObserver;
+    }
+
+    protected function tearDown(): void
+    {
+        Schema::dropIfExists('observer_interactable_stubs');
+
+        parent::tearDown();
     }
 
     #[Test]
@@ -152,10 +189,11 @@ class UserObserverTest extends TestCase
 
         // 评论及他人回复
         $comment = Comment::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
-        Comment::factory()->forSource($comment)->create(['user_id' => $otherUser->id]);
+        $reply = Comment::factory()->forSource($comment)->create(['user_id' => $otherUser->id]);
 
-        // 互动行为
-        Like::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
+        // 互动行为（点赞目标需带 like_count 字段，使用评论作为来源）
+        $likeSource = Comment::factory()->forSource($otherUser)->create(['user_id' => $otherUser->id]);
+        Like::factory()->forSource($likeSource)->create(['user_id' => $user->id]);
         Collection::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
         Follow::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
         Visit::factory()->forSource($otherUser)->create(['user_id' => $user->id]);
@@ -200,7 +238,8 @@ class UserObserverTest extends TestCase
         $this->assertDatabaseMissing('withdraw_accounts', ['owner_id' => $user->id]);
         $this->assertSame(0, Comment::forUser($user)->count());
         $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
-        $this->assertSame(0, Comment::forUser($otherUser)->count()); // 回复被递归删除
+        $this->assertDatabaseMissing('comments', ['id' => $reply->id]); // 回复被递归删除
+        $this->assertDatabaseHas('comments', ['id' => $likeSource->id]); // 他人独立评论不受影响
         $this->assertSame(0, Like::forUser($user)->count());
         $this->assertSame(0, Collection::forUser($user)->count());
         $this->assertSame(0, Follow::forUser($user)->count());
@@ -225,7 +264,18 @@ class UserObserverTest extends TestCase
     {
         $user = User::factory()->create();
 
-        WalletTrade::factory()->forUser($user->id, 100)->create();
+        WalletTrade::create([
+            'owner_type' => $user->getMorphClass(),
+            'owner_id' => $user->id,
+            'amount' => 100,
+            'before_balance' => 0,
+            'after_balance' => 100,
+            'before_frozen' => 0,
+            'after_frozen' => 0,
+            'type' => WalletTradeType::RECHARGE,
+            'status' => WalletTradeStatus::SUCCESS,
+            'description' => '充值',
+        ]);
 
         $this->observer->forceDeleted($user);
 
