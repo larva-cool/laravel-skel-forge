@@ -54,6 +54,7 @@ class UserObserver
     {
         $user->extra->delete();
         $user->profile->delete();
+        $user->identityVerifications()->delete();
         $user->inviteCode()->delete();
         $user->loginHistories()->delete();
         $user->socials()->delete();

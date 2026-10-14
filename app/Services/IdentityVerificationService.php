@@ -7,11 +7,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\IdentityVerifiable;
 use App\Enums\IdentityStatus;
 use App\Events\User\IdentityRejected;
 use App\Events\User\IdentityVerified;
 use App\Models\Admin\Admin;
-use App\Models\User;
 use App\Models\User\IdentityVerification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -33,11 +33,11 @@ class IdentityVerificationService
      *
      * @param  array<string, mixed>  $data
      */
-    public function submit(User $user, array $data): IdentityVerification
+    public function submit(IdentityVerifiable $verifiable, array $data): IdentityVerification
     {
-        return DB::transaction(function () use ($user, $data) {
-            // 同一用户仅允许一条待审记录
-            $existing = $user->identityVerifications()
+        return DB::transaction(function () use ($verifiable, $data) {
+            // 同一主体仅允许一条待审记录
+            $existing = $verifiable->identityVerifications()
                 ->where('status', IdentityStatus::PENDING)
                 ->lockForUpdate()
                 ->first();
@@ -49,10 +49,10 @@ class IdentityVerificationService
             $data['status'] = IdentityStatus::PENDING;
             $data['submitted_at'] = Carbon::now();
 
-            $verification = $user->identityVerifications()->create($data);
+            $verification = $verifiable->identityVerifications()->create($data);
 
-            // 同步用户实名认证状态为待审核
-            $user->setIdentityStatus(IdentityStatus::PENDING);
+            // 同步主体实名认证状态为待审核
+            $verifiable->setIdentityStatus(IdentityStatus::PENDING);
 
             return $verification;
         });

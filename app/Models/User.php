@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Contracts\IdentityVerifiable;
 use App\Enums\IdentityStatus;
 use App\Enums\IdentityType;
 use App\Enums\UserStatus;
@@ -20,6 +21,7 @@ use App\Models\Point\PointTrade;
 use App\Models\System\LoginHistory;
 use App\Models\System\Social;
 use App\Models\Traits\DateTimeFormatter;
+use App\Models\Traits\HasIdentity;
 use App\Models\Traits\HasInvitation;
 use App\Models\Traits\HasReportable;
 use App\Models\Traits\HasTaskProgress;
@@ -110,13 +112,14 @@ use Laravel\Scout\Searchable;
 #[Hidden(['password', 'remember_token'])]
 #[ObservedBy([UserObserver::class])]
 #[UsePolicy(UserPolicy::class)]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements IdentityVerifiable, MustVerifyEmail
 {
     use DateTimeFormatter;
 
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, Searchable, SoftDeletes;
 
+    use HasIdentity;
     use HasInvitation;
     use HasReportable;
     use HasTaskProgress;
@@ -271,27 +274,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * 实名认证记录（多态一对多）
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany<int, IdentityVerification>
-     */
-    public function identityVerifications(): \Illuminate\Database\Eloquent\Relations\MorphMany
-    {
-        return $this->morphMany(IdentityVerification::class, 'verifiable');
-    }
-
-    /**
-     * 最新实名认证记录（多态一对一）
-     *
-     * @return MorphOne<IdentityVerification>
-     */
-    public function latestIdentity(): MorphOne
-    {
-        return $this->morphOne(IdentityVerification::class, 'verifiable')
-            ->orderByDesc('id');
-    }
-
-    /**
      * 手机号路由通知
      *
      * @param  \Illuminate\Notifications\Notification|null  $notification
@@ -436,57 +418,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function markActive(): bool
     {
         return $this->updateQuietly(['status' => UserStatus::ACTIVE]);
-    }
-
-    /**
-     * 是否已通过实名认证
-     */
-    public function isVerified(): bool
-    {
-        return $this->identity_status === IdentityStatus::APPROVED;
-    }
-
-    /**
-     * identity_verified 访问器
-     */
-    protected function identityVerified(): Attribute
-    {
-        return Attribute::make(
-            get: fn (mixed $value, array $attributes) => ($attributes['identity_status'] ?? null) === IdentityStatus::APPROVED->value
-        );
-    }
-
-    /**
-     * 设置实名认证状态
-     */
-    public function setIdentityStatus(IdentityStatus $status): bool
-    {
-        return $this->forceFill(['identity_status' => $status])->saveQuietly();
-    }
-
-    /**
-     * 标记用户已通过实名认证
-     */
-    public function markVerified(IdentityType $type, ?IdentityVerification $verification = null): bool
-    {
-        $status = $this->forceFill([
-            'identity_type' => $type,
-            'identity_status' => IdentityStatus::APPROVED,
-        ])->saveQuietly();
-        Event::dispatch(new IdentityVerified($this, $verification));
-
-        return $status;
-    }
-
-    /**
-     * 标记用户未通过实名认证
-     */
-    public function markUnverified(?IdentityStatus $status = null): bool
-    {
-        return $this->forceFill([
-            'identity_type' => null,
-            'identity_status' => $status ?? IdentityStatus::UNSUBMITTED,
-        ])->saveQuietly();
     }
 
     /**
