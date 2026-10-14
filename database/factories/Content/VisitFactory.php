@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Content;
 
 use App\Models\Content\Visit;
 use App\Models\User;

@@ -10,7 +10,7 @@ namespace App\Models\Content;
 use App\Models\Model;
 use App\Models\Traits\HasUser;
 use App\Models\User;
-use Database\Factories\VisitFactory;
+use Database\Factories\Content\VisitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
