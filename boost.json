@@ -19,6 +19,7 @@
         "octane-development",
         "pulse-development",
         "scout-development",
+        "telescope-debugging",
         "echo-development",
         "tailwindcss-development",
         "laravel-permission-development"
