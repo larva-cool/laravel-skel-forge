@@ -62,7 +62,7 @@ return [
             // 模型配置
             'models' => [
                 'text' => [
-                    'default' => env('VOLC_TEXT_MODEL', 'doubao-seed-2-0-lite-260428'),
+                    'default' => env('VOLC_TEXT_MODEL', 'doubao-seed-2-1-lite-260915'),
                 ],
                 'image' => [
                     'default' => env('VOLC_IMAGE_MODEL', 'doubao-seedream-5-0-pro-260628'),
