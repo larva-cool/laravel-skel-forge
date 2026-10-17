@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Settings;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Models\System\Setting;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
@@ -18,8 +20,17 @@ use Stringable;
  *
  * 支持按 key 精确查询单个配置、按前缀批量查询，或关键字搜索配置项。
  */
-class GetSetting implements Tool
+class GetSetting implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点。
+     */
+    public function permission(): string|array|null
+    {
+        return 'settings.index';
+    }
     /**
      * 工具描述。
      */
@@ -62,6 +73,10 @@ class GetSetting implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $key = $request->string('key')->toString();
         $prefix = $request->string('prefix')->toString();
         $keyword = $request->string('keyword')->toString();

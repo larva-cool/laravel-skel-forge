@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Audit;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Models\System\MailCode;
 use App\Models\System\PhoneCode;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -20,8 +22,17 @@ use Stringable;
  * 统一查询短信验证码与邮件验证码的发送记录，支持按账号、状态、时间范围筛选。
  * 为安全起见，不返回验证码明文。只读操作。
  */
-class ListVerificationCodes implements Tool
+class ListVerificationCodes implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点（短信/邮件验证码任一查询权限即可）。
+     */
+    public function permission(): string|array|null
+    {
+        return ['phone-codes.index', 'mail-codes.index'];
+    }
     /**
      * 工具描述。
      */
@@ -74,6 +85,10 @@ class ListVerificationCodes implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $channel = $request->string('channel')->toString();
 
         $query = $channel === 'sms' ? PhoneCode::query() : MailCode::query();

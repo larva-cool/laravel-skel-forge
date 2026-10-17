@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Settings;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Models\System\Setting;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Approvals\Approval;
@@ -21,9 +23,17 @@ use Stringable;
  *
  * 仅允许修改已存在配置项的 value，按 cast_type 自动转型并持久化，写操作需二次确认。
  */
-class SetSetting implements Approvable, Tool
+class SetSetting implements Approvable, RequiresPermission, Tool
 {
-    use InteractsWithApprovals;
+    use AuthorizesAdmin, InteractsWithApprovals;
+
+    /**
+     * 执行该工具所需的权限点。
+     */
+    public function permission(): string|array|null
+    {
+        return 'settings.edit';
+    }
 
     /**
      * 工具描述。
@@ -83,6 +93,10 @@ class SetSetting implements Approvable, Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $key = $request->string('key')->toString();
 
         /** @var Setting|null $setting */

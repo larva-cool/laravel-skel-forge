@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Audit;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Models\Admin\Admin;
 use App\Models\System\LoginHistory;
 use App\Models\User;
@@ -21,8 +23,17 @@ use Stringable;
  * 支持按用户类型、用户 ID、IP/地址/设备/平台关键字、时间范围筛选，
  * 用于安全审计与异常登录排查。只读操作。
  */
-class ListLoginHistories implements Tool
+class ListLoginHistories implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点。
+     */
+    public function permission(): string|array|null
+    {
+        return 'login-histories.index';
+    }
     /**
      * 工具描述。
      */
@@ -72,6 +83,10 @@ class ListLoginHistories implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $query = LoginHistory::query();
 
         $guard = $request->string('guard')->toString();
