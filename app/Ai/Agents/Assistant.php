@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
+use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Audit\ListLoginHistories;
 use App\Ai\Tools\Audit\ListVerificationCodes;
 use App\Ai\Tools\Settings\GetSetting;
@@ -23,6 +24,7 @@ use App\Ai\Tools\Users\ResetUserContact;
 use App\Ai\Tools\Users\ResetUserPassword;
 use App\Ai\Tools\Users\SetUserStatus;
 use App\Ai\Tools\Web\WebFetch;
+use App\Models\Admin\Admin;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Temperature;
 use Laravel\Ai\Concerns\RemembersConversations;
@@ -111,6 +113,7 @@ class Assistant implements Agent, Conversational, HasTools
 - 绝不泄露其他用户的密码、令牌等敏感信息。
 - 不执行任何超出工具能力范围的操作（如直接操作数据库、删除数据、修改管理员账号、修改后台菜单/角色权限等）。
 - 当操作因规则被拒绝（例如联系方式已被占用、配置项不存在）时，如实传达原因，不要尝试绕过。
+- 当前管理员的可用工具已按其角色权限动态过滤。若其请求的能力不在当前工具列表中，或工具返回"没有执行此操作所需的权限"，说明该管理员暂无对应权限，礼貌告知需联系超级管理员开通，不要尝试以其他方式绕过。
 - 当前对话时间以系统时间为准，统计类查询注意时间范围的准确性。
 
 保持回复简洁、专业、有条理。
@@ -120,11 +123,18 @@ PROMPT;
     /**
      * 获取智能体可用的工具列表。
      *
+     * 按当前对话管理员的权限点过滤：无权限的工具不会暴露给模型，
+     * 同时向实现 RequiresPermission 的工具注入管理员用于执行兜底校验。
+     * 无对话参与者（非会话场景）时按 deny-by-default 处理。
+     *
      * @return iterable<Tool>
      */
     public function tools(): iterable
     {
-        return [
+        $participant = $this->conversationParticipant();
+        $admin = $participant instanceof Admin ? $participant : null;
+
+        $tools = [
             new WebFetch,
             // 前台用户管理
             new ListUsers,
@@ -151,5 +161,27 @@ PROMPT;
             // 数据统计概览
             new GetDashboardStats,
         ];
+
+        return array_values(array_filter(
+            array_map(
+                static fn (Tool $tool): Tool => $tool instanceof RequiresPermission ? $tool->forAdmin($admin) : $tool,
+                $tools,
+            ),
+            static fn (Tool $tool): bool => ! $tool instanceof RequiresPermission || self::allowsTool($tool, $admin),
+        ));
+    }
+
+    /**
+     * 判断当前管理员是否可使用指定工具（任一权限点满足即可）
+     */
+    protected static function allowsTool(RequiresPermission $tool, ?Admin $admin): bool
+    {
+        $permission = $tool->permission();
+
+        if ($permission === null || $permission === []) {
+            return true;
+        }
+
+        return $admin instanceof Admin && $admin->canAny((array) $permission);
     }
 }

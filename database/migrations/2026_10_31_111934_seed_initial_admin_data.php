@@ -930,6 +930,7 @@ return new class extends Migration
                         'type' => MenuType::MENU,
                         'sort' => 1,
                         'keep_alive' => false,
+                        'permission' => 'chat.use',
                     ],
                 ],
             ],
