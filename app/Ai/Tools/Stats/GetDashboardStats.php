@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Stats;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Enums\AdminStatus;
 use App\Enums\UserStatus;
 use App\Models\Admin\Admin;
@@ -26,8 +28,17 @@ use Stringable;
  *
  * 汇总用户、管理员、登录、验证码等关键业务指标，供管理员快速了解平台运行状况。
  */
-class GetDashboardStats implements Tool
+class GetDashboardStats implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点（跟随 AI 助手入口权限）。
+     */
+    public function permission(): string|array|null
+    {
+        return 'chat.use';
+    }
     /**
      * 工具描述。
      */
@@ -57,6 +68,10 @@ class GetDashboardStats implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $days = $request->integer('days', 7) ?: 7;
         $days = min(max($days, 1), 90);
         $since = Carbon::now()->subDays($days - 1)->startOfDay();

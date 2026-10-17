@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\System;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Enums\CacheKey;
 use App\Models\System\Area;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -21,8 +23,17 @@ use Stringable;
  * 支持查询顶级地区（省份）列表、指定父级下的直属子地区，或整棵地区树。
  * 使用缓存避免重复递归查询。只读操作。
  */
-class GetAreas implements Tool
+class GetAreas implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点。
+     */
+    public function permission(): string|array|null
+    {
+        return 'areas.index';
+    }
     /**
      * 工具描述。
      */
@@ -53,6 +64,10 @@ class GetAreas implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $mode = $request->string('mode')->toString() ?: 'roots';
 
         return match ($mode) {

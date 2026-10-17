@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\System;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Contracts\Tool;
@@ -19,8 +21,17 @@ use Throwable;
  *
  * 返回应用版本、运行环境、数据库连通性、缓存/队列驱动、存储盘等运维信息。只读操作。
  */
-class SystemInfo implements Tool
+class SystemInfo implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点（跟随 AI 助手入口权限）。
+     */
+    public function permission(): string|array|null
+    {
+        return 'chat.use';
+    }
     /**
      * 工具描述。
      */
@@ -44,6 +55,10 @@ class SystemInfo implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         return json_encode([
             'application' => [
                 'name' => config('app.name'),

@@ -7,6 +7,9 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Web;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
+
 use DOMDocument;
 use DOMNode;
 use DOMXPath;
@@ -24,8 +27,17 @@ use Stringable;
  * 使用 Laravel HTTP 客户端抓取指定 URL，将 HTML 解析为纯文本返回给模型。
  * 与 provider 原生 WebFetch 不同，本工具完全在本地执行，不依赖 AI 厂商的联网能力。
  */
-class WebFetch implements Tool
+class WebFetch implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点（跟随 AI 助手入口权限）。
+     */
+    public function permission(): string|array|null
+    {
+        return 'chat.use';
+    }
     /**
      * 单次抓取最大返回字符数，超出截断。
      */
@@ -78,6 +90,10 @@ class WebFetch implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $url = trim($request->string('url')->toString());
         $selector = trim($request->string('selector')->toString());
 
