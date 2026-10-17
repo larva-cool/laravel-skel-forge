@@ -53,7 +53,7 @@ class SocialTest extends TestCase
         $user = User::factory()->create();
         $social = Social::create([
             'user_id' => $user->id,
-            'user_type' => User::class,
+            'user_type' => $user->getMorphClass(),
             'provider' => SocialProvider::APPLE,
             'openid' => 'apple_id_456',
         ]);
@@ -69,7 +69,7 @@ class SocialTest extends TestCase
         $admin = Admin::query()->where('username', 'admin')->first();
         $social = Social::create([
             'user_id' => $admin->id,
-            'user_type' => Admin::class,
+            'user_type' => $admin->getMorphClass(),
             'provider' => SocialProvider::DOUYIN,
             'openid' => 'douyin_789',
         ]);

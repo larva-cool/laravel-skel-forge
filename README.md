@@ -161,7 +161,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 监控 | `/admin/monitor`、`/admin/queue`、`/admin/debug` | Pulse 性能、Horizon 队列、Telescope 调试（仅 local） |
 | 审计 | `/admin/audit-logs`、`/admin/schedule-logs`、`/admin/login-histories` | 操作审计、调度日志与全局登录历史（跨管理员/前台用户，可按 guard、结果、时间过滤）。**导出支持**：用户/评论/反馈/审计日志/钱包流水/充值订单/提现申请列表与用户积分、金币流水均提供 `GET /export` 端点（同步/异步双通道，大数据量走队列生成并通过站内信推送下载链接） |
 | 仪表盘 | `/admin/dashboard` | 核心指标统计与趋势图 |
-| AI 聊天 | `/admin/chat` | SSE 流式对话、工具调用审批、会话管理 |
+| AI 聊天 | `/admin/chat` | SSE 流式对话、工具调用审批、会话管理；入口由 `chat.use` 权限点保护，工具按管理员角色权限动态过滤并在执行层兜底校验 |
 
 ### 前台 API（`/api/v1`）
 
