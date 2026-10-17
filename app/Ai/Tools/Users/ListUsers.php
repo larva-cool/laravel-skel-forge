@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Users;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -19,8 +21,17 @@ use Stringable;
  *
  * 支持按关键字、状态、VIP、注册时间范围筛选，返回分页用户摘要数据。
  */
-class ListUsers implements Tool
+class ListUsers implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点。
+     */
+    public function permission(): string|array|null
+    {
+        return 'users.index';
+    }
     /**
      * 工具描述。
      */
@@ -68,6 +79,10 @@ class ListUsers implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $query = User::query();
 
         if ($keyword = $request->string('keyword')->toString()) {

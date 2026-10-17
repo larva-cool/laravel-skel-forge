@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Users;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
@@ -18,8 +20,17 @@ use Stringable;
  *
  * 通过用户 ID 或账号（用户名/邮箱/手机号）获取单个用户的完整信息。
  */
-class GetUser implements Tool
+class GetUser implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点。
+     */
+    public function permission(): string|array|null
+    {
+        return 'users.index';
+    }
     /**
      * 工具描述。
      */
@@ -49,6 +60,10 @@ class GetUser implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $id = $request->integer('id');
         $account = $request->string('account')->toString();
 

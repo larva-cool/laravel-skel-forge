@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Users;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -22,9 +24,17 @@ use Stringable;
  *
  * 写操作，默认需要管理员二次确认。
  */
-class SetUserStatus implements Approvable, Tool
+class SetUserStatus implements Approvable, RequiresPermission, Tool
 {
-    use InteractsWithApprovals;
+    use AuthorizesAdmin, InteractsWithApprovals;
+
+    /**
+     * 执行该工具所需的权限点。
+     */
+    public function permission(): string|array|null
+    {
+        return 'users.edit';
+    }
 
     /**
      * 工具描述。
@@ -80,6 +90,10 @@ class SetUserStatus implements Approvable, Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $user = User::query()->find($request->integer('id'));
         if (! $user) {
             return '未找到目标用户，操作已取消。';

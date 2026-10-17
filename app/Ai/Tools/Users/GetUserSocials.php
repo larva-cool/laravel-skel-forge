@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools\Users;
 
+use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Concerns\AuthorizesAdmin;
 use App\Models\System\Social;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -20,8 +22,17 @@ use Stringable;
  * 只读操作，返回第三方账号的提供商、OpenID/UnionID 摘要、绑定时间和令牌状态，
  * 不返回 access_token / refresh_token 明文。
  */
-class GetUserSocials implements Tool
+class GetUserSocials implements RequiresPermission, Tool
 {
+    use AuthorizesAdmin;
+
+    /**
+     * 执行该工具所需的权限点。
+     */
+    public function permission(): string|array|null
+    {
+        return 'users.index';
+    }
     /**
      * 工具描述。
      */
@@ -49,6 +60,10 @@ class GetUserSocials implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        if ($deny = $this->authorizeAdmin()) {
+            return $deny;
+        }
+
         $user = User::query()->find($request->integer('id'));
         if (! $user) {
             return '未找到目标用户。';
