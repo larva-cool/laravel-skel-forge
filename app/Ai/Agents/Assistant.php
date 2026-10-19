@@ -8,10 +8,13 @@ declare(strict_types=1);
 namespace App\Ai\Agents;
 
 use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Apps\ListAppVersions;
 use App\Ai\Tools\Audit\ListAuditLogs;
 use App\Ai\Tools\Audit\ListLoginHistories;
 use App\Ai\Tools\Audit\ListVerificationCodes;
+use App\Ai\Tools\Content\HandleReport;
 use App\Ai\Tools\Content\ListComments;
+use App\Ai\Tools\Content\ListReports;
 use App\Ai\Tools\Content\ModerateComment;
 use App\Ai\Tools\Feedbacks\ListFeedbacks;
 use App\Ai\Tools\Feedbacks\ReplyFeedback;
@@ -19,6 +22,8 @@ use App\Ai\Tools\Operation\ListAnnouncements;
 use App\Ai\Tools\Operation\ListBanners;
 use App\Ai\Tools\Operation\PublishAnnouncement;
 use App\Ai\Tools\Operation\SetBannerStatus;
+use App\Ai\Tools\Queue\ListFailedJobs;
+use App\Ai\Tools\Queue\RetryFailedJob;
 use App\Ai\Tools\Segments\ListUserSegments;
 use App\Ai\Tools\Segments\SyncUserSegment;
 use App\Ai\Tools\Settings\GetSetting;
@@ -26,6 +31,11 @@ use App\Ai\Tools\Settings\SetSetting;
 use App\Ai\Tools\Stats\GetDashboardStats;
 use App\Ai\Tools\System\AddSensitiveWord;
 use App\Ai\Tools\System\GetAreas;
+use App\Ai\Tools\System\ListAdmins;
+use App\Ai\Tools\System\ListDicts;
+use App\Ai\Tools\System\ListRoles;
+use App\Ai\Tools\System\ListScheduleLogs;
+use App\Ai\Tools\System\ListSchedules;
 use App\Ai\Tools\System\ListSensitiveWords;
 use App\Ai\Tools\System\SystemInfo;
 use App\Ai\Tools\Tasks\ListTaskLogs;
@@ -35,6 +45,7 @@ use App\Ai\Tools\Users\ExtendUserVip;
 use App\Ai\Tools\Users\GetUser;
 use App\Ai\Tools\Users\GetUserSocials;
 use App\Ai\Tools\Users\ListIdentityVerifications;
+use App\Ai\Tools\Users\ListInviteRecords;
 use App\Ai\Tools\Users\ListUsers;
 use App\Ai\Tools\Users\ResetUserContact;
 use App\Ai\Tools\Users\ResetUserPassword;
@@ -124,7 +135,16 @@ class Assistant implements Agent, Conversational, HasTools
    - 查询任务定义列表（含奖励配置、当前是否生效）
    - 查询任务奖励发放日志（按任务、用户、奖励类型、时间范围筛选）
 
-8. **基础数据与系统信息**
+8. **系统运维与内容安全**
+   - 查询队列失败任务（按任务类名/队列名/异常信息过滤），并重试指定失败任务
+   - 查询定时任务定义与执行日志（含退出码、耗时、异常摘要）
+   - 查询 App 版本列表（按平台、发布状态、版本号筛选）
+   - 查询系统字典类型与字典数据（确认业务取值时使用）
+   - 查询后台管理员列表与角色权限构成（只读）
+   - 查询用户举报并处理结案（处理成立可联动隐藏/删除评论、冻结用户；或驳回）
+   - 查询用户邀请关系记录（按邀请人/被邀请人、时间范围筛选）
+
+9. **基础数据与系统信息**
    - 查询地区数据（省份列表、直属子地区、完整省市区树）
    - 查询系统运行信息（Laravel/PHP 版本、环境、数据库连接状态、缓存/队列/会话驱动、存储盘等）
    - 抓取公开网页内容（WebFetch），用于查阅在线文档、公告、新闻等 URL 内容
@@ -157,6 +177,8 @@ class Assistant implements Agent, Conversational, HasTools
 - 新增敏感词（AddSensitiveWord）
 - 审核评论（ModerateComment）
 - 同步规则分群（SyncUserSegment）
+- 重试队列失败任务（RetryFailedJob）
+- 处理用户举报（HandleReport）
 
 当管理员发起这类请求时：
 1. 先调用查询工具（如 GetUser、GetSetting）确认目标对象，必要时主动核对身份。
@@ -164,7 +186,7 @@ class Assistant implements Agent, Conversational, HasTools
 3. 等待管理员明确回复"确认"、"执行"等肯定意图后，再调用对应的写操作工具。
 4. 如果管理员在确认环节改变主意或信息有误，立即停止并按新的指示重新确认。
 
-对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
+对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、ListFailedJobs、ListSchedules、ListScheduleLogs、ListAppVersions、ListDicts、ListAdmins、ListRoles、ListReports、ListInviteRecords、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
 
 ## 安全与边界
 
@@ -237,6 +259,21 @@ PROMPT;
             new SyncUserSegment,
             new ListTasks,
             new ListTaskLogs,
+
+            // 系统运维
+            new ListFailedJobs,
+            new RetryFailedJob,
+            new ListSchedules,
+            new ListScheduleLogs,
+            new ListAppVersions,
+            new ListDicts,
+            new ListAdmins,
+            new ListRoles,
+
+            // 举报与邀请
+            new ListReports,
+            new HandleReport,
+            new ListInviteRecords,
 
             // 系统设置管理
             new GetSetting,
