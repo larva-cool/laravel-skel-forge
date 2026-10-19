@@ -49,18 +49,24 @@ class PointHelper
      * @param  Model  $source  积分来源模型
      * @param  PointType  $type  交易类型，使用本类的TYPE_*常量
      * @param  string  $desc  交易描述
+     * @param  ?Carbon  $expireTime  过期时间，为空时按系统设置的有效期计算
+     * @param  bool  $neverExpire  是否永不过期（为 true 时忽略 $expireTime）
      * @return PointTrade 创建的积分交易记录模型实例
      *
      * @throws \InvalidArgumentException 当积分数量非正数时抛出
      */
-    public static function incr(int|string $userId, int $points, Model $source, PointType $type, string $desc = ''): PointTrade
+    public static function incr(int|string $userId, int $points, Model $source, PointType $type, string $desc = '', ?Carbon $expireTime = null, bool $neverExpire = false): PointTrade
     {
         if ($points <= 0) {
             throw new \InvalidArgumentException('积分数量必须为正数');
         }
 
-        // 计算积分过期时间（默认365天后）
-        $expireTime = Carbon::now()->addDays((int) settings('user.point_expiration', 365));
+        // 计算积分过期时间：显式声明永不过期时置空，否则未指定时按系统设置的有效期计算（默认365天后）
+        if ($neverExpire) {
+            $expireTime = null;
+        } else {
+            $expireTime ??= Carbon::now()->addDays((int) settings('user.point_expiration', 365));
+        }
 
         return self::connection()->transaction(
             fn () => self::createTradeLog($userId, $points, $source->getKey(), $source->getMorphClass(), $type, $desc, $expireTime)

@@ -45,6 +45,31 @@ class PointHelperTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('incr 默认按系统设置生成过期时间')]
+    public function incr_sets_default_expiration(): void
+    {
+        $user = User::factory()->create();
+
+        $trade = PointHelper::incr($user->id, 100, $user, PointType::TYPE_ADMIN_RECHARGE, '后台充值');
+
+        $this->assertNotNull($trade->expired_at);
+        $this->assertTrue($trade->expired_at->greaterThan(Carbon::now()));
+        $this->assertNotNull(PointRecord::query()->where('user_id', $user->id)->sole('expired_at')->expired_at);
+    }
+
+    #[Test]
+    #[TestDox('incr 声明永不过期时过期时间为空')]
+    public function incr_supports_never_expire(): void
+    {
+        $user = User::factory()->create();
+
+        $trade = PointHelper::incr($user->id, 100, $user, PointType::TYPE_ADMIN_RECHARGE, '后台充值', neverExpire: true);
+
+        $this->assertNull($trade->expired_at);
+        $this->assertNull(PointRecord::query()->where('user_id', $user->id)->sole('expired_at')->expired_at);
+    }
+
+    #[Test]
     #[TestDox('incr 积分数量非正数时抛出异常')]
     public function incr_throws_on_non_positive_amount(): void
     {
