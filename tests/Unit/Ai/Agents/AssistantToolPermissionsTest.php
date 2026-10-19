@@ -9,15 +9,21 @@ namespace Tests\Unit\Ai\Agents;
 
 use App\Ai\Agents\Assistant;
 use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Audit\ListAuditLogs;
 use App\Ai\Tools\Audit\ListLoginHistories;
 use App\Ai\Tools\Audit\ListVerificationCodes;
+use App\Ai\Tools\Feedbacks\ListFeedbacks;
 use App\Ai\Tools\Settings\GetSetting;
 use App\Ai\Tools\Settings\SetSetting;
 use App\Ai\Tools\System\GetAreas;
 use App\Ai\Tools\System\SystemInfo;
 use App\Ai\Tools\Users\GetUser;
+use App\Ai\Tools\Users\ListIdentityVerifications;
 use App\Ai\Tools\Users\ListUsers;
 use App\Ai\Tools\Users\SetUserStatus;
+use App\Ai\Tools\Wallet\ListRecharges;
+use App\Ai\Tools\Wallet\ListWalletTrades;
+use App\Ai\Tools\Wallet\ListWithdraws;
 use App\Ai\Tools\Web\WebFetch;
 use App\Enums\AdminStatus;
 use App\Models\Admin\Admin;
@@ -111,7 +117,7 @@ class AssistantToolPermissionsTest extends TestCase
     {
         $superAdmin = Admin::query()->where('username', 'admin')->firstOrFail();
 
-        $this->assertCount(16, $this->toolClasses($superAdmin));
+        $this->assertCount(22, $this->toolClasses($superAdmin));
     }
 
     #[Test]
@@ -199,5 +205,29 @@ class AssistantToolPermissionsTest extends TestCase
         $this->assertContains(ListLoginHistories::class, $classes);
         $this->assertContains(GetAreas::class, $classes);
         $this->assertCount(2, $classes);
+    }
+
+    #[Test]
+    #[TestDox('财务、反馈与实名认证工具按各自权限点放行')]
+    public function permission_filtering_covers_wallet_feedback_and_identity_tools(): void
+    {
+        $admin = $this->createAdminWithPermissions([
+            'wallet.index',
+            'wallet.orders',
+            'wallet.withdraws',
+            'feedbacks.index',
+            'identity-verifications.index',
+            'audit-logs.index',
+        ]);
+
+        $classes = $this->toolClasses($admin);
+
+        $this->assertContains(ListWalletTrades::class, $classes);
+        $this->assertContains(ListRecharges::class, $classes);
+        $this->assertContains(ListWithdraws::class, $classes);
+        $this->assertContains(ListFeedbacks::class, $classes);
+        $this->assertContains(ListIdentityVerifications::class, $classes);
+        $this->assertContains(ListAuditLogs::class, $classes);
+        $this->assertCount(6, $classes);
     }
 }

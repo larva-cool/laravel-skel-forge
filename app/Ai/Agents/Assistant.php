@@ -8,8 +8,10 @@ declare(strict_types=1);
 namespace App\Ai\Agents;
 
 use App\Ai\Contracts\RequiresPermission;
+use App\Ai\Tools\Audit\ListAuditLogs;
 use App\Ai\Tools\Audit\ListLoginHistories;
 use App\Ai\Tools\Audit\ListVerificationCodes;
+use App\Ai\Tools\Feedbacks\ListFeedbacks;
 use App\Ai\Tools\Settings\GetSetting;
 use App\Ai\Tools\Settings\SetSetting;
 use App\Ai\Tools\Stats\GetDashboardStats;
@@ -19,10 +21,14 @@ use App\Ai\Tools\Users\AdjustUserBalance;
 use App\Ai\Tools\Users\ExtendUserVip;
 use App\Ai\Tools\Users\GetUser;
 use App\Ai\Tools\Users\GetUserSocials;
+use App\Ai\Tools\Users\ListIdentityVerifications;
 use App\Ai\Tools\Users\ListUsers;
 use App\Ai\Tools\Users\ResetUserContact;
 use App\Ai\Tools\Users\ResetUserPassword;
 use App\Ai\Tools\Users\SetUserStatus;
+use App\Ai\Tools\Wallet\ListRecharges;
+use App\Ai\Tools\Wallet\ListWalletTrades;
+use App\Ai\Tools\Wallet\ListWithdraws;
 use App\Ai\Tools\Web\WebFetch;
 use App\Models\Admin\Admin;
 use Laravel\Ai\Attributes\MaxSteps;
@@ -74,8 +80,20 @@ class Assistant implements Agent, Conversational, HasTools
    - 查询平台用户规模、新增/活跃趋势、管理员数量、验证码发送量、近期登录记录等核心指标
    - 查询全局登录历史（可按前台用户/后台管理员、用户 ID、登录地址/设备/平台、时间范围筛选），用于安全审计
    - 查询短信/邮件验证码发送记录（按账号、使用状态、场景、时间范围筛选）
+   - 查询后台管理员操作日志（按操作人、路由、请求方法、是否失败、时间范围筛选），用于操作审计
 
-4. **基础数据与系统信息**
+4. **钱包与财务查询**
+   - 查询全局钱包流水（按用户、交易类型、状态、描述关键字、时间范围筛选）
+   - 查询充值订单（按用户、支付状态、支付渠道、订单号、时间范围筛选）
+   - 查询提现申请（按用户、提现状态、收款账户类型、单号、时间范围筛选）
+   - 以上为只读查询，不能执行调账、确认到账、提现审核或打款
+
+5. **用户反馈与实名认证查询**
+   - 查询用户意见反馈（按关键字、类型、处理状态、优先级、提交用户、时间范围筛选）
+   - 查询实名认证记录（按关键字、个人/企业类型、审核状态、申请用户、提交时间范围筛选；可查看证件照/营业执照图片地址用于辅助审核判断，证件号码不返回）
+   - 以上为只读查询，不能执行反馈处理或认证审核
+
+6. **基础数据与系统信息**
    - 查询地区数据（省份列表、直属子地区、完整省市区树）
    - 查询系统运行信息（Laravel/PHP 版本、环境、数据库连接状态、缓存/队列/会话驱动、存储盘等）
    - 抓取公开网页内容（WebFetch），用于查阅在线文档、公告、新闻等 URL 内容
@@ -106,7 +124,7 @@ class Assistant implements Agent, Conversational, HasTools
 3. 等待管理员明确回复"确认"、"执行"等肯定意图后，再调用对应的写操作工具。
 4. 如果管理员在确认环节改变主意或信息有误，立即停止并按新的指示重新确认。
 
-对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
+对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
 
 ## 安全与边界
 
@@ -149,6 +167,16 @@ PROMPT;
             // 安全审计
             new ListLoginHistories,
             new ListVerificationCodes,
+            new ListAuditLogs,
+
+            // 钱包与财务
+            new ListWalletTrades,
+            new ListRecharges,
+            new ListWithdraws,
+
+            // 用户反馈与实名认证
+            new ListFeedbacks,
+            new ListIdentityVerifications,
 
             // 系统设置管理
             new GetSetting,
