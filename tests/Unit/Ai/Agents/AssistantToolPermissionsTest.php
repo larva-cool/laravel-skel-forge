@@ -13,6 +13,7 @@ use App\Ai\Tools\Audit\ListAuditLogs;
 use App\Ai\Tools\Audit\ListLoginHistories;
 use App\Ai\Tools\Audit\ListVerificationCodes;
 use App\Ai\Tools\Feedbacks\ListFeedbacks;
+use App\Ai\Tools\Feedbacks\ReplyFeedback;
 use App\Ai\Tools\Settings\GetSetting;
 use App\Ai\Tools\Settings\SetSetting;
 use App\Ai\Tools\System\GetAreas;
@@ -20,10 +21,13 @@ use App\Ai\Tools\System\SystemInfo;
 use App\Ai\Tools\Users\GetUser;
 use App\Ai\Tools\Users\ListIdentityVerifications;
 use App\Ai\Tools\Users\ListUsers;
+use App\Ai\Tools\Users\ReviewIdentityVerification;
+use App\Ai\Tools\Users\SendUserNotification;
 use App\Ai\Tools\Users\SetUserStatus;
 use App\Ai\Tools\Wallet\ListRecharges;
 use App\Ai\Tools\Wallet\ListWalletTrades;
 use App\Ai\Tools\Wallet\ListWithdraws;
+use App\Ai\Tools\Wallet\ReviewWithdraw;
 use App\Ai\Tools\Web\WebFetch;
 use App\Enums\AdminStatus;
 use App\Models\Admin\Admin;
@@ -117,7 +121,7 @@ class AssistantToolPermissionsTest extends TestCase
     {
         $superAdmin = Admin::query()->where('username', 'admin')->firstOrFail();
 
-        $this->assertCount(22, $this->toolClasses($superAdmin));
+        $this->assertCount(26, $this->toolClasses($superAdmin));
     }
 
     #[Test]
@@ -225,9 +229,28 @@ class AssistantToolPermissionsTest extends TestCase
         $this->assertContains(ListWalletTrades::class, $classes);
         $this->assertContains(ListRecharges::class, $classes);
         $this->assertContains(ListWithdraws::class, $classes);
+        $this->assertContains(ReviewWithdraw::class, $classes);
         $this->assertContains(ListFeedbacks::class, $classes);
         $this->assertContains(ListIdentityVerifications::class, $classes);
         $this->assertContains(ListAuditLogs::class, $classes);
-        $this->assertCount(6, $classes);
+        $this->assertCount(7, $classes);
+    }
+
+    #[Test]
+    #[TestDox('编辑类权限点解锁审批写操作工具')]
+    public function edit_permissions_unlock_approval_write_tools(): void
+    {
+        $admin = $this->createAdminWithPermissions([
+            'identity-verifications.edit',
+            'feedbacks.edit',
+            'users.edit',
+        ]);
+
+        $classes = $this->toolClasses($admin);
+
+        $this->assertContains(ReviewIdentityVerification::class, $classes);
+        $this->assertContains(ReplyFeedback::class, $classes);
+        $this->assertContains(SendUserNotification::class, $classes);
+        $this->assertNotContains(ReviewWithdraw::class, $classes);
     }
 }

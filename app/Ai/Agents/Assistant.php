@@ -12,6 +12,7 @@ use App\Ai\Tools\Audit\ListAuditLogs;
 use App\Ai\Tools\Audit\ListLoginHistories;
 use App\Ai\Tools\Audit\ListVerificationCodes;
 use App\Ai\Tools\Feedbacks\ListFeedbacks;
+use App\Ai\Tools\Feedbacks\ReplyFeedback;
 use App\Ai\Tools\Settings\GetSetting;
 use App\Ai\Tools\Settings\SetSetting;
 use App\Ai\Tools\Stats\GetDashboardStats;
@@ -25,10 +26,13 @@ use App\Ai\Tools\Users\ListIdentityVerifications;
 use App\Ai\Tools\Users\ListUsers;
 use App\Ai\Tools\Users\ResetUserContact;
 use App\Ai\Tools\Users\ResetUserPassword;
+use App\Ai\Tools\Users\ReviewIdentityVerification;
+use App\Ai\Tools\Users\SendUserNotification;
 use App\Ai\Tools\Users\SetUserStatus;
 use App\Ai\Tools\Wallet\ListRecharges;
 use App\Ai\Tools\Wallet\ListWalletTrades;
 use App\Ai\Tools\Wallet\ListWithdraws;
+use App\Ai\Tools\Wallet\ReviewWithdraw;
 use App\Ai\Tools\Web\WebFetch;
 use App\Models\Admin\Admin;
 use Laravel\Ai\Attributes\MaxSteps;
@@ -82,16 +86,19 @@ class Assistant implements Agent, Conversational, HasTools
    - 查询短信/邮件验证码发送记录（按账号、使用状态、场景、时间范围筛选）
    - 查询后台管理员操作日志（按操作人、路由、请求方法、是否失败、时间范围筛选），用于操作审计
 
-4. **钱包与财务查询**
+4. **钱包与财务**
    - 查询全局钱包流水（按用户、交易类型、状态、描述关键字、时间范围筛选）
    - 查询充值订单（按用户、支付状态、支付渠道、订单号、时间范围筛选）
    - 查询提现申请（按用户、提现状态、收款账户类型、单号、时间范围筛选）
-   - 以上为只读查询，不能执行调账、确认到账、提现审核或打款
+   - 审核提现申请（通过/驳回，仅待审核状态可操作；驳回需填写原因，资金自动解冻退回）
+   - 不支持调账、确认到账、标记打款等操作
 
-5. **用户反馈与实名认证查询**
+5. **用户反馈与实名认证**
    - 查询用户意见反馈（按关键字、类型、处理状态、优先级、提交用户、时间范围筛选）
+   - 处理意见反馈（更新处理状态、填写处理备注，首次处理自动记录处理人）
    - 查询实名认证记录（按关键字、个人/企业类型、审核状态、申请用户、提交时间范围筛选；可查看证件照/营业执照图片地址用于辅助审核判断，证件号码不返回）
-   - 以上为只读查询，不能执行反馈处理或认证审核
+   - 审核实名认证（通过/驳回，仅待审核状态可操作；驳回需填写原因）
+   - 向指定用户发送站内通知（需提供标题与正文）
 
 6. **基础数据与系统信息**
    - 查询地区数据（省份列表、直属子地区、完整省市区树）
@@ -117,6 +124,10 @@ class Assistant implements Agent, Conversational, HasTools
 - 重置用户手机号 / 邮箱（ResetUserContact）
 - 重置用户密码（ResetUserPassword）
 - 修改系统配置（SetSetting）
+- 审核提现申请（ReviewWithdraw）
+- 审核实名认证（ReviewIdentityVerification）
+- 处理用户反馈（ReplyFeedback）
+- 发送站内通知（SendUserNotification）
 
 当管理员发起这类请求时：
 1. 先调用查询工具（如 GetUser、GetSetting）确认目标对象，必要时主动核对身份。
@@ -173,10 +184,14 @@ PROMPT;
             new ListWalletTrades,
             new ListRecharges,
             new ListWithdraws,
+            new ReviewWithdraw,
 
             // 用户反馈与实名认证
             new ListFeedbacks,
             new ListIdentityVerifications,
+            new ReplyFeedback,
+            new ReviewIdentityVerification,
+            new SendUserNotification,
 
             // 系统设置管理
             new GetSetting,
