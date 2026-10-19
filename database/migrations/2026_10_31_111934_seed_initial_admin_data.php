@@ -932,6 +932,18 @@ return new class extends Migration
                         'keep_alive' => false,
                         'permission' => 'chat.use',
                     ],
+                    [
+                        'key' => 'ai.finance',
+                        'path' => 'finance',
+                        'name' => 'AIFinance',
+                        'component' => '/ai/finance/index',
+                        'title' => '财务助手',
+                        'icon' => 'ri:money-cny-circle-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 2,
+                        'keep_alive' => false,
+                        'permission' => 'finance.use',
+                    ],
                 ],
             ],
 
