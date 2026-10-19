@@ -11,13 +11,25 @@ use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Audit\ListAuditLogs;
 use App\Ai\Tools\Audit\ListLoginHistories;
 use App\Ai\Tools\Audit\ListVerificationCodes;
+use App\Ai\Tools\Content\ListComments;
+use App\Ai\Tools\Content\ModerateComment;
 use App\Ai\Tools\Feedbacks\ListFeedbacks;
 use App\Ai\Tools\Feedbacks\ReplyFeedback;
+use App\Ai\Tools\Operation\ListAnnouncements;
+use App\Ai\Tools\Operation\ListBanners;
+use App\Ai\Tools\Operation\PublishAnnouncement;
+use App\Ai\Tools\Operation\SetBannerStatus;
+use App\Ai\Tools\Segments\ListUserSegments;
+use App\Ai\Tools\Segments\SyncUserSegment;
 use App\Ai\Tools\Settings\GetSetting;
 use App\Ai\Tools\Settings\SetSetting;
 use App\Ai\Tools\Stats\GetDashboardStats;
+use App\Ai\Tools\System\AddSensitiveWord;
 use App\Ai\Tools\System\GetAreas;
+use App\Ai\Tools\System\ListSensitiveWords;
 use App\Ai\Tools\System\SystemInfo;
+use App\Ai\Tools\Tasks\ListTaskLogs;
+use App\Ai\Tools\Tasks\ListTasks;
 use App\Ai\Tools\Users\AdjustUserBalance;
 use App\Ai\Tools\Users\ExtendUserVip;
 use App\Ai\Tools\Users\GetUser;
@@ -100,7 +112,19 @@ class Assistant implements Agent, Conversational, HasTools
    - 审核实名认证（通过/驳回，仅待审核状态可操作；驳回需填写原因）
    - 向指定用户发送站内通知（需提供标题与正文）
 
-6. **基础数据与系统信息**
+6. **运营内容管理**
+   - 查询公告列表；发布公告（上线）与归档公告（下线）
+   - 查询 Banner/轮播图；启用或禁用 Banner
+   - 查询敏感词库；新增敏感词（新增后立即生效）
+   - 查询用户评论；审核评论（通过/驳回/待审核/需复审，驳回后用户不可见）
+
+7. **用户分群与任务系统**
+   - 查询用户分群列表（含成员数、规则同步信息）
+   - 手动触发规则分群的成员同步（仅已启用的规则分群）
+   - 查询任务定义列表（含奖励配置、当前是否生效）
+   - 查询任务奖励发放日志（按任务、用户、奖励类型、时间范围筛选）
+
+8. **基础数据与系统信息**
    - 查询地区数据（省份列表、直属子地区、完整省市区树）
    - 查询系统运行信息（Laravel/PHP 版本、环境、数据库连接状态、缓存/队列/会话驱动、存储盘等）
    - 抓取公开网页内容（WebFetch），用于查阅在线文档、公告、新闻等 URL 内容
@@ -128,6 +152,11 @@ class Assistant implements Agent, Conversational, HasTools
 - 审核实名认证（ReviewIdentityVerification）
 - 处理用户反馈（ReplyFeedback）
 - 发送站内通知（SendUserNotification）
+- 发布 / 归档公告（PublishAnnouncement）
+- 启用 / 禁用 Banner（SetBannerStatus）
+- 新增敏感词（AddSensitiveWord）
+- 审核评论（ModerateComment）
+- 同步规则分群（SyncUserSegment）
 
 当管理员发起这类请求时：
 1. 先调用查询工具（如 GetUser、GetSetting）确认目标对象，必要时主动核对身份。
@@ -135,7 +164,7 @@ class Assistant implements Agent, Conversational, HasTools
 3. 等待管理员明确回复"确认"、"执行"等肯定意图后，再调用对应的写操作工具。
 4. 如果管理员在确认环节改变主意或信息有误，立即停止并按新的指示重新确认。
 
-对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
+对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
 
 ## 安全与边界
 
@@ -192,6 +221,22 @@ PROMPT;
             new ReplyFeedback,
             new ReviewIdentityVerification,
             new SendUserNotification,
+
+            // 运营内容管理
+            new ListAnnouncements,
+            new PublishAnnouncement,
+            new ListBanners,
+            new SetBannerStatus,
+            new ListSensitiveWords,
+            new AddSensitiveWord,
+            new ListComments,
+            new ModerateComment,
+
+            // 用户分群与任务系统
+            new ListUserSegments,
+            new SyncUserSegment,
+            new ListTasks,
+            new ListTaskLogs,
 
             // 系统设置管理
             new GetSetting,
