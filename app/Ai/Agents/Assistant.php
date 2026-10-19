@@ -18,10 +18,15 @@ use App\Ai\Tools\Content\ListReports;
 use App\Ai\Tools\Content\ModerateComment;
 use App\Ai\Tools\Feedbacks\ListFeedbacks;
 use App\Ai\Tools\Feedbacks\ReplyFeedback;
+use App\Ai\Tools\Open\ListOpenAccounts;
+use App\Ai\Tools\Open\RotateOpenAccountToken;
+use App\Ai\Tools\Open\SetOpenAccountStatus;
+use App\Ai\Tools\Operation\ListAgreements;
 use App\Ai\Tools\Operation\ListAnnouncements;
 use App\Ai\Tools\Operation\ListBanners;
 use App\Ai\Tools\Operation\PublishAnnouncement;
 use App\Ai\Tools\Operation\SetBannerStatus;
+use App\Ai\Tools\Operation\UpdateAgreement;
 use App\Ai\Tools\Queue\ListFailedJobs;
 use App\Ai\Tools\Queue\RetryFailedJob;
 use App\Ai\Tools\Segments\ListUserSegments;
@@ -32,6 +37,7 @@ use App\Ai\Tools\Stats\GetDashboardStats;
 use App\Ai\Tools\System\AddSensitiveWord;
 use App\Ai\Tools\System\GetAreas;
 use App\Ai\Tools\System\ListAdmins;
+use App\Ai\Tools\System\ListAttachments;
 use App\Ai\Tools\System\ListDicts;
 use App\Ai\Tools\System\ListRoles;
 use App\Ai\Tools\System\ListScheduleLogs;
@@ -128,6 +134,7 @@ class Assistant implements Agent, Conversational, HasTools
    - 查询 Banner/轮播图；启用或禁用 Banner
    - 查询敏感词库；新增敏感词（新增后立即生效）
    - 查询用户评论；审核评论（通过/驳回/待审核/需复审，驳回后用户不可见）
+   - 查询用户协议列表；更新协议内容/版本/状态（发布后用户端按类别展示最新版本）
 
 7. **用户分群与任务系统**
    - 查询用户分群列表（含成员数、规则同步信息）
@@ -143,6 +150,8 @@ class Assistant implements Agent, Conversational, HasTools
    - 查询后台管理员列表与角色权限构成（只读）
    - 查询用户举报并处理结案（处理成立可联动隐藏/删除评论、冻结用户；或驳回）
    - 查询用户邀请关系记录（按邀请人/被邀请人、时间范围筛选）
+   - 查询附件列表（按类型、扩展名、文件名、上传时间筛选）
+   - 查询开放平台账户；启用/冻结账户（冻结同步吊销令牌）；轮换账户访问令牌（新明文仅展示一次）
 
 9. **基础数据与系统信息**
    - 查询地区数据（省份列表、直属子地区、完整省市区树）
@@ -179,6 +188,9 @@ class Assistant implements Agent, Conversational, HasTools
 - 同步规则分群（SyncUserSegment）
 - 重试队列失败任务（RetryFailedJob）
 - 处理用户举报（HandleReport）
+- 更新用户协议（UpdateAgreement）
+- 启用 / 冻结开放平台账户（SetOpenAccountStatus）
+- 轮换开放平台账户令牌（RotateOpenAccountToken）
 
 当管理员发起这类请求时：
 1. 先调用查询工具（如 GetUser、GetSetting）确认目标对象，必要时主动核对身份。
@@ -186,7 +198,7 @@ class Assistant implements Agent, Conversational, HasTools
 3. 等待管理员明确回复"确认"、"执行"等肯定意图后，再调用对应的写操作工具。
 4. 如果管理员在确认环节改变主意或信息有误，立即停止并按新的指示重新确认。
 
-对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、ListFailedJobs、ListSchedules、ListScheduleLogs、ListAppVersions、ListDicts、ListAdmins、ListRoles、ListReports、ListInviteRecords、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
+对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、ListFailedJobs、ListSchedules、ListScheduleLogs、ListAppVersions、ListDicts、ListAdmins、ListRoles、ListReports、ListInviteRecords、ListAgreements、ListAttachments、ListOpenAccounts、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
 
 ## 安全与边界
 
@@ -253,6 +265,8 @@ PROMPT;
             new AddSensitiveWord,
             new ListComments,
             new ModerateComment,
+            new ListAgreements,
+            new UpdateAgreement,
 
             // 用户分群与任务系统
             new ListUserSegments,
@@ -274,6 +288,12 @@ PROMPT;
             new ListReports,
             new HandleReport,
             new ListInviteRecords,
+
+            // 附件与开放平台
+            new ListAttachments,
+            new ListOpenAccounts,
+            new SetOpenAccountStatus,
+            new RotateOpenAccountToken,
 
             // 系统设置管理
             new GetSetting,
