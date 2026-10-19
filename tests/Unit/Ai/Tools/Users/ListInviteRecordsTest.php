@@ -61,6 +61,24 @@ class ListInviteRecordsTest extends TestCase
         return $admin->refresh();
     }
 
+    /**
+     * 创建一条邀请记录
+     *
+     * @param  array<string, mixed>  $overrides
+     */
+    private function createInviteRecord(array $overrides = []): InviteRecord
+    {
+        $inviter = User::factory()->create();
+        $invitee = User::factory()->create();
+
+        return InviteRecord::factory()->create(array_merge([
+            'inviter_id' => $inviter->id,
+            'inviter_type' => 'user',
+            'invitee_id' => $invitee->id,
+            'invitee_type' => 'user',
+        ], $overrides));
+    }
+
     #[Test]
     #[TestDox('未注入管理员时工具执行被拒绝')]
     public function handle_denies_without_admin(): void
@@ -88,13 +106,11 @@ class ListInviteRecordsTest extends TestCase
         $admin = $this->createAdminWithPermissions(['invite-records.index']);
         $inviter = User::factory()->create();
         $invitee = User::factory()->create();
-        InviteRecord::factory()->create([
+        $this->createInviteRecord([
             'inviter_id' => $inviter->id,
-            'inviter_type' => 'user',
             'invitee_id' => $invitee->id,
-            'invitee_type' => 'user',
         ]);
-        InviteRecord::factory()->create();
+        $this->createInviteRecord();
 
         $result = (new ListInviteRecords)->forAdmin($admin)->handle(new Request(['inviter_id' => $inviter->id]));
 
@@ -111,11 +127,8 @@ class ListInviteRecordsTest extends TestCase
     {
         $admin = $this->createAdminWithPermissions(['invite-records.index']);
         $invitee = User::factory()->create();
-        InviteRecord::factory()->create([
-            'invitee_id' => $invitee->id,
-            'invitee_type' => 'user',
-        ]);
-        InviteRecord::factory()->create();
+        $this->createInviteRecord(['invitee_id' => $invitee->id]);
+        $this->createInviteRecord();
 
         $result = (new ListInviteRecords)->forAdmin($admin)->handle(new Request(['invitee_id' => $invitee->id]));
 

@@ -70,7 +70,7 @@ class HandleReportTest extends TestCase
     private function createReport(array $overrides = []): Report
     {
         return Report::query()->create(array_merge([
-            'user_id' => User::factory(),
+            'user_id' => User::factory()->create()->id,
             'reportable_id' => 1,
             'reportable_type' => 'comment',
             'category' => 'spam',
