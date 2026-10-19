@@ -10,11 +10,14 @@ namespace Tests\Unit\Ai\Tools\Tasks;
 use App\Ai\Tools\Tasks\ListTaskLogs;
 use App\Enums\AdminStatus;
 use App\Enums\Task\TaskClaimMode;
+use App\Enums\Task\TaskGroupType;
+use App\Enums\Task\TaskResetType;
 use App\Enums\Task\TaskRewardType;
 use App\Enums\Task\TaskType;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\Task\Task;
+use App\Models\Task\TaskGroup;
 use App\Models\Task\TaskLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -72,10 +75,19 @@ class ListTaskLogsTest extends TestCase
      */
     private function createLog(User $user, array $overrides = []): TaskLog
     {
+        $group = TaskGroup::query()->create([
+            'name' => '单元测试分组',
+            'code' => 'group_'.uniqid(),
+            'type' => TaskGroupType::DAILY,
+            'reset_type' => TaskResetType::DAILY,
+            'sort_order' => 0,
+            'status' => true,
+        ]);
+
         $task = Task::query()->create([
-            'group_id' => null,
+            'group_id' => $group->id,
             'name' => '每日签到',
-            'code' => 'daily_sign_in_'.uniqid(),
+            'code' => 'task_'.uniqid(),
             'type' => TaskType::SIGN_IN,
             'condition' => ['target_value' => 1],
             'reward_type' => TaskRewardType::COIN,
@@ -123,7 +135,7 @@ class ListTaskLogsTest extends TestCase
         $this->createLog($user);
         $this->createLog($user);
 
-        $result = (new ListTaskLogs)->forAdmin($admin)->handle(new Request([]));
+        $result = (new ListTaskLogs)->forAdmin($admin)->handle(new Request(['user_id' => $user->id]));
 
         $payload = json_decode((string) $result, true);
         $this->assertIsArray($payload);

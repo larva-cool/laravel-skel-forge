@@ -128,10 +128,12 @@ class ListTasksTest extends TestCase
     {
         $admin = $this->createAdminWithPermissions(['tasks.index']);
         $group = $this->createGroup();
-        $this->createTask($group);
-        $this->createTask($group, ['name' => '完善个人资料', 'code' => 'complete_profile', 'type' => TaskType::COMPLETE_PROFILE]);
+        $this->createTask($group, ['name' => '单元测试任务签到']);
+        $this->createTask($group, ['name' => '单元测试任务资料', 'type' => TaskType::COMPLETE_PROFILE]);
 
-        $result = (new ListTasks)->forAdmin($admin)->handle(new Request([]));
+        $result = (new ListTasks)->forAdmin($admin)->handle(new Request([
+            'keyword' => '单元测试任务',
+        ]));
 
         $payload = json_decode((string) $result, true);
         $this->assertIsArray($payload);
@@ -149,9 +151,10 @@ class ListTasksTest extends TestCase
         $admin = $this->createAdminWithPermissions(['tasks.index']);
         $group = $this->createGroup();
         $this->createTask($group);
-        $this->createTask($group, ['name' => '邀请好友', 'code' => 'invite', 'type' => TaskType::INVITE_USER, 'status' => false]);
+        $this->createTask($group, ['name' => '邀请好友', 'type' => TaskType::INVITE_USER, 'status' => false]);
 
         $result = (new ListTasks)->forAdmin($admin)->handle(new Request([
+            'group_id' => $group->id,
             'type' => 'invite_user',
             'status' => false,
         ]));

@@ -70,6 +70,7 @@ class ListCommentsTest extends TestCase
     private function createComment(array $overrides = []): Comment
     {
         return Comment::factory()->create(array_merge([
+            'user_id' => User::factory(),
             'source_type' => 'comment',
             'source_id' => 1,
         ], $overrides));
