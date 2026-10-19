@@ -91,7 +91,7 @@ class ListTasksTest extends TestCase
         return Task::query()->create(array_merge([
             'group_id' => $group->id,
             'name' => '每日签到',
-            'code' => 'daily_sign_in',
+            'code' => 'task_'.uniqid(),
             'type' => TaskType::SIGN_IN,
             'condition' => ['target_value' => 1],
             'reward_type' => TaskRewardType::COIN,

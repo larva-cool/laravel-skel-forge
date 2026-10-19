@@ -61,6 +61,19 @@ class ModerateCommentTest extends TestCase
         return $admin->refresh();
     }
 
+    /**
+     * 创建一条评论
+     *
+     * @param  array<string, mixed>  $overrides
+     */
+    private function createComment(array $overrides = []): Comment
+    {
+        return Comment::factory()->create(array_merge([
+            'source_type' => 'comment',
+            'source_id' => 1,
+        ], $overrides));
+    }
+
     #[Test]
     #[TestDox('未注入管理员时工具执行被拒绝')]
     public function handle_denies_without_admin(): void
@@ -75,7 +88,7 @@ class ModerateCommentTest extends TestCase
     public function handle_denies_admin_without_permission(): void
     {
         $admin = $this->createAdminWithPermissions(['comments.index']);
-        $comment = Comment::factory()->pending()->create();
+        $comment = $this->createComment(['status' => ReviewStatus::PENDING]);
 
         $result = (new ModerateComment)->forAdmin($admin)->handle(new Request([
             'id' => $comment->id,
@@ -91,7 +104,7 @@ class ModerateCommentTest extends TestCase
     public function handle_approves_comment(): void
     {
         $admin = $this->createAdminWithPermissions(['comments.edit']);
-        $comment = Comment::factory()->pending()->create();
+        $comment = $this->createComment(['status' => ReviewStatus::PENDING]);
 
         $result = (new ModerateComment)->forAdmin($admin)->handle(new Request([
             'id' => $comment->id,
@@ -107,7 +120,7 @@ class ModerateCommentTest extends TestCase
     public function handle_rejects_comment(): void
     {
         $admin = $this->createAdminWithPermissions(['comments.edit']);
-        $comment = Comment::factory()->create();
+        $comment = $this->createComment();
 
         $result = (new ModerateComment)->forAdmin($admin)->handle(new Request([
             'id' => $comment->id,
@@ -123,7 +136,7 @@ class ModerateCommentTest extends TestCase
     public function handle_skips_when_status_unchanged(): void
     {
         $admin = $this->createAdminWithPermissions(['comments.edit']);
-        $comment = Comment::factory()->create();
+        $comment = $this->createComment();
 
         $result = (new ModerateComment)->forAdmin($admin)->handle(new Request([
             'id' => $comment->id,
