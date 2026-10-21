@@ -431,7 +431,7 @@ return new class extends Migration
                         'key' => 'user.segment-group',
                         'path' => 'segment-group',
                         'name' => 'UserSegmentGroup',
-                        'component' => '/index/index',
+                        'component' => '',
                         'title' => '用户分群',
                         'icon' => 'ri:group-line',
                         'type' => MenuType::DIRECTORY,

@@ -102,6 +102,12 @@ class FinanceChatController extends Controller
      */
     public function stream(ChatRequest $request): mixed
     {
+        // 客户端提前断开（用户切换页面/刷新）时仍需完成会话保存：
+        // Laravel AI 包在事件流结束后才生成标题并落库会话与消息；
+        // 流式生成 + 标题生成可能超过 PHP 默认 30s 时限，这里放宽
+        ignore_user_abort(true);
+        set_time_limit(300);
+
         /** @var Admin $user */
         $user = $request->user();
         $prompt = $request->input('prompt');
@@ -131,6 +137,10 @@ class FinanceChatController extends Controller
      */
     public function approve(ChatApprovalRequest $request): mixed
     {
+        // 客户端提前断开时仍需完成会话保存；放宽执行时限
+        ignore_user_abort(true);
+        set_time_limit(300);
+
         /** @var Admin $user */
         $user = $request->user();
         $conversationId = $request->input('conversation_id');

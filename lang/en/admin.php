@@ -83,7 +83,6 @@ return [
 
     // AI chat
     'chat_conversation_not_found' => 'Conversation not found.',
-    'chat_agent_forbidden' => 'You do not have permission to use this agent.',
 
     // Sensitive words
     'sensitive_dict_refreshed' => 'Sensitive word dictionary refreshed.',

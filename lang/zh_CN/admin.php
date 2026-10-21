@@ -83,7 +83,6 @@ return [
 
     // AI 聊天
     'chat_conversation_not_found' => '会话不存在',
-    'chat_agent_forbidden' => '没有使用该智能体的权限',
 
     // 敏感词管理
     'sensitive_dict_refreshed' => '字典已刷新',

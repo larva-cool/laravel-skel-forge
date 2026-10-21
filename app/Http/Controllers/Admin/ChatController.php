@@ -142,12 +142,18 @@ class ChatController extends Controller
      */
     public function stream(ChatRequest $request): mixed
     {
+        // 客户端提前断开（用户切换页面/刷新）时仍需完成会话保存：
+        // Laravel AI 包在事件流结束后才生成标题并落库会话与消息；
+        // 流式生成 + 标题生成可能超过 PHP 默认 30s 时限，这里放宽
+        ignore_user_abort(true);
+        set_time_limit(300);
+
         /** @var Admin $user */
         $user = $request->user();
         $prompt = $request->input('prompt');
         $conversationId = $request->input('conversation_id');
 
-        $agent = $this->resolveAgent($request->input('agent'), $user);
+        $agent = $this->resolveAgent($request->input('agent'));
 
         if ($conversationId) {
             $conversation = $user->conversations()->find($conversationId);
@@ -165,11 +171,13 @@ class ChatController extends Controller
             ->map(fn (Attachment $attachment) => Image::fromStorage($attachment->path, $attachment->disk))
             ->all();
 
-        return $agent->stream(
+        $response = $agent->stream(
             prompt: $prompt,
             attachments: $attachments,
             model: $request->input('model'),
         );
+
+        return $response;
     }
 
     /**
@@ -181,6 +189,10 @@ class ChatController extends Controller
      */
     public function approve(ChatApprovalRequest $request): mixed
     {
+        // 客户端提前断开时仍需完成会话保存；放宽执行时限
+        ignore_user_abort(true);
+        set_time_limit(300);
+
         /** @var Admin $user */
         $user = $request->user();
         $conversationId = $request->input('conversation_id');
@@ -198,7 +210,7 @@ class ChatController extends Controller
             ? Decision::approve()
             : Decision::reject($reason);
 
-        $agent = $this->resolveAgent($request->input('agent'), $user)
+        $agent = $this->resolveAgent($request->input('agent'))
             ->continue($conversationId, as: $user);
 
         return $agent->stream(
@@ -227,13 +239,11 @@ class ChatController extends Controller
     }
 
     /**
-     * 按标识实例化智能体，并校验对应使用权限
+     * 按标识实例化智能体（权限校验由智能体内部处理）
      */
-    protected function resolveAgent(?string $key, Admin $user): Assistant|Finance
+    protected function resolveAgent(?string $key): Assistant|Finance
     {
         if ($key === 'finance') {
-            abort_unless($user->can('finance.use'), 403, __('admin.chat_agent_forbidden'));
-
             return Finance::make();
         }
 
