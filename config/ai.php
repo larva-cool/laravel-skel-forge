@@ -55,7 +55,9 @@ return [
 
     'providers' => [
         'volc' => [
-            'driver' => 'openai',
+            // 火山方舟属于 OpenAI 兼容服务，走 chat/completions 端点；
+            // openai 驱动的 Responses API 与方舟存在兼容问题（续聊报 input.type 400）
+            'driver' => 'openai-compatible',
             'url' => env('VOLC_ARK_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
             'key' => env('VOLC_ARK_KEY', ''),
             'store' => false,
