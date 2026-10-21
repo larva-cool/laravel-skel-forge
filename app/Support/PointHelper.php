@@ -53,7 +53,7 @@ class PointHelper
      * @param  bool  $neverExpire  是否永不过期（为 true 时忽略 $expireTime）
      * @return PointTrade 创建的积分交易记录模型实例
      *
-     * @throws \InvalidArgumentException 当积分数量非正数时抛出
+     * @throws \InvalidArgumentException|\Throwable 当积分数量非正数时抛出
      */
     public static function incr(int|string $userId, int $points, Model $source, PointType $type, string $desc = '', ?Carbon $expireTime = null, bool $neverExpire = false): PointTrade
     {
@@ -86,7 +86,7 @@ class PointHelper
      * @return bool 操作是否成功
      *
      * @throws \InvalidArgumentException 当积分数量非正数时抛出
-     * @throws InsufficientPointsException 当积分不足时抛出
+     * @throws InsufficientPointsException|\Throwable 当积分不足时抛出
      */
     public static function decr(int|string $userId, int $point, Model $source, PointType $type, string $desc): bool
     {
