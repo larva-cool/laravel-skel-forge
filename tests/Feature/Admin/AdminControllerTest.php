@@ -106,6 +106,7 @@ class AdminControllerTest extends TestCase
         $response = $this->actingAsAdmin()->postJson('/admin/admins', [
             'username' => 'editor01',
             'name' => '编辑用户',
+            'avatar' => 'https://example.com/storage/admin_avatars/editor01.webp',
             'password' => 'Password123!',
             'status' => 1,
             'roles' => [],
@@ -113,11 +114,13 @@ class AdminControllerTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('username', 'editor01')
-            ->assertJsonPath('name', '编辑用户');
+            ->assertJsonPath('name', '编辑用户')
+            ->assertJsonPath('avatar', 'https://example.com/storage/admin_avatars/editor01.webp');
 
         $this->assertDatabaseHas('admin_users', [
             'username' => 'editor01',
             'name' => '编辑用户',
+            'avatar' => 'https://example.com/storage/admin_avatars/editor01.webp',
         ]);
     }
 
@@ -192,17 +195,20 @@ class AdminControllerTest extends TestCase
         $response = $this->actingAsAdmin()->putJson("/admin/admins/{$newAdmin->id}", [
             'name' => '更新后',
             'email' => 'updated@example.com',
+            'avatar' => 'https://example.com/storage/admin_avatars/updatable.webp',
             'status' => 1,
         ]);
 
         $response->assertOk()
             ->assertJsonPath('name', '更新后')
-            ->assertJsonPath('email', 'updated@example.com');
+            ->assertJsonPath('email', 'updated@example.com')
+            ->assertJsonPath('avatar', 'https://example.com/storage/admin_avatars/updatable.webp');
 
         $this->assertDatabaseHas('admin_users', [
             'id' => $newAdmin->id,
             'name' => '更新后',
             'email' => 'updated@example.com',
+            'avatar' => 'https://example.com/storage/admin_avatars/updatable.webp',
         ]);
     }
 

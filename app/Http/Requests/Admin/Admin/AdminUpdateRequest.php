@@ -23,6 +23,7 @@ use Spatie\Permission\Models\Role;
  * @property-read string|null $email 邮箱
  * @property-read string|null $phone 手机号
  * @property-read string $name 昵称
+ * @property-read string|null $avatar 头像URL
  * @property-read string|null $password 密码（留空则不修改）
  * @property-read int $status 状态
  * @property-read string[]|null $roles 角色名称数组
@@ -50,6 +51,7 @@ class AdminUpdateRequest extends FormRequest
                 Rule::unique(Admin::class, 'phone')->ignore($adminId),
             ],
             'name' => ['required', 'string', 'min:2', 'max:50', new NameRule],
+            'avatar' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', Password::defaults()],
             'status' => ['required', 'integer', Rule::enum(AdminStatus::class)],
             'roles' => ['sometimes', 'array'],
