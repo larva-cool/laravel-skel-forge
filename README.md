@@ -136,7 +136,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 模块 | 路由前缀 | 说明 |
 |------|----------|------|
 | 认证授权 | `/admin/auth` | 管理员登录（带节流限速，失败尝试记入登录历史）、登出、当前用户信息、刷新 Token |
-| 管理员 | `/admin/admins` | 管理员 CRUD、状态切换、密码重置、角色分配、登录历史（含成功/失败记录，可按 `result` 过滤），列表可导出 Excel |
+| 管理员 | `/admin/admins` | 管理员 CRUD（创建/编辑支持头像上传）、状态切换、密码重置、角色分配、登录历史（含成功/失败记录，可按 `result` 过滤），列表可导出 Excel |
 | 角色权限 | `/admin/roles`、`/admin/permissions` | RBAC 角色与权限管理 |
 | 菜单 | `/admin/menus` | 树形菜单管理（目录/菜单/按钮） |
 | 配置 | `/admin/settings`、`/admin/config` | 系统配置项与按分组查看 |
