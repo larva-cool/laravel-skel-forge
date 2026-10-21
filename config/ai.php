@@ -56,8 +56,8 @@ return [
     'providers' => [
         'volc' => [
             'driver' => 'openai',
-            'url' => env('VOLC_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
-            'key' => env('VOLC_API_KEY', ''),
+            'url' => env('VOLC_ARK_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
+            'key' => env('VOLC_ARK_KEY', ''),
             'store' => false,
             // 模型配置
             'models' => [
