@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Chat;
 
+use App\Models\Ai\ChatModel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -30,10 +31,7 @@ class ChatRequest extends FormRequest
      */
     public function rules(): array
     {
-        $availableModels = array_column(
-            config('ai.providers.volc.models.text.available', []),
-            'id'
-        );
+        $availableModels = ChatModel::availableIds();
 
         return [
             'prompt' => ['required', 'string', 'min:1', 'max:10000'],

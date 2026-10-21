@@ -281,14 +281,11 @@ Route::group(['prefix' => 'chat', 'as' => 'chat.'], function (Registrar $registr
     $registrar->delete('conversations/{conversationId}', [\App\Http\Controllers\Admin\ChatController::class, 'destroy'])->name('destroy');
 });
 
-// 财务助手
-Route::group(['prefix' => 'finance-chat', 'as' => 'finance-chat.'], function (Registrar $registrar) {
-    $registrar->get('conversations', [\App\Http\Controllers\Admin\FinanceChatController::class, 'conversations'])->name('conversations');
-    $registrar->get('conversations/{conversationId}', [\App\Http\Controllers\Admin\FinanceChatController::class, 'conversation'])->name('conversation');
-    $registrar->post('', [\App\Http\Controllers\Admin\FinanceChatController::class, 'stream'])->name('send');
-    $registrar->post('approve', [\App\Http\Controllers\Admin\FinanceChatController::class, 'approve'])->name('approve');
-    $registrar->delete('conversations/{conversationId}', [\App\Http\Controllers\Admin\FinanceChatController::class, 'destroy'])->name('destroy');
+// AI 模型管理
+Route::group(['prefix' => 'chat-models', 'as' => 'chat-models.'], function (Registrar $registrar) {
+    $registrar->put('{chat_model}/toggle-status', [\App\Http\Controllers\Admin\ChatModelController::class, 'toggleStatus'])->name('toggle-status');
 });
+Route::apiResource('chat-models', \App\Http\Controllers\Admin\ChatModelController::class);
 
 // 评论管理（运营管理）
 Route::group(['prefix' => 'comments', 'as' => 'comments.'], function (Registrar $registrar) {

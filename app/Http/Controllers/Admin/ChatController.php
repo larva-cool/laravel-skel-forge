@@ -13,6 +13,7 @@ use App\Http\Requests\Admin\Chat\ChatApprovalRequest;
 use App\Http\Requests\Admin\Chat\ChatRequest;
 use App\Http\Requests\Admin\Chat\FileUploadRequest;
 use App\Models\Admin\Admin;
+use App\Models\Ai\ChatModel;
 use App\Models\System\Attachment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,22 +48,28 @@ class ChatController extends Controller
      */
     public function meta(Request $request): JsonResponse
     {
-        /** @var Admin $user */
-        $user = $request->user();
-
         $agents = [
             ['key' => 'assistant', 'name' => '系统管理助手'],
+            ['key' => 'finance', 'name' => '财务助手'],
         ];
-
-        if ($user->can('finance.use')) {
-            $agents[] = ['key' => 'finance', 'name' => '财务助手'];
-        }
 
         return response()->json([
             'agents' => $agents,
-            'models' => config('ai.providers.volc.models.text.available', []),
-            'default_model' => config('ai.providers.volc.models.text.default'),
+            'models' => ChatModel::options(),
+            'default_model' => ChatModel::defaultModelId(),
         ]);
+    }
+
+    /**
+     * 按标识实例化智能体（权限校验由智能体内部处理）
+     */
+    protected function resolveAgent(?string $key): Assistant|Finance
+    {
+        if ($key === 'finance') {
+            return Finance::make();
+        }
+
+        return Assistant::make();
     }
 
     /**
@@ -239,18 +246,6 @@ class ChatController extends Controller
     }
 
     /**
-     * 按标识实例化智能体（权限校验由智能体内部处理）
-     */
-    protected function resolveAgent(?string $key): Assistant|Finance
-    {
-        if ($key === 'finance') {
-            return Finance::make();
-        }
-
-        return Assistant::make();
-    }
-
-    /**
      * 将消息存储的附件映射为前端可访问的图片 URL 列表
      *
      * @param  array<int, array<string, mixed>>|string|null  $attachments
@@ -273,13 +268,10 @@ class ChatController extends Controller
                 $type = $item['type'] ?? null;
                 $path = $item['path'] ?? null;
 
-                /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-                $disk = Storage::disk($item['disk'] ?? config('filesystems.default'));
-
                 return match ($type) {
                     'stored-image' => $path ? [
                         'type' => 'image',
-                        'url' => $disk->url($path),
+                        'url' => Storage::url($path),
                     ] : null,
                     'remote-image' => isset($item['url']) ? [
                         'type' => 'image',
