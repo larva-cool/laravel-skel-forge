@@ -272,6 +272,8 @@ Route::apiResource('dict-items', \App\Http\Controllers\Admin\DictItemController:
 
 // AI 聊天
 Route::group(['prefix' => 'chat', 'as' => 'chat.'], function (Registrar $registrar) {
+    $registrar->post('upload-file', [\App\Http\Controllers\Admin\ChatController::class, 'uploadFile'])->name('upload_file');
+    $registrar->get('meta', [\App\Http\Controllers\Admin\ChatController::class, 'meta'])->name('meta');
     $registrar->get('conversations', [\App\Http\Controllers\Admin\ChatController::class, 'conversations'])->name('conversations');
     $registrar->get('conversations/{conversationId}', [\App\Http\Controllers\Admin\ChatController::class, 'conversation'])->name('conversation');
     $registrar->post('', [\App\Http\Controllers\Admin\ChatController::class, 'stream'])->name('send');

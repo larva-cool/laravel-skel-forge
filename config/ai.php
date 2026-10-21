@@ -65,6 +65,13 @@ return [
             'models' => [
                 'text' => [
                     'default' => env('VOLC_TEXT_MODEL', 'doubao-seed-2-1-lite-260915'),
+                    // 聊天页可选模型列表（id 需为火山方舟已开通的模型，未开通的模型调用会报错，可从列表移除）
+                    'available' => [
+                        ['id' => 'doubao-seed-2-1-lite-260915', 'name' => 'Doubao Seed 2.1 Lite'],
+                        ['id' => 'doubao-seed-1-6-250615', 'name' => 'Doubao Seed 1.6'],
+                        ['id' => 'doubao-seed-1-6-lite-251015', 'name' => 'Doubao Seed 1.6 Lite'],
+                        ['id' => 'doubao-seed-1-6-flash-250828', 'name' => 'Doubao Seed 1.6 Flash'],
+                    ],
                 ],
                 'image' => [
                     'default' => env('VOLC_IMAGE_MODEL', 'doubao-seedream-5-0-pro-260628'),
