@@ -9,7 +9,12 @@ namespace Tests\Feature\Admin\Segment;
 
 use App\Enums\SegmentRuleField;
 use App\Enums\SegmentRuleOperator;
+use App\Enums\SocialProvider;
+use App\Models\Invite\InviteRecord;
+use App\Models\System\Social;
 use App\Models\User;
+use App\Models\Wallet\Recharge;
+use App\Models\Wallet\Withdraw;
 use App\Services\Segment\SegmentRuleEvaluator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -481,5 +486,314 @@ class SegmentRuleEvaluatorTest extends TestCase
         ];
 
         $this->assertSame([$match->id], $this->idsMatching($rule));
+    }
+
+    #[Test]
+    #[TestDox('余额字段：比较与区间')]
+    public function balance_field_comparisons(): void
+    {
+        $rich = $this->makeUser(['balance' => 500]);
+        $mid = $this->makeUser(['balance' => 100]);
+        $poor = $this->makeUser(['balance' => 0]);
+        $this->makeUser(['balance' => 1000]);
+
+        $gte = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'balance', 'op' => '>=', 'value' => 100],
+        ]];
+        $matched = $this->idsMatching($gte);
+        sort($matched);
+        $this->assertSame([$rich->id, $mid->id], $matched);
+
+        $between = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'frozen_balance', 'op' => 'between', 'value' => [1, 1000]],
+        ]];
+        $frozenRich = $this->makeUser(['frozen_balance' => 88]);
+        $matched = $this->idsMatching($between);
+        $this->assertSame([$frozenRich->id], $matched);
+    }
+
+    #[Test]
+    #[TestDox('省市字段：profile 关联的 IN 与 IS_NULL')]
+    public function province_and_city_fields(): void
+    {
+        $beijing = $this->makeUser();
+        $beijing->profile()->update(['province_id' => 110000, 'city_id' => 110100]);
+
+        $shanghai = $this->makeUser();
+        $shanghai->profile()->update(['province_id' => 310000, 'city_id' => 310100]);
+
+        $noArea = $this->makeUser();
+
+        $inRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'province_id', 'op' => 'in', 'value' => [110000, 310000]],
+        ]];
+        $matched = $this->idsMatching($inRule);
+        sort($matched);
+        $this->assertSame([$beijing->id, $shanghai->id], $matched);
+
+        $cityRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'city_id', 'op' => '=', 'value' => 310100],
+        ]];
+        $this->assertSame([$shanghai->id], $this->idsMatching($cityRule));
+
+        $nullRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'province_id', 'op' => 'is_null'],
+        ]];
+        $this->assertSame([$noArea->id], $this->idsMatching($nullRule));
+    }
+
+    #[Test]
+    #[TestDox('绑定状态字段：邮箱 / 手机号 / 用户名的 IS_NULL 与 IS_NOT_NULL')]
+    public function contact_binding_null_checks(): void
+    {
+        $withEmail = $this->makeUser(['email' => 'a@example.com']);
+        $withoutEmail = $this->makeUser(['email' => null]);
+
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'email', 'op' => 'is_not_null'],
+        ]];
+        $this->assertSame([$withEmail->id], $this->idsMatching($rule));
+
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'email', 'op' => 'is_null'],
+        ]];
+        $this->assertSame([$withoutEmail->id], $this->idsMatching($rule));
+
+        $withPhone = $this->makeUser(['phone' => '+8613800138000']);
+        $this->makeUser(['phone' => null]);
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'phone', 'op' => 'is_not_null'],
+        ]];
+        $matched = $this->idsMatching($rule);
+        $this->assertContains($withPhone->id, $matched);
+
+        $withUsername = $this->makeUser(['username' => 'user_'.uniqid()]);
+        $this->makeUser(['username' => null]);
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'username', 'op' => 'is_not_null'],
+        ]];
+        $matched = $this->idsMatching($rule);
+        $this->assertContains($withUsername->id, $matched);
+    }
+
+    #[Test]
+    #[TestDox('邮箱验证字段：extra 关联的 IS_NOT_NULL')]
+    public function email_verified_at_null_check(): void
+    {
+        $verified = $this->makeUser();
+        $verified->extra()->update(['email_verified_at' => now()]);
+
+        $unverified = $this->makeUser();
+
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'email_verified_at', 'op' => 'is_not_null'],
+        ]];
+        $this->assertSame([$verified->id], $this->idsMatching($rule));
+
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'email_verified_at', 'op' => 'is_null'],
+        ]];
+        $this->assertSame([$unverified->id], $this->idsMatching($rule));
+    }
+
+    #[Test]
+    #[TestDox('社交平台绑定：已绑定微信 / 未绑定微信')]
+    public function social_provider_existence(): void
+    {
+        $wechatUser = $this->makeUser();
+        Social::query()->create([
+            'user_id' => $wechatUser->id,
+            'user_type' => $wechatUser->getMorphClass(),
+            'provider' => SocialProvider::WECHAT_MP,
+            'openid' => 'openid_'.uniqid(),
+        ]);
+
+        $appleUser = $this->makeUser();
+        Social::query()->create([
+            'user_id' => $appleUser->id,
+            'user_type' => $appleUser->getMorphClass(),
+            'provider' => SocialProvider::APPLE,
+            'openid' => 'openid_'.uniqid(),
+        ]);
+
+        $noSocial = $this->makeUser();
+
+        $boundRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'social_provider', 'op' => '=', 'value' => SocialProvider::WECHAT_MP->value],
+        ]];
+        $this->assertSame([$wechatUser->id], $this->idsMatching($boundRule));
+
+        $unboundRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'social_provider', 'op' => '!=', 'value' => SocialProvider::WECHAT_MP->value],
+        ]];
+        $matched = $this->idsMatching($unboundRule);
+        sort($matched);
+        $this->assertSame([$appleUser->id, $noSocial->id], $matched);
+    }
+
+    #[Test]
+    #[TestDox('充值次数：仅统计已到账订单')]
+    public function recharge_count_aggregate(): void
+    {
+        $whale = $this->makeUser();
+        Recharge::factory()->forUser($whale)->success()->count(3)->create();
+        Recharge::factory()->forUser($whale)->create(); // 待支付不计入
+
+        $normal = $this->makeUser();
+        Recharge::factory()->forUser($normal)->success()->create();
+
+        $none = $this->makeUser();
+
+        $gteRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'recharge_count', 'op' => '>=', 'value' => 2],
+        ]];
+        $this->assertSame([$whale->id], $this->idsMatching($gteRule));
+
+        $zeroRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'recharge_count', 'op' => '=', 'value' => 0],
+        ]];
+        $this->assertSame([$none->id], $this->idsMatching($zeroRule));
+    }
+
+    #[Test]
+    #[TestDox('累计充值金额：SUM 聚合比较与区间')]
+    public function recharge_total_sum_aggregate(): void
+    {
+        $whale = $this->makeUser();
+        Recharge::factory()->forUser($whale)->success()->create(['amount' => 600]);
+        Recharge::factory()->forUser($whale)->success()->create(['amount' => 500]);
+        Recharge::factory()->forUser($whale)->create(['amount' => 9999]); // 待支付不计入
+
+        $normal = $this->makeUser();
+        Recharge::factory()->forUser($normal)->success()->create(['amount' => 100]);
+
+        $none = $this->makeUser();
+
+        $gteRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'recharge_total', 'op' => '>=', 'value' => 1000],
+        ]];
+        $this->assertSame([$whale->id], $this->idsMatching($gteRule));
+
+        $betweenRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'recharge_total', 'op' => 'between', 'value' => [50, 500]],
+        ]];
+        $this->assertSame([$normal->id], $this->idsMatching($betweenRule));
+
+        // 无明细记录的用户不产生分组行，= 0 不命中
+        $zeroRule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'recharge_total', 'op' => '=', 'value' => 0],
+        ]];
+        $this->assertSame([], $this->idsMatching($zeroRule));
+    }
+
+    #[Test]
+    #[TestDox('提现次数：关系计数')]
+    public function withdraw_count_aggregate(): void
+    {
+        $frequent = $this->makeUser();
+        Withdraw::factory()->count(2)->create([
+            'owner_type' => $frequent->getMorphClass(),
+            'owner_id' => $frequent->id,
+        ]);
+
+        $none = $this->makeUser();
+
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'withdraw_count', 'op' => '>', 'value' => 0],
+        ]];
+        $this->assertSame([$frequent->id], $this->idsMatching($rule));
+
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'withdraw_count', 'op' => '=', 'value' => 0],
+        ]];
+        $this->assertSame([$none->id], $this->idsMatching($rule));
+    }
+
+    #[Test]
+    #[TestDox('邀请人数：关系计数')]
+    public function invite_count_aggregate(): void
+    {
+        $inviter = $this->makeUser();
+        InviteRecord::factory()->forInviter($inviter)->forInvitee($this->makeUser())->create();
+        InviteRecord::factory()->forInviter($inviter)->forInvitee($this->makeUser())->create();
+
+        $none = $this->makeUser();
+
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'invite_count', 'op' => '>=', 'value' => 2],
+        ]];
+        $this->assertSame([$inviter->id], $this->idsMatching($rule));
+
+        $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
+            ['field' => 'invite_count', 'op' => '<', 'value' => 1],
+        ]];
+        $this->assertSame([$none->id], $this->idsMatching($rule));
+    }
+
+    #[Test]
+    #[TestDox('聚合/存在性字段与主表字段 OR 组合')]
+    public function aggregate_combined_with_column_field_in_or_logic(): void
+    {
+        $vipUser = $this->makeUser(['vip_expires_at' => Carbon::now()->addDay()]);
+
+        $payUser = $this->makeUser();
+        Recharge::factory()->forUser($payUser)->success()->create(['amount' => 500]);
+
+        $this->makeUser(); // 既不满足 VIP 也无充值
+
+        $rule = ['version' => 1, 'logic' => 'or', 'conditions' => [
+            ['field' => 'vip_expires_at', 'op' => '>', 'value' => 'now'],
+            ['field' => 'recharge_total', 'op' => '>', 'value' => 100],
+        ]];
+
+        $matched = $this->idsMatching($rule);
+        sort($matched);
+        $this->assertSame([$vipUser->id, $payUser->id], $matched);
+    }
+
+    #[Test]
+    #[TestDox('聚合字段操作符白名单：social_provider 不允许 in')]
+    public function aggregate_field_operator_whitelist_throws(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->evaluator->validate([
+            'version' => 1,
+            'logic' => 'and',
+            'conditions' => [
+                ['field' => 'social_provider', 'op' => 'in', 'value' => ['wechat_mp']],
+            ],
+        ]);
+    }
+
+    #[Test]
+    #[TestDox('新字段基础属性：queryType / 关联 / 值类型')]
+    public function new_field_basics(): void
+    {
+        $this->assertSame('number', SegmentRuleField::BALANCE->valueType());
+        $this->assertSame('column', SegmentRuleField::BALANCE->queryType());
+
+        $this->assertSame('exists', SegmentRuleField::SOCIAL_PROVIDER->queryType());
+        $this->assertSame('socials', SegmentRuleField::SOCIAL_PROVIDER->aggregateRelation());
+        $this->assertSame('provider', SegmentRuleField::SOCIAL_PROVIDER->column());
+
+        $this->assertSame('count', SegmentRuleField::RECHARGE_COUNT->queryType());
+        $this->assertSame('recharges', SegmentRuleField::RECHARGE_COUNT->aggregateRelation());
+        $this->assertNotNull(SegmentRuleField::RECHARGE_COUNT->aggregateConstraint());
+
+        $this->assertSame('sum', SegmentRuleField::RECHARGE_TOTAL->queryType());
+        $this->assertSame('amount', SegmentRuleField::RECHARGE_TOTAL->column());
+        $this->assertSame('owner_id', SegmentRuleField::RECHARGE_TOTAL->aggregateGroupColumn());
+
+        $this->assertSame('invitees', SegmentRuleField::INVITE_COUNT->aggregateRelation());
+        $this->assertSame('withdraws', SegmentRuleField::WITHDRAW_COUNT->aggregateRelation());
+
+        $this->assertSame('profile', SegmentRuleField::PROVINCE_ID->relation());
+        $this->assertSame('extra', SegmentRuleField::EMAIL_VERIFIED_AT->relation());
+
+        // 充值类字段操作符不含 in / between
+        $countOps = SegmentRuleField::RECHARGE_COUNT->allowedOperators();
+        $this->assertContains(SegmentRuleOperator::GTE, $countOps);
+        $this->assertNotContains(SegmentRuleOperator::IN, $countOps);
+        $this->assertNotContains(SegmentRuleOperator::BETWEEN, $countOps);
     }
 }
