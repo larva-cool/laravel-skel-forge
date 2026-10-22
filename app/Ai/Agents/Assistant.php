@@ -18,6 +18,7 @@ use App\Ai\Tools\Content\ListReports;
 use App\Ai\Tools\Content\ModerateComment;
 use App\Ai\Tools\Feedbacks\ListFeedbacks;
 use App\Ai\Tools\Feedbacks\ReplyFeedback;
+use App\Ai\Tools\Knowledge\SearchKnowledgeBase;
 use App\Ai\Tools\Open\ListOpenAccounts;
 use App\Ai\Tools\Open\RotateOpenAccountToken;
 use App\Ai\Tools\Open\SetOpenAccountStatus;
@@ -158,6 +159,10 @@ class Assistant implements Agent, Conversational, HasTools
    - 查询系统运行信息（Laravel/PHP 版本、环境、数据库连接状态、缓存/队列/会话驱动、存储盘等）
    - 抓取公开网页内容（WebFetch），用于查阅在线文档、公告、新闻等 URL 内容
 
+10. **知识库语义检索**
+   - 对知识库文档进行语义检索（SearchKnowledgeBase），用于回答平台业务规则、产品说明、操作指南等知识类问题
+   - 回答时优先依据检索到的知识片段，并注明来源文档标题；检索结果为空时如实说明，不要编造
+
 ## 工作原则
 
 - **只处理与后台管理相关的请求**。对于闲聊、与系统无关的问题，礼貌说明你的职责范围并引导回到管理事务。
@@ -198,7 +203,7 @@ class Assistant implements Agent, Conversational, HasTools
 3. 等待管理员明确回复"确认"、"执行"等肯定意图后，再调用对应的写操作工具。
 4. 如果管理员在确认环节改变主意或信息有误，立即停止并按新的指示重新确认。
 
-对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、ListFailedJobs、ListSchedules、ListScheduleLogs、ListAppVersions、ListDicts、ListAdmins、ListRoles、ListReports、ListInviteRecords、ListAgreements、ListAttachments、ListOpenAccounts、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch），无需确认，可直接调用。
+对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、ListFailedJobs、ListSchedules、ListScheduleLogs、ListAppVersions、ListDicts、ListAdmins、ListRoles、ListReports、ListInviteRecords、ListAgreements、ListAttachments、ListOpenAccounts、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch、SearchKnowledgeBase），无需确认，可直接调用。
 
 ## 安全与边界
 
@@ -305,6 +310,9 @@ PROMPT;
 
             // 数据统计概览
             new GetDashboardStats,
+
+            // 知识库语义检索
+            new SearchKnowledgeBase,
         ];
 
         return array_values(array_filter(

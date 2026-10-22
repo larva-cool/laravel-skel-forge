@@ -287,6 +287,15 @@ Route::group(['prefix' => 'chat-models', 'as' => 'chat-models.'], function (Regi
 });
 Route::apiResource('chat-models', \App\Http\Controllers\Admin\ChatModelController::class);
 
+// AI 知识库管理
+Route::group(['prefix' => 'knowledge-documents', 'as' => 'knowledge-documents.'], function (Registrar $registrar) {
+    $registrar->put('{knowledge_document}/toggle-status', [\App\Http\Controllers\Admin\KnowledgeDocumentController::class, 'toggleStatus'])->name('toggle-status');
+    $registrar->post('{knowledge_document}/reindex', [\App\Http\Controllers\Admin\KnowledgeDocumentController::class, 'reindex'])->name('reindex');
+    $registrar->get('{knowledge_document}/chunks', [\App\Http\Controllers\Admin\KnowledgeDocumentController::class, 'chunks'])->name('chunks');
+    $registrar->post('search', [\App\Http\Controllers\Admin\KnowledgeDocumentController::class, 'search'])->name('search');
+});
+Route::apiResource('knowledge-documents', \App\Http\Controllers\Admin\KnowledgeDocumentController::class);
+
 // 评论管理（运营管理）
 Route::group(['prefix' => 'comments', 'as' => 'comments.'], function (Registrar $registrar) {
     $registrar->get('{comment}/replies', [\App\Http\Controllers\Admin\CommentController::class, 'replies'])->name('replies');

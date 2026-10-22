@@ -121,7 +121,7 @@ class AssistantToolPermissionsTest extends TestCase
     {
         $superAdmin = Admin::query()->where('username', 'admin')->firstOrFail();
 
-        $this->assertCount(55, $this->toolClasses($superAdmin));
+        $this->assertCount(56, $this->toolClasses($superAdmin));
     }
 
     #[Test]

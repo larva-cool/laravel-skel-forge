@@ -949,6 +949,23 @@ return new class extends Migration
                             ['title' => '删除模型', 'permission' => 'chat-models.delete'],
                         ],
                     ],
+                    [
+                        'key' => 'ai.knowledge',
+                        'path' => 'knowledge',
+                        'name' => 'AIKnowledge',
+                        'component' => '/ai/knowledge/index',
+                        'title' => '知识库',
+                        'icon' => 'ri:book-2-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 3,
+                        'keep_alive' => true,
+                        'permission' => 'knowledge-documents.index',
+                        'buttons' => [
+                            ['title' => '新增文档', 'permission' => 'knowledge-documents.create'],
+                            ['title' => '编辑文档', 'permission' => 'knowledge-documents.edit'],
+                            ['title' => '删除文档', 'permission' => 'knowledge-documents.delete'],
+                        ],
+                    ],
                 ],
             ],
 
