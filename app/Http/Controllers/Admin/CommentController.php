@@ -11,6 +11,7 @@ use App\Enums\ReviewStatus;
 use App\Http\Requests\Admin\Comment\CommentReviewRequest;
 use App\Http\Resources\Admin\CommentResource;
 use App\Models\Content\Comment;
+use App\Services\Ai\ContentAssistService;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class CommentController extends Controller
     {
         $this->middleware('auth:admin');
         $this->middleware('permission:comments.index')->only(['index', 'show', 'replies']);
-        $this->middleware('permission:comments.edit')->only(['review']);
+        $this->middleware('permission:comments.edit')->only(['review', 'aiReview']);
         $this->middleware('permission:comments.delete')->only(['destroy']);
     }
 
@@ -118,6 +119,16 @@ class CommentController extends Controller
             ->paginate(per_page($request));
 
         return CommentResource::collection($items);
+    }
+
+    /**
+     * AI 敏感词命中智能复核（减少误杀，仅给出辅助建议，不改变评论状态）
+     */
+    public function aiReview(int $id, ContentAssistService $service): JsonResponse
+    {
+        $comment = Comment::query()->findOrFail($id);
+
+        return response()->json($service->reviewComment($comment));
     }
 
     /**

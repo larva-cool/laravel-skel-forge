@@ -8,10 +8,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AnnouncementStatus;
+use App\Http\Requests\Admin\Ai\AiCopyRequest;
 use App\Http\Requests\Admin\Announcement\AnnouncementIndexRequest;
 use App\Http\Requests\Admin\Announcement\AnnouncementSaveRequest;
 use App\Http\Resources\Admin\AnnouncementResource;
 use App\Models\Operation\Announcement;
+use App\Services\Ai\ContentAssistService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -29,9 +31,17 @@ class AnnouncementController extends Controller
     {
         $this->middleware('auth:admin');
         $this->middleware('permission:announcements.index')->only(['index', 'show']);
-        $this->middleware('permission:announcements.create')->only(['store']);
+        $this->middleware('permission:announcements.create')->only(['store', 'generateCopy']);
         $this->middleware('permission:announcements.edit')->only(['update', 'toggleStatus']);
         $this->middleware('permission:announcements.delete')->only(['destroy']);
+    }
+
+    /**
+     * AI 生成公告文案（标题/摘要/正文，仅生成不落库）
+     */
+    public function generateCopy(AiCopyRequest $request, ContentAssistService $service): JsonResponse
+    {
+        return response()->json($service->generateAnnouncementCopy($request->string('brief')->toString()));
     }
 
     /**

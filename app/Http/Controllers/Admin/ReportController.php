@@ -13,6 +13,7 @@ use App\Http\Requests\Admin\Report\ReportProcessRequest;
 use App\Http\Resources\Admin\ReportResource;
 use App\Http\Resources\Admin\ReportStatResource;
 use App\Models\Content\Report;
+use App\Services\Ai\ContentAssistService;
 use App\Services\ReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class ReportController extends Controller
     {
         $this->middleware('auth:admin');
         $this->middleware('permission:reports.index')->only(['index', 'show', 'stats', 'export']);
-        $this->middleware('permission:reports.edit')->only(['update']);
+        $this->middleware('permission:reports.edit')->only(['update', 'aiTriage']);
     }
 
     /**
@@ -64,6 +65,20 @@ class ReportController extends Controller
             ->findOrFail($id);
 
         return new ReportResource($report);
+    }
+
+    /**
+     * AI 举报智能初判（仅给出辅助建议，不改变举报状态）
+     */
+    public function aiTriage(int $id, ContentAssistService $service): JsonResponse
+    {
+        $report = Report::query()->with('reportable')->findOrFail($id);
+
+        if ($report->status->isClosed()) {
+            abort(422, '该举报已结案，无需初判');
+        }
+
+        return response()->json($service->triageReport($report));
     }
 
     /**

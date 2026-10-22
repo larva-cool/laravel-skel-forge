@@ -11,6 +11,7 @@ use App\Http\Requests\Admin\Feedback\FeedbackUpdateRequest;
 use App\Http\Resources\Admin\FeedbackResource;
 use App\Http\Resources\Admin\FeedbackStatResource;
 use App\Models\System\Feedback;
+use App\Services\Ai\ContentAssistService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -31,7 +32,7 @@ class FeedbackController extends Controller
     {
         $this->middleware('auth:admin');
         $this->middleware('permission:feedbacks.index')->only(['index', 'show', 'stats', 'export']);
-        $this->middleware('permission:feedbacks.edit')->only(['update']);
+        $this->middleware('permission:feedbacks.edit')->only(['update', 'draftReply']);
         $this->middleware('permission:feedbacks.delete')->only(['destroy']);
     }
 
@@ -89,6 +90,14 @@ class FeedbackController extends Controller
         $feedback = Feedback::query()->with(['admin', 'user'])->findOrFail($id);
 
         return new FeedbackResource($feedback);
+    }
+
+    /**
+     * AI 草拟反馈回复（仅生成草稿，不修改反馈）
+     */
+    public function draftReply(Feedback $feedback, ContentAssistService $service): JsonResponse
+    {
+        return response()->json(['draft' => $service->draftFeedbackReply($feedback)]);
     }
 
     /**

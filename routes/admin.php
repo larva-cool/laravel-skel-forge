@@ -300,6 +300,7 @@ Route::apiResource('knowledge-documents', \App\Http\Controllers\Admin\KnowledgeD
 Route::group(['prefix' => 'comments', 'as' => 'comments.'], function (Registrar $registrar) {
     $registrar->get('{comment}/replies', [\App\Http\Controllers\Admin\CommentController::class, 'replies'])->name('replies');
     $registrar->post('{comment}/review', [\App\Http\Controllers\Admin\CommentController::class, 'review'])->name('review');
+    $registrar->post('{comment}/ai-review', [\App\Http\Controllers\Admin\CommentController::class, 'aiReview'])->name('ai-review');
     $registrar->get('export', [\App\Http\Controllers\Admin\CommentController::class, 'export'])->name('export');
 });
 Route::apiResource('comments', \App\Http\Controllers\Admin\CommentController::class)->except(['store', 'update']);
@@ -308,6 +309,7 @@ Route::apiResource('comments', \App\Http\Controllers\Admin\CommentController::cl
 Route::group(['prefix' => 'feedbacks', 'as' => 'feedbacks.'], function (Registrar $registrar) {
     $registrar->get('stats', [\App\Http\Controllers\Admin\FeedbackController::class, 'stats'])->name('stats');
     $registrar->get('export', [\App\Http\Controllers\Admin\FeedbackController::class, 'export'])->name('export');
+    $registrar->post('{feedback}/draft-reply', [\App\Http\Controllers\Admin\FeedbackController::class, 'draftReply'])->name('draft-reply');
 });
 Route::apiResource('feedbacks', \App\Http\Controllers\Admin\FeedbackController::class)->except(['store']);
 
@@ -316,12 +318,15 @@ Route::group(['prefix' => 'banners', 'as' => 'banners.'], function (Registrar $r
     $registrar->get('positions', [\App\Http\Controllers\Admin\BannerController::class, 'positions'])->name('positions');
     $registrar->put('{banner}/toggle-status', [\App\Http\Controllers\Admin\BannerController::class, 'toggleStatus'])->name('toggle-status');
     $registrar->post('sort', [\App\Http\Controllers\Admin\BannerController::class, 'sort'])->name('sort');
+    $registrar->post('ai-copy', [\App\Http\Controllers\Admin\BannerController::class, 'generateCopy'])->name('ai-copy');
+    $registrar->post('ai-image', [\App\Http\Controllers\Admin\BannerController::class, 'generateImage'])->name('ai-image');
 });
 Route::apiResource('banners', \App\Http\Controllers\Admin\BannerController::class);
 
 // 公告管理（运营管理）
 Route::group(['prefix' => 'announcements', 'as' => 'announcements.'], function (Registrar $registrar) {
     $registrar->put('{announcement}/toggle-status', [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggleStatus'])->name('toggle-status');
+    $registrar->post('ai-copy', [\App\Http\Controllers\Admin\AnnouncementController::class, 'generateCopy'])->name('ai-copy');
 });
 Route::apiResource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
 
@@ -344,6 +349,7 @@ Route::apiResource('sensitive-words', \App\Http\Controllers\Admin\SensitiveWordC
 Route::group(['prefix' => 'reports', 'as' => 'reports.'], function (Registrar $registrar) {
     $registrar->get('stats', [\App\Http\Controllers\Admin\ReportController::class, 'stats'])->name('stats');
     $registrar->get('export', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('export');
+    $registrar->post('{report}/ai-triage', [\App\Http\Controllers\Admin\ReportController::class, 'aiTriage'])->name('ai-triage');
 });
 Route::apiResource('reports', \App\Http\Controllers\Admin\ReportController::class)->except(['store', 'destroy']);
 

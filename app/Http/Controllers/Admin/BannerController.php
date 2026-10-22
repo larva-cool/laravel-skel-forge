@@ -7,12 +7,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\Admin\Ai\AiCopyRequest;
+use App\Http\Requests\Admin\Ai\AiImageRequest;
 use App\Http\Requests\Admin\Banner\BannerIndexRequest;
 use App\Http\Requests\Admin\Banner\BannerSaveRequest;
 use App\Http\Requests\Admin\Banner\BannerSortRequest;
 use App\Http\Resources\Admin\BannerResource;
 use App\Models\Operation\Banner;
 use App\Models\System\Dict;
+use App\Services\Ai\ContentAssistService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -30,9 +33,25 @@ class BannerController extends Controller
     {
         $this->middleware('auth:admin');
         $this->middleware('permission:banners.index')->only(['index', 'show', 'positions']);
-        $this->middleware('permission:banners.create')->only(['store']);
+        $this->middleware('permission:banners.create')->only(['store', 'generateCopy', 'generateImage']);
         $this->middleware('permission:banners.edit')->only(['update', 'toggleStatus', 'sort']);
         $this->middleware('permission:banners.delete')->only(['destroy']);
+    }
+
+    /**
+     * AI 生成 Banner 文案（标题 + 绘图提示词，仅生成不落库）
+     */
+    public function generateCopy(AiCopyRequest $request, ContentAssistService $service): JsonResponse
+    {
+        return response()->json($service->generateBannerCopy($request->string('brief')->toString()));
+    }
+
+    /**
+     * AI 生成 Banner 配图（Seedream 绘图并落盘，返回访问 URL）
+     */
+    public function generateImage(AiImageRequest $request, ContentAssistService $service): JsonResponse
+    {
+        return response()->json($service->generateBannerImage($request->string('prompt')->toString()));
     }
 
     /**
