@@ -495,14 +495,16 @@ class SegmentRuleEvaluatorTest extends TestCase
         $rich = $this->makeUser(['balance' => 500]);
         $mid = $this->makeUser(['balance' => 100]);
         $poor = $this->makeUser(['balance' => 0]);
-        $this->makeUser(['balance' => 1000]);
+        $superRich = $this->makeUser(['balance' => 1000]);
 
         $gte = ['version' => 1, 'logic' => 'and', 'conditions' => [
             ['field' => 'balance', 'op' => '>=', 'value' => 100],
         ]];
         $matched = $this->idsMatching($gte);
         sort($matched);
-        $this->assertSame([$rich->id, $mid->id], $matched);
+        $expected = [$rich->id, $mid->id, $superRich->id];
+        sort($expected);
+        $this->assertSame($expected, $matched);
 
         $between = ['version' => 1, 'logic' => 'and', 'conditions' => [
             ['field' => 'frozen_balance', 'op' => 'between', 'value' => [1, 1000]],
@@ -714,8 +716,10 @@ class SegmentRuleEvaluatorTest extends TestCase
     public function invite_count_aggregate(): void
     {
         $inviter = $this->makeUser();
-        InviteRecord::factory()->forInviter($inviter)->forInvitee($this->makeUser())->create();
-        InviteRecord::factory()->forInviter($inviter)->forInvitee($this->makeUser())->create();
+        $inviteeA = $this->makeUser();
+        $inviteeB = $this->makeUser();
+        InviteRecord::factory()->forInviter($inviter)->forInvitee($inviteeA)->create();
+        InviteRecord::factory()->forInviter($inviter)->forInvitee($inviteeB)->create();
 
         $none = $this->makeUser();
 
@@ -727,7 +731,11 @@ class SegmentRuleEvaluatorTest extends TestCase
         $rule = ['version' => 1, 'logic' => 'and', 'conditions' => [
             ['field' => 'invite_count', 'op' => '<', 'value' => 1],
         ]];
-        $this->assertSame([$none->id], $this->idsMatching($rule));
+        $matched = $this->idsMatching($rule);
+        sort($matched);
+        $expected = [$inviteeA->id, $inviteeB->id, $none->id];
+        sort($expected);
+        $this->assertSame($expected, $matched);
     }
 
     #[Test]
