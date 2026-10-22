@@ -10,9 +10,10 @@ namespace Tests\Unit\Services\Ai;
 use App\Ai\Agents\ContentReviewer;
 use App\Ai\Agents\Copywriter;
 use App\Models\Content\Comment;
-use App\Models\Content\Report;
 use App\Models\System\SensitiveWord;
+use App\Models\User;
 use App\Services\Ai\ContentAssistService;
+use Database\Factories\Content\ReportFactory;
 use Database\Factories\FeedbackFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +42,16 @@ class ContentAssistServiceTest extends TestCase
         parent::setUp();
 
         $this->service = app(ContentAssistService::class);
+    }
+
+    /**
+     * 创建一条评论（满足 user_id 与多态源非空约束）
+     */
+    private function createComment(array $attributes = []): Comment
+    {
+        return Comment::factory()->forSource(User::factory()->create())->create(array_merge([
+            'user_id' => User::factory()->create()->id,
+        ], $attributes));
     }
 
     #[Test]
@@ -129,8 +140,8 @@ class ContentAssistServiceTest extends TestCase
     #[TestDox('举报初判：返回成立建议与理由')]
     public function triage_report_returns_uphold_suggestion(): void
     {
-        $comment = Comment::factory()->create(['content' => '加微信领红包，日赚千元']);
-        $report = Report::factory()->forComment($comment)->create(['category' => 'ad']);
+        $comment = $this->createComment(['content' => '加微信领红包，日赚千元']);
+        $report = ReportFactory::new()->forComment($comment)->create(['category' => 'ad']);
 
         ContentReviewer::fake(['{"suggestion":"uphold","reason":"内容属于广告引流，违反社区规范"}']);
 
@@ -145,7 +156,7 @@ class ContentAssistServiceTest extends TestCase
     #[TestDox('举报初判：非法建议值回退为不成立')]
     public function triage_report_falls_back_to_reject_on_invalid_suggestion(): void
     {
-        $report = Report::factory()->create();
+        $report = ReportFactory::new()->forComment($this->createComment())->create();
 
         ContentReviewer::fake(['{"suggestion":"unknown","reason":"证据不足"}']);
 
@@ -160,7 +171,7 @@ class ContentAssistServiceTest extends TestCase
     public function review_comment_approves_without_ai_when_no_hits(): void
     {
         ContentReviewer::fake();
-        $comment = Comment::factory()->create(['content' => '这是一条正常的评论内容']);
+        $comment = $this->createComment(['content' => '这是一条正常的评论内容']);
 
         $result = $this->service->reviewComment($comment);
 
@@ -174,7 +185,7 @@ class ContentAssistServiceTest extends TestCase
     public function review_comment_calls_ai_when_sensitive_word_hit(): void
     {
         SensitiveWord::factory()->review()->create(['word' => '垃圾']);
-        $comment = Comment::factory()->create(['content' => '这个垃圾处理器质量很好']);
+        $comment = $this->createComment(['content' => '这个垃圾处理器质量很好']);
 
         ContentReviewer::fake(['{"suggestion":"approve","reason":"垃圾处理器为商品名称，属于误杀"}']);
 
@@ -185,6 +196,6 @@ class ContentAssistServiceTest extends TestCase
         $this->assertCount(1, $result['hits']);
         $this->assertSame('垃圾', $result['hits'][0]['word']);
         $this->assertSame('review', $result['hits'][0]['level']);
-        ContentReviewer::assertPrompted(fn (string $prompt): bool => str_contains($prompt, '垃圾处理器'));
+        ContentReviewer::assertPrompted(fn (\Laravel\Ai\Prompts\AgentPrompt $prompt): bool => str_contains($prompt->prompt, '垃圾处理器'));
     }
 }
