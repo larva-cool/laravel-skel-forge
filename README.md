@@ -148,12 +148,12 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 应用版本 | `/admin/apps`、`/admin/apps/{app}/versions` | 客户端应用与版本发布/撤回/废弃 |
 | 前台用户 | `/admin/users` | 前台用户 CRUD、状态、积分/金币调整、VIP 延期、登录历史（可按 `result` 过滤）、社交账号、流水、回收站，列表与流水可导出 Excel；含用户钱包查询（余额/流水/调整） |
 | 钱包管理 | `/admin/wallet` | 真实货币钱包：钱包统计、全局流水列表/详情（可导出）、充值订单（统计/详情/手动确认到账/关单，可导出）、提现申请（统计/详情/审核通过/驳回/标记打款/打款失败，可导出） |
-| 反馈管理 | `/admin/feedbacks` | 用户反馈列表、统计、详情、处理、删除，列表可导出 Excel |
+| 反馈管理 | `/admin/feedbacks` | 用户反馈列表、统计、详情、处理、删除，列表可导出 Excel；`POST /admin/feedbacks/{id}/draft-reply` AI 草拟处理回复 |
 | 实名认证 | `/admin/identity-verifications` | 用户实名认证审核（个人/企业），支持通过/驳回、统计、详情查看证件附件 |
-| 评论管理 | `/admin/comments` | 评论列表（按审核状态/源类型/关键词/用户过滤）、详情（含 IP 与上级评论摘要）、回复链分页查询、审核（通过/驳回/审核中）、删除，列表可导出 Excel |
-| 举报管理 | `/admin/reports` | 举报列表（按状态/分类/对象类型/时间/关键词过滤）、详情（含被举报对象快照）、处理（resolved/rejected + 联动处置动作）、统计、可导出 Excel。联动处置：hide_comment（隐藏评论）/ delete_comment（删除评论）/ freeze_user（冻结用户，可指定天数或永久） |
-| Banner 管理 | `/admin/banners` | 轮播图 CRUD、状态切换、批量排序、展示位置选项（`positions`） |
-| 公告管理 | `/admin/announcements` | 公告 CRUD 与状态流转（草稿/已发布/归档），支持状态切换 |
+| 评论管理 | `/admin/comments` | 评论列表（按审核状态/源类型/关键词/用户过滤）、详情（含 IP 与上级评论摘要）、回复链分页查询、审核（通过/驳回/审核中）、删除，列表可导出 Excel；`POST /admin/comments/{id}/ai-review` 敏感词命中 AI 语境复核（减少误杀） |
+| 举报管理 | `/admin/reports` | 举报列表（按状态/分类/对象类型/时间/关键词过滤）、详情（含被举报对象快照）、处理（resolved/rejected + 联动处置动作）、统计、可导出 Excel；`POST /admin/reports/{id}/ai-triage` AI 举报智能初判。联动处置：hide_comment（隐藏评论）/ delete_comment（删除评论）/ freeze_user（冻结用户，可指定天数或永久） |
+| Banner 管理 | `/admin/banners` | 轮播图 CRUD、状态切换、批量排序、展示位置选项（`positions`）；`POST /admin/banners/ai-copy` AI 生成标题与绘图提示词、`POST /admin/banners/ai-image` Seedream 生成配图 |
+| 公告管理 | `/admin/announcements` | 公告 CRUD 与状态流转（草稿/已发布/归档），支持状态切换；`POST /admin/announcements/ai-copy` AI 生成标题/摘要/正文 |
 | 任务系统 | `/admin/task-groups`、`/admin/tasks`、`/admin/task-logs` | 任务分组 CRUD（含 options/状态切换）、任务 CRUD（6 种任务类型 + 3 种奖励 + 自动/手动领取模式，含状态切换）、任务完成日志（只读，列表/详情，支持任务/奖励类型/关键词/时间筛选） |
 | 用户分群 | `/admin/user-segments`、`/admin/segment-tasks`、`/user/segment`、`/user/segment-task` | 用户分群（segment）CRUD：手动分群与规则分群两种类型，规则分群按 JSON 条件由定时任务每天 02:00 增量同步成员；支持为用户批量打标/移标（含笛卡尔批量，>1000 ID 自动转为异步任务入队，通过 `/admin/segment-tasks` 后端接口 + 前端 `/user/segment-task` 任务列表页轮询查询进度，完成/失败时站内信通知）、按分群筛选用户（AND 语义）、规则预览；公告群发可复用 `options` 接口拉取手动分群作为目标范围 |
 | 邀请记录 | `/admin/invite-records` | 邀请关系查询（只读）：分页列表与详情，支持按邀请人/被邀请人（多态类型 + ID）、描述关键词、邀请时间范围筛选。邀请人与被邀请人均为多态关联，可跨 `user`/`admin` 主体查询 |
