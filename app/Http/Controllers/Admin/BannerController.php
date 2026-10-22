@@ -43,9 +43,9 @@ class BannerController extends Controller
      */
     public function generateCopy(AiCopyRequest $request, ContentAssistService $service): JsonResponse
     {
-        // AI 生成耗时较长，放宽执行时限
+        // AI 生成耗时较长，放宽执行时限（对齐 ChatController 的做法）
         ignore_user_abort(true);
-        set_time_limit(120);
+        set_time_limit(300);
 
         return response()->json($service->generateBannerCopy($request->string('brief')->toString()));
     }
@@ -55,9 +55,9 @@ class BannerController extends Controller
      */
     public function generateImage(AiImageRequest $request, ContentAssistService $service): JsonResponse
     {
-        // Seedream 绘图耗时较长，放宽执行时限
+        // Seedream 绘图耗时较长，放宽执行时限（对齐 ChatController 的做法）
         ignore_user_abort(true);
-        set_time_limit(120);
+        set_time_limit(300);
 
         return response()->json($service->generateBannerImage($request->string('prompt')->toString()));
     }

@@ -126,9 +126,9 @@ class CommentController extends Controller
      */
     public function aiReview(int $id, ContentAssistService $service): JsonResponse
     {
-        // AI 复核耗时较长，放宽执行时限
+        // AI 复核耗时较长，放宽执行时限（对齐 ChatController 的做法）
         ignore_user_abort(true);
-        set_time_limit(120);
+        set_time_limit(300);
 
         $comment = Comment::query()->findOrFail($id);
 
