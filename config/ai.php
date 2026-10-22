@@ -84,7 +84,7 @@ return [
                 ],
                 // 向量模型
                 'embeddings' => [
-                    'default' => env('VOLC_EMBEDDINGS_MODEL', 'doubao-embedding-vision-250615'),
+                    'default' => env('VOLC_EMBEDDINGS_MODEL', 'doubao-embedding-vision-251215'),
                     'dimensions' => env('VOLC_EMBEDDINGS_DIMENSIONS', 2048), // 向量维度：支持传入dimensions参数降维1024使用
                 ],
             ],
