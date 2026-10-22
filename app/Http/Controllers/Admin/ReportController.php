@@ -72,6 +72,10 @@ class ReportController extends Controller
      */
     public function aiTriage(int $id, ContentAssistService $service): JsonResponse
     {
+        // AI 初判耗时较长，放宽执行时限
+        ignore_user_abort(true);
+        set_time_limit(300);
+
         $report = Report::query()->with('reportable')->findOrFail($id);
 
         if ($report->status->isClosed()) {

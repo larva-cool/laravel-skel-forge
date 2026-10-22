@@ -126,6 +126,10 @@ class CommentController extends Controller
      */
     public function aiReview(int $id, ContentAssistService $service): JsonResponse
     {
+        // AI 复核耗时较长，放宽执行时限
+        ignore_user_abort(true);
+        set_time_limit(120);
+
         $comment = Comment::query()->findOrFail($id);
 
         return response()->json($service->reviewComment($comment));

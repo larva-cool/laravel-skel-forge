@@ -97,6 +97,10 @@ class FeedbackController extends Controller
      */
     public function draftReply(Feedback $feedback, ContentAssistService $service): JsonResponse
     {
+        // AI 草拟耗时较长，放宽执行时限
+        ignore_user_abort(true);
+        set_time_limit(300);
+
         return response()->json(['draft' => $service->draftFeedbackReply($feedback)]);
     }
 
