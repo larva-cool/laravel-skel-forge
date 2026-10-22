@@ -1,7 +1,9 @@
 <?php
+
 /**
  * This is NOT a freeware, use is subject to license terms.
  */
+
 declare(strict_types=1);
 
 return [
@@ -18,8 +20,8 @@ return [
     */
 
     'default' => 'volc',
-    'default_for_images' => 'volc',
-    'default_for_audio' => 'volc',//不支持音频相关功能
+    'default_for_images' => 'volc-image',
+    'default_for_audio' => 'volc', //不支持音频相关功能
     'default_for_transcription' => 'volc', //不支持转录相关功能
     'default_for_embeddings' => 'volc',
     'default_for_reranking' => 'volc', //不支持排序相关功能
@@ -85,6 +87,28 @@ return [
                     'default' => env('VOLC_EMBEDDINGS_MODEL', 'doubao-embedding-vision-250615'),
                     'dimensions' => env('VOLC_EMBEDDINGS_DIMENSIONS', 2048), // 向量维度：支持传入dimensions参数降维1024使用
                 ],
+            ],
+        ],
+        // 火山图像（Seedream）
+        'volc-image' => [
+            'driver' => 'openai',
+            'url' => env('VOLC_ARK_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
+            'key' => env('VOLC_ARK_KEY', ''),
+            'models' => [
+                'image' => [
+                    'default' => env('VOLC_IMAGE_MODEL', 'doubao-seedream-5-0-pro-260628')
+                ],
+            ],
+        ],
+        // 阿里图像（万相 / qwen-image）
+        'aliyun-image' => [
+            'driver' => 'openai',
+            'url' => env('DASHSCOPE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+            'key' => env('DASHSCOPE_API_KEY', ''),
+            'models' => [
+                'image' => [
+                    'default' => env('ALI_IMAGE_MODEL', 'qwen-image-3.0-pro')
+                ]
             ],
         ],
     ],
