@@ -117,7 +117,7 @@ class SegmentRuleEvaluator
     }
 
     /**
-     * 编译单条条件为闭包
+     * 编译单条条件为闭包（按字段查询类型分发）
      *
      * @param  array<string,mixed>  $condition
      * @return \Closure(\Illuminate\Database\Eloquent\Builder<\App\Models\User>): void
@@ -126,12 +126,28 @@ class SegmentRuleEvaluator
     {
         $fieldEnum = SegmentRuleField::from((string) $condition['field']);
         $operator = SegmentRuleOperator::from((string) $condition['op']);
-        $column = $fieldEnum->column();
         $rawValue = $condition['value'] ?? null;
 
         if (! in_array($operator, $fieldEnum->allowedOperators(), true)) {
             throw new InvalidArgumentException("字段 {$fieldEnum->value} 不支持操作符 {$operator->value}");
         }
+
+        return match ($fieldEnum->queryType()) {
+            SegmentRuleField::QUERY_EXISTS => $this->compileExistence($fieldEnum, $operator, $rawValue),
+            SegmentRuleField::QUERY_COUNT => $this->compileCount($fieldEnum, $operator, $rawValue),
+            SegmentRuleField::QUERY_SUM => $this->compileSum($fieldEnum, $operator, $rawValue),
+            default => $this->compileColumnCondition($fieldEnum, $operator, $rawValue),
+        };
+    }
+
+    /**
+     * 编译主表/关联列比较条件
+     *
+     * @return \Closure(\Illuminate\Database\Eloquent\Builder<\App\Models\User>): void
+     */
+    protected function compileColumnCondition(SegmentRuleField $fieldEnum, SegmentRuleOperator $operator, mixed $rawValue): \Closure
+    {
+        $column = $fieldEnum->column();
 
         // 关联字段（如 gender / birthday 位于 user_profiles 表）通过 whereHas 包装
         $relation = $fieldEnum->relation();
@@ -194,6 +210,92 @@ class SegmentRuleEvaluator
         return $relation !== null
             ? static fn (Builder $q) => $q->whereHas($relation, fn (Builder $sub) => $inner($sub))
             : $inner;
+    }
+
+    /**
+     * 编译关系存在性条件（如已绑定/未绑定某社交平台）
+     *
+     * @return \Closure(\Illuminate\Database\Eloquent\Builder<\App\Models\User>): void
+     */
+    protected function compileExistence(SegmentRuleField $field, SegmentRuleOperator $operator, mixed $rawValue): \Closure
+    {
+        $relation = $field->aggregateRelation();
+        $column = $field->column();
+        $resolved = $field->resolveValue($rawValue);
+
+        return match ($operator) {
+            SegmentRuleOperator::EQ => static fn (Builder $q) => $q->whereHas(
+                $relation,
+                static fn (Builder $sub) => $sub->where($column, $resolved)
+            ),
+            SegmentRuleOperator::NEQ => static fn (Builder $q) => $q->whereDoesntHave(
+                $relation,
+                static fn (Builder $sub) => $sub->where($column, $resolved)
+            ),
+            default => throw new InvalidArgumentException("字段 {$field->value} 不支持操作符 {$operator->value}"),
+        };
+    }
+
+    /**
+     * 编译关系计数条件（如充值次数 / 提现次数 / 邀请人数）
+     *
+     * @return \Closure(\Illuminate\Database\Eloquent\Builder<\App\Models\User>): void
+     */
+    protected function compileCount(SegmentRuleField $field, SegmentRuleOperator $operator, mixed $rawValue): \Closure
+    {
+        $relation = $field->aggregateRelation();
+        $constraint = $field->aggregateConstraint();
+        $count = max(0, (int) $rawValue);
+
+        return match ($operator) {
+            SegmentRuleOperator::EQ, SegmentRuleOperator::NEQ,
+            SegmentRuleOperator::GT, SegmentRuleOperator::GTE,
+            SegmentRuleOperator::LT, SegmentRuleOperator::LTE => static fn (Builder $q) => $q->whereHas($relation, $constraint, $operator->value, $count),
+            default => throw new InvalidArgumentException("字段 {$field->value} 不支持操作符 {$operator->value}"),
+        };
+    }
+
+    /**
+     * 编译关系求和条件（如累计充值金额）
+     *
+     * 通过 whereHas + groupBy/having 子查询实现：子查询按持有者分组后以 SUM 聚合值
+     * 过滤，存在分组行即表示该用户满足求和条件。注意：无任何明细记录的用户不产生
+     * 分组行，不会被「= 0」类条件命中。
+     *
+     * @return \Closure(\Illuminate\Database\Eloquent\Builder<\App\Models\User>): void
+     */
+    protected function compileSum(SegmentRuleField $field, SegmentRuleOperator $operator, mixed $rawValue): \Closure
+    {
+        $relation = $field->aggregateRelation();
+        $constraint = $field->aggregateConstraint();
+        $column = $field->column();
+        $groupColumn = $field->aggregateGroupColumn();
+
+        if ($operator === SegmentRuleOperator::BETWEEN) {
+            if (! is_array($rawValue) || count($rawValue) !== 2) {
+                throw new InvalidArgumentException('between 需要恰好 2 个值');
+            }
+            $raw = "COALESCE(SUM({$column}), 0) BETWEEN ? AND ?";
+            $bindings = array_values($rawValue);
+        } elseif (in_array($operator, [
+            SegmentRuleOperator::EQ, SegmentRuleOperator::NEQ,
+            SegmentRuleOperator::GT, SegmentRuleOperator::GTE,
+            SegmentRuleOperator::LT, SegmentRuleOperator::LTE,
+        ], true)) {
+            $raw = "COALESCE(SUM({$column}), 0) {$operator->value} ?";
+            $bindings = [$rawValue];
+        } else {
+            throw new InvalidArgumentException("字段 {$field->value} 不支持操作符 {$operator->value}");
+        }
+
+        return static function (Builder $q) use ($relation, $constraint, $groupColumn, $raw, $bindings): void {
+            $q->whereHas($relation, static function (Builder $sub) use ($constraint, $groupColumn, $raw, $bindings): void {
+                if ($constraint) {
+                    $constraint($sub);
+                }
+                $sub->select($groupColumn)->groupBy($groupColumn)->havingRaw($raw, $bindings);
+            });
+        };
     }
 
     /**
