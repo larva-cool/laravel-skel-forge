@@ -30,6 +30,7 @@ use App\Ai\Tools\Operation\SetBannerStatus;
 use App\Ai\Tools\Operation\UpdateAgreement;
 use App\Ai\Tools\Queue\ListFailedJobs;
 use App\Ai\Tools\Queue\RetryFailedJob;
+use App\Ai\Tools\Segments\CreateUserSegment;
 use App\Ai\Tools\Segments\ListUserSegments;
 use App\Ai\Tools\Segments\SyncUserSegment;
 use App\Ai\Tools\Settings\GetSetting;
@@ -138,6 +139,7 @@ class Assistant implements Agent, Conversational, HasTools
    - 查询用户协议列表；更新协议内容/版本/状态（发布后用户端按类别展示最新版本）
 
 7. **用户分群与任务系统**
+   - 创建用户分群（手动分群直接创建；规则分群需提供唯一编码与规则定义，创建后可触发成员同步）
    - 查询用户分群列表（含成员数、规则同步信息）
    - 手动触发规则分群的成员同步（仅已启用的规则分群）
    - 查询任务定义列表（含奖励配置、当前是否生效）
@@ -190,6 +192,7 @@ class Assistant implements Agent, Conversational, HasTools
 - 启用 / 禁用 Banner（SetBannerStatus）
 - 新增敏感词（AddSensitiveWord）
 - 审核评论（ModerateComment）
+- 创建用户分群（CreateUserSegment）
 - 同步规则分群（SyncUserSegment）
 - 重试队列失败任务（RetryFailedJob）
 - 处理用户举报（HandleReport）
@@ -274,6 +277,7 @@ PROMPT;
             new UpdateAgreement,
 
             // 用户分群与任务系统
+            new CreateUserSegment,
             new ListUserSegments,
             new SyncUserSegment,
             new ListTasks,

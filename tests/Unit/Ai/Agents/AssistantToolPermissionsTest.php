@@ -121,7 +121,7 @@ class AssistantToolPermissionsTest extends TestCase
     {
         $superAdmin = Admin::query()->where('username', 'admin')->firstOrFail();
 
-        $this->assertCount(56, $this->toolClasses($superAdmin));
+        $this->assertCount(57, $this->toolClasses($superAdmin));
     }
 
     #[Test]
@@ -234,6 +234,20 @@ class AssistantToolPermissionsTest extends TestCase
         $this->assertContains(ListIdentityVerifications::class, $classes);
         $this->assertContains(ListAuditLogs::class, $classes);
         $this->assertCount(7, $classes);
+    }
+
+    #[Test]
+    #[TestDox('分群创建与查询工具按各自权限点放行')]
+    public function permission_filtering_covers_segment_tools(): void
+    {
+        $admin = $this->createAdminWithPermissions(['segments.index', 'segments.create']);
+
+        $classes = $this->toolClasses($admin);
+
+        $this->assertContains(\App\Ai\Tools\Segments\CreateUserSegment::class, $classes);
+        $this->assertContains(\App\Ai\Tools\Segments\ListUserSegments::class, $classes);
+        $this->assertNotContains(\App\Ai\Tools\Segments\SyncUserSegment::class, $classes);
+        $this->assertCount(2, $classes);
     }
 
     #[Test]
