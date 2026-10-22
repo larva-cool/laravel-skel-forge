@@ -75,22 +75,17 @@ return [
             'driver' => 'openai-compatible',
             'url' => env('VOLC_ARK_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
             'key' => env('VOLC_ARK_KEY', ''),
-            'store' => false,
             // 模型配置
             'models' => [
                 'text' => [
                     'default' => env('VOLC_TEXT_MODEL', 'doubao-seed-2-1-lite-260915'),
                 ],
-                'image' => [
-                    'default' => env('VOLC_IMAGE_MODEL', 'doubao-seedream-5-0-pro-260628'),
+                // 向量模型
+                'embeddings' => [
+                    'default' => env('VOLC_EMBEDDINGS_MODEL', 'doubao-embedding-vision-250615'),
+                    'dimensions' => env('VOLC_EMBEDDINGS_DIMENSIONS', 2048), // 向量维度：支持传入dimensions参数降维1024使用
                 ],
-            ],
-            // 向量模型
-            'embeddings' => [
-                'default' => env('VOLC_EMBEDDINGS_MODEL', 'doubao-embedding-vision-250615'),
-                'dimensions' => env('VOLC_EMBEDDINGS_DIMENSIONS', 2048), // 向量维度：支持传入dimensions参数降维1024使用
             ],
         ],
     ],
-
 ];
