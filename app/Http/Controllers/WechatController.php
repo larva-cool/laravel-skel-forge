@@ -10,6 +10,7 @@ namespace App\Http\Controllers;
 use App\Events\Wechat\WechatScan;
 use App\Events\Wechat\WechatSubscribed;
 use App\Events\Wechat\WechatUnsubscribed;
+use App\Jobs\Wechat\ReplyWechatTextMessageJob;
 use App\Services\WechatService;
 use EasyWeChat\OfficialAccount\Message;
 use Illuminate\Http\JsonResponse;
@@ -175,6 +176,15 @@ class WechatController extends Controller
             Event::dispatch(new WechatScan($message->toArray()));
 
             return $next($message);
+        });
+
+        // 文本消息：异步派发智能客服回复。
+        // 被动响应受微信 5 秒超时限制，AI 生成后通过客服消息接口下发；
+        // 此处返回 null 使被动响应为空串（success），避免微信超时重推消息。
+        $server->addMessageListener('text', function (Message $message) {
+            ReplyWechatTextMessageJob::dispatch((string) $message->MsgId, (string) $message->FromUserName, (string) $message->Content);
+
+            return null;
         });
 
         $server->with(function (Message $message, \Closure $next) {
