@@ -152,6 +152,17 @@ return new class extends Migration
                         'keep_alive' => false,
                         'fixed_tab' => true,
                     ],
+                    [
+                        'key' => 'dashboard.finance',
+                        'path' => 'finance',
+                        'name' => 'Finance',
+                        'component' => '/dashboard/finance',
+                        'title' => '财务分析',
+                        'icon' => 'ri:funds-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 2,
+                        'keep_alive' => true,
+                    ],
                 ],
             ],
 
