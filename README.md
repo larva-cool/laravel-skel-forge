@@ -5,6 +5,7 @@ Ai Forge 企业级项目套件的后端 API 服务，基于 Laravel 13 构建，
 - 官方站点：<https://www.aiforge.cn>
 - 前端项目：[Ai Forge Admin](https://codeup.aliyun.com/xutongle/Skel/laravel-skel-admin)（管理后台 SPA）
 - 演示后台：<https://admin-demo.aiforge.cn>
+- 接口文档（Apifox）：[后台接口](https://s.apifox.cn/28f8b0b7-abda-470f-8013-4e1b924c47f0) / [前台接口](https://s.apifox.cn/beffd1da-1021-434c-8f13-8cbf50a3f406)
 
 ## 技术栈
 
