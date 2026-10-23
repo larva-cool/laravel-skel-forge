@@ -87,7 +87,7 @@ class ContentAssistService
     {
         $path = 'banners/ai/'.Str::uuid()->toString().'.png';
 
-        $stored = Image::of($prompt)->landscape()->generate()->storePublicly($path);
+        $stored = Image::of($prompt)->landscape()->timeout(300)->generate()->storePublicly($path);
 
         if ($stored === false) {
             throw new UnprocessableEntityHttpException('Banner 图片保存失败，请重试');
