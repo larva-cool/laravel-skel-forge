@@ -17,6 +17,7 @@ use App\Ai\Tools\Wallet\ReviewWithdraw;
 use App\Models\Admin\Admin;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -33,6 +34,7 @@ use Stringable;
  */
 #[MaxSteps(12)]
 #[Temperature(0.1)]
+#[Timeout(300)]
 class Finance implements Agent, Conversational, HasTools
 {
     use Promptable, RemembersConversations;

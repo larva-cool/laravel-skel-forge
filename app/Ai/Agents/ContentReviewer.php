@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace App\Ai\Agents;
 
 use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Promptable;
 use Stringable;
@@ -19,6 +20,7 @@ use Stringable;
  * 以保守、严谨的态度给出辅助判断，最终处置由人工决定。
  */
 #[Temperature(0.2)]
+#[Timeout(300)]
 class ContentReviewer implements Agent
 {
     use Promptable;

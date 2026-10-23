@@ -10,6 +10,7 @@ namespace App\Ai\Agents;
 use App\Ai\Tools\Knowledge\SearchPublicKnowledgeBase;
 use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\Tool;
@@ -24,6 +25,7 @@ use Stringable;
  */
 #[MaxSteps(4)]
 #[Temperature(0.4)]
+#[Timeout(300)]
 class WechatAssistant implements Agent, HasTools
 {
     use Promptable;

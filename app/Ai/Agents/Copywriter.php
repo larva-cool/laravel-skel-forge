@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace App\Ai\Agents;
 
 use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Promptable;
 use Stringable;
@@ -19,6 +20,7 @@ use Stringable;
  * 严格按调用方要求的 JSON 结构输出，不附加任何额外说明。
  */
 #[Temperature(0.7)]
+#[Timeout(300)]
 class Copywriter implements Agent
 {
     use Promptable;
