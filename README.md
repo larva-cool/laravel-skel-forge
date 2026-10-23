@@ -17,7 +17,7 @@
 | 实时通信 | Laravel Reverb 1.x / Echo 2.x |
 | 应用服务器 | Laravel Octane 2.x |
 | 监控 | Laravel Pulse 1.x / Telescope 5.x |
-| AI | laravel/ai 0.10.x |
+| AI | laravel/ai 0.10.x + larva/laravel-ai-volc 1.x（火山方舟驱动：文本/向量/TTS 语音/Seedream 图像/Seedance 视频） |
 | 缓存/队列 | Redis |
 | 前端构建 | Tailwind CSS v4 + Vite 8.x |
 | 测试 | PHPUnit 12.x |
