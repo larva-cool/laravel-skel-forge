@@ -20,8 +20,8 @@ return [
     */
 
     'default' => 'volc',
-    'default_for_images' => 'volc-image',
-    'default_for_audio' => 'volc', //不支持音频相关功能
+    'default_for_images' => 'volc',
+    'default_for_audio' => 'volc',
     'default_for_transcription' => 'volc', //不支持转录相关功能
     'default_for_embeddings' => 'volc',
     'default_for_reranking' => 'volc', //不支持排序相关功能
@@ -74,7 +74,8 @@ return [
         'volc' => [
             // 火山方舟属于 OpenAI 兼容服务，走 chat/completions 端点；
             // openai 驱动的 Responses API 与方舟存在兼容问题（续聊报 input.type 400）
-            'driver' => 'openai-compatible',
+            // volc 自定义驱动（App\Ai\Providers\VolcCompatibleProvider）在 openai-compatible 基础上扩展了 TTS / 视频生成能力
+            'driver' => 'volc',
             'url' => env('VOLC_ARK_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
             'key' => env('VOLC_ARK_KEY', ''),
             // 模型配置
@@ -87,16 +88,23 @@ return [
                     'default' => env('VOLC_EMBEDDINGS_MODEL', 'doubao-embedding-vision-251215'),
                     'dimensions' => env('VOLC_EMBEDDINGS_DIMENSIONS', 2048), // 向量维度：支持传入dimensions参数降维1024使用
                 ],
-            ],
-        ],
-        // 火山图像（Seedream）
-        'volc-image' => [
-            'driver' => 'openai',
-            'url' => env('VOLC_ARK_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
-            'key' => env('VOLC_ARK_KEY', ''),
-            'models' => [
+                // 语音合成（TTS，doubao-seed-tts）
+                'audio' => [
+                    'default' => env('VOLC_AUDIO_MODEL', 'doubao-seed-tts-2.0'),
+                    // 默认音色：SDK 占位音色 default-female / default-male 分别映射到 voice / male_voice
+                    'voice' => env('VOLC_AUDIO_VOICE', 'zh_female_gaolengyujie_uranus_bigtts'),
+                    'male_voice' => env('VOLC_AUDIO_MALE_VOICE', 'zh_male_qingshuangnanda_mars_bigtts'),
+                    'response_format' => env('VOLC_AUDIO_FORMAT', 'mp3'),
+                    'speed' => env('VOLC_AUDIO_SPEED', 1.0),
+                ],
+                // 图像生成（Seedream）
                 'image' => [
-                    'default' => env('VOLC_IMAGE_MODEL', 'doubao-seedream-5-0-pro-260628')
+                    'default' => env('VOLC_IMAGE_MODEL', 'doubao-seedream-5-0-pro-260628'),
+                    'watermark' => env('VOLC_IMAGE_WATERMARK', false), // 是否在图片右下角添加 AI 生成水印
+                ],
+                // 视频生成（Seedance，异步任务）
+                'video' => [
+                    'default' => env('VOLC_VIDEO_MODEL', 'doubao-seedance-2-5-260628'),
                 ],
             ],
         ],

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b565b24662ea4c8c7c9e70649806c369",
+    "content-hash": "61241e867b2ec36bd56473dc3449acf5",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -3341,6 +3341,69 @@
                 "source": "https://github.com/larva-cool/flysystem-kodo/tree/1.1.0"
             },
             "time": "2026-08-05T02:30:24+00:00"
+        },
+        {
+            "name": "larva/laravel-ai-volc",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/larva-cool/laravel-ai-volc.git",
+                "reference": "c0dc685d7174e409195ffaf5af68c8f45370ba2d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/larva-cool/laravel-ai-volc/zipball/c0dc685d7174e409195ffaf5af68c8f45370ba2d",
+                "reference": "c0dc685d7174e409195ffaf5af68c8f45370ba2d",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/http": "^12.0 || ^13.0",
+                "laravel/ai": "^0.10.3",
+                "php": "^8.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^11.3 || ^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Larva\\Ai\\Volc\\VolcServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Larva\\Ai\\Volc\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Larva Team",
+                    "email": "support@larva.com.cn"
+                }
+            ],
+            "description": "Volcengine Ark (火山方舟) provider for Laravel AI: text, embeddings, TTS, Seedream images and Seedance video.",
+            "keywords": [
+                "ark",
+                "doubao",
+                "laravel",
+                "laravel-ai",
+                "seedance",
+                "seedream",
+                "tts",
+                "volc",
+                "volcengine"
+            ],
+            "support": {
+                "issues": "https://github.com/larva-cool/laravel-ai-volc/issues",
+                "source": "https://github.com/larva-cool/laravel-ai-volc"
+            },
+            "time": "2026-10-23T03:57:54+00:00"
         },
         {
             "name": "larva/laravel-flysystem-kodo",
