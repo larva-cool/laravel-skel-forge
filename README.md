@@ -1,9 +1,10 @@
-# Laravel Skel Forge
+# Ai Forge API
 
-基于 Laravel 13 的后台管理系统骨架，采用 DDD 架构并遵循 RESTful API 设计规范。
+Ai Forge 企业级项目套件的后端 API 服务，基于 Laravel 13 构建，采用 DDD 架构并遵循 RESTful API 设计规范。
 
-- 前端项目：[laravel-skel-admin](https://codeup.aliyun.com/xutongle/Skel/laravel-skel-admin)
-- 产品文档：见 [PRD.md](PRD.md)
+- 官方站点：<https://www.aiforge.cn>
+- 前端项目：[Ai Forge Admin](https://codeup.aliyun.com/xutongle/Skel/laravel-skel-admin)（管理后台 SPA）
+- 演示后台：<https://admin-demo.aiforge.cn>
 
 ## 技术栈
 

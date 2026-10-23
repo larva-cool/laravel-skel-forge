@@ -1,6 +1,6 @@
 # Changelog
 
-Laravel Skel Forge 版本变更记录。格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号遵循语义化版本（SemVer）。
+Ai Forge API 版本变更记录。格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号遵循语义化版本（SemVer）。
 
 > v1.0.0 为首个正式版本。此前未维护变更日志，故本条目汇总该版本的核心能力，并列出发布前的关键新增。
 
@@ -117,7 +117,7 @@ Laravel Skel Forge 版本变更记录。格式参考 [Keep a Changelog](https://
 
 ## [v1.0.0] - 2026-10-10
 
-企业级后台管理 API 骨架首个正式版本。基于 Laravel 13 + PHP 8.4，采用 DDD 分层架构与 RESTful 规范，配套独立前端 SPA（laravel-skel-admin）。
+企业级后台管理 API 骨架首个正式版本。基于 Laravel 13 + PHP 8.4，采用 DDD 分层架构与 RESTful 规范，配套独立前端 SPA（Ai Forge Admin）。
 
 ### 核心能力
 
