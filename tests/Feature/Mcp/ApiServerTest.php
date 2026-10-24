@@ -31,15 +31,6 @@ use App\Mcp\Tools\Invite\GetInviteStatsTool;
 use App\Mcp\Tools\Invite\ListInviteRecordsTool;
 use App\Mcp\Tools\Task\ClaimTaskTool;
 use App\Mcp\Tools\Task\ListTasksTool;
-use App\Mcp\Tools\User\Notification\MarkAllNotificationsReadTool;
-use App\Mcp\Tools\User\Notification\MarkNotificationReadTool;
-use App\Mcp\Tools\User\RecordVisitTool;
-use App\Mcp\Tools\User\UpdateAvatarTool;
-use App\Mcp\Tools\User\UpdateEmailTool;
-use App\Mcp\Tools\User\UpdatePasswordTool;
-use App\Mcp\Tools\User\UpdatePhoneTool;
-use App\Mcp\Tools\User\UpdateProfileTool;
-use App\Mcp\Tools\User\UpdateUsernameTool;
 use App\Mcp\Tools\User\Address\GetAddressTool;
 use App\Mcp\Tools\User\Address\ListAddressesTool;
 use App\Mcp\Tools\User\GetUserProfileTool;
@@ -54,6 +45,15 @@ use App\Mcp\Tools\User\ListSocialsTool;
 use App\Mcp\Tools\User\ListVisitsTool;
 use App\Mcp\Tools\User\Notification\ListNotificationsTool;
 use App\Mcp\Tools\User\Notification\ListUnreadNotificationsTool;
+use App\Mcp\Tools\User\Notification\MarkAllNotificationsReadTool;
+use App\Mcp\Tools\User\Notification\MarkNotificationReadTool;
+use App\Mcp\Tools\User\RecordVisitTool;
+use App\Mcp\Tools\User\UpdateAvatarTool;
+use App\Mcp\Tools\User\UpdateEmailTool;
+use App\Mcp\Tools\User\UpdatePasswordTool;
+use App\Mcp\Tools\User\UpdatePhoneTool;
+use App\Mcp\Tools\User\UpdateProfileTool;
+use App\Mcp\Tools\User\UpdateUsernameTool;
 use App\Mcp\Tools\Wallet\GetRechargeTool;
 use App\Mcp\Tools\Wallet\GetWalletOverviewTool;
 use App\Mcp\Tools\Wallet\GetWithdrawTool;
@@ -182,7 +182,11 @@ class ApiServerTest extends TestCase
             ListTokensTool::class,
             UpdateProfileTool::class,
             UpdateUsernameTool::class,
+            UpdateEmailTool::class,
+            UpdatePhoneTool::class,
+            UpdateAvatarTool::class,
             UpdatePasswordTool::class,
+            RecordVisitTool::class,
         ]);
     }
 
@@ -356,6 +360,146 @@ class ApiServerTest extends TestCase
             ->assertOk()
             ->assertStructuredContent(fn (AssertableJson $json) => $json
                 ->where('is_verified', false)
+                ->etc()
+            );
+    }
+
+    // ==================== Phase 3: 写操作工具测试 ====================
+
+    #[Test]
+    #[TestDox('content.comment.create 发布评论成功')]
+    public function create_comment_tool_creates_comment(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(CreateCommentTool::class, [
+                'source_type' => 'comment',
+                'source_id' => 1,
+                'content' => '这是一条测试评论',
+            ])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('content', '这是一条测试评论')
+                ->where('status.value', 'approved')
+                ->etc()
+            );
+    }
+
+    #[Test]
+    #[TestDox('content.comment.delete 只能删除自己的评论')]
+    public function delete_comment_tool_rejects_other_users_comment(): void
+    {
+        $other = User::factory()->create();
+        $foreignComment = \App\Models\Content\Comment::factory()->create([
+            'user_id' => $other->id,
+            'source_type' => 'comment',
+            'source_id' => 1,
+        ]);
+
+        ApiServer::actingAs($this->user)
+            ->tool(DeleteCommentTool::class, ['id' => $foreignComment->id])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('content.like.create 重复点赞返回错误')]
+    public function create_like_tool_rejects_duplicate(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(CreateLikeTool::class, ['source_type' => 'comment', 'source_id' => 1])
+            ->assertOk();
+
+        ApiServer::actingAs($this->user)
+            ->tool(CreateLikeTool::class, ['source_type' => 'comment', 'source_id' => 1])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('content.like.delete 取消点赞成功')]
+    public function delete_like_tool_removes_like(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(CreateLikeTool::class, ['source_type' => 'comment', 'source_id' => 1])
+            ->assertOk();
+
+        ApiServer::actingAs($this->user)
+            ->tool(DeleteLikeTool::class, ['source_type' => 'comment', 'source_id' => 1])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('message', 'Like removed successfully.')
+            );
+    }
+
+    #[Test]
+    #[TestDox('user.username.update 修改用户名成功')]
+    public function update_username_tool_changes_username(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(UpdateUsernameTool::class, ['username' => 'newname'])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('message', 'Username updated successfully.')
+            );
+
+        $this->assertEquals('newname', $this->user->refresh()->username);
+    }
+
+    #[Test]
+    #[TestDox('user.password.update 旧密码错误返回错误')]
+    public function update_password_tool_rejects_wrong_old_password(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(UpdatePasswordTool::class, [
+                'old_password' => 'wrong-password',
+                'password' => 'NewPassword123!',
+            ])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('user.profile.update 修改资料成功')]
+    public function update_profile_tool_updates_profile(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(UpdateProfileTool::class, [
+                'name' => '新昵称',
+                'bio' => '这是一个签名',
+            ])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('name', '新昵称')
+                ->etc()
+            );
+    }
+
+    #[Test]
+    #[TestDox('notification.mark_all_read 标记全部已读')]
+    public function mark_all_notifications_read_tool_marks_all(): void
+    {
+        \Illuminate\Notifications\DatabaseNotification::unguard();
+        $this->user->notifications()->createMany([
+            ['id' => \Illuminate\Support\Str::uuid()->toString(), 'type' => 'App\Notifications\Test', 'data' => ['title' => 'test'], 'notifiable_type' => 'user', 'notifiable_id' => $this->user->id],
+            ['id' => \Illuminate\Support\Str::uuid()->toString(), 'type' => 'App\Notifications\Test', 'data' => ['title' => 'test2'], 'notifiable_type' => 'user', 'notifiable_id' => $this->user->id],
+        ]);
+
+        ApiServer::actingAs($this->user)
+            ->tool(MarkAllNotificationsReadTool::class)
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('marked_count', 2)
+                ->etc()
+            );
+    }
+
+    #[Test]
+    #[TestDox('visit.record 记录访问成功')]
+    public function record_visit_tool_creates_visit(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(RecordVisitTool::class, ['source_type' => 'comment', 'source_id' => 1])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('source_type', 'comment')
+                ->where('source_id', 1)
                 ->etc()
             );
     }

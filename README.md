@@ -196,7 +196,9 @@ php artisan test --compact --filter=name  # 按名称过滤
 - **调试**：`php artisan mcp:inspector mcp/v1`
 - **分页约定**：列表类工具统一接受 `page` / `per_page` 入参，返回 `items` + `pagination`（total/per_page/current_page/last_page/has_more）
 
-#### 已封装工具（35 个）
+#### 已封装工具（53 个）
+
+**只读工具（35 个）**
 
 | 域 | 工具 | 说明 |
 |---|---|---|
@@ -210,6 +212,19 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 任务/邀请 | `task.list` / `invite.record.list` / `invite.stats.get` | 任务中心、邀请记录、邀请统计 |
 | 公开数据 | `common.banner.list` / `common.area.list` / `common.dict_item.list` / `common.announcement.list` / `common.announcement.get` / `common.agreement.get` | Banner、地区、字典项、公告列表/详情、协议 |
 | 会话 | `auth.token.list` | 已签发的访问令牌列表 |
+
+**写操作工具（18 个）**
+
+| 域 | 工具 | 说明 |
+|---|---|---|
+| 内容互动 | `content.comment.create` / `content.comment.delete` | 发布评论（敏感词过滤）、删除自己的评论 |
+| 内容互动 | `content.like.create` / `content.like.delete` | 点赞（防重复）、取消点赞 |
+| 内容互动 | `content.collection.create` / `content.collection.delete` | 收藏（防重复）、取消收藏 |
+| 内容互动 | `content.follow.create` / `content.follow.delete` | 关注（防重复）、取消关注 |
+| 用户资料 | `user.profile.update` / `user.username.update` / `user.email.update` / `user.phone.update` / `user.avatar.update` / `user.password.update` | 修改资料/用户名/邮箱/手机/头像/密码 |
+| 任务 | `task.claim` | 领取任务奖励 |
+| 通知 | `notification.mark_all_read` / `notification.mark_read` | 全部已读、标记已读 |
+| 访问记录 | `visit.record` | 记录一次访问 |
 
 ## 队列与定时任务
 
