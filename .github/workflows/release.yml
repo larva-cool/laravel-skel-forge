@@ -42,7 +42,10 @@ jobs:
             ${{ runner.os }}-php-${{ matrix.php }}-composer-
 
       - name: Install dependencies
+        # APP_ENV=local：CI 无 .env，默认为 production 会禁用 laravel/boost 导致 post-update-cmd 的 boost:update 失败
         run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+        env:
+          APP_ENV: local
 
       - name: Run tests
         run: vendor/bin/phpunit
