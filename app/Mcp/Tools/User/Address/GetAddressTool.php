@@ -33,7 +33,7 @@ class GetAddressTool extends Tool
     /**
      * Handle the tool request.
      */
-    public function handle(Request $request): ResponseFactory
+    public function handle(Request $request): Response|ResponseFactory
     {
         $arguments = $request->validate([
             'id' => ['required', 'integer', 'min:1'],

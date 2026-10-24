@@ -8,11 +8,48 @@ declare(strict_types=1);
 namespace Tests\Feature\Mcp;
 
 use App\Mcp\Servers\ApiServer;
+use App\Mcp\Tools\Auth\ListTokensTool;
+use App\Mcp\Tools\Common\GetAgreementTool;
+use App\Mcp\Tools\Common\GetAnnouncementTool;
+use App\Mcp\Tools\Common\ListAnnouncementsTool;
+use App\Mcp\Tools\Common\ListAreasTool;
 use App\Mcp\Tools\Common\ListBannersTool;
+use App\Mcp\Tools\Common\ListDictItemsTool;
+use App\Mcp\Tools\Content\ListCollectionsTool;
+use App\Mcp\Tools\Content\ListCommentsTool;
+use App\Mcp\Tools\Content\ListFollowsTool;
+use App\Mcp\Tools\Content\ListLikesTool;
+use App\Mcp\Tools\Invite\GetInviteStatsTool;
+use App\Mcp\Tools\Invite\ListInviteRecordsTool;
+use App\Mcp\Tools\Task\ListTasksTool;
+use App\Mcp\Tools\User\Address\GetAddressTool;
+use App\Mcp\Tools\User\Address\ListAddressesTool;
 use App\Mcp\Tools\User\GetUserProfileTool;
+use App\Mcp\Tools\User\Identity\GetIdentityStatusTool;
+use App\Mcp\Tools\User\Identity\GetIdentityTool;
+use App\Mcp\Tools\User\ListCoinsTool;
+use App\Mcp\Tools\User\ListLoginHistoriesTool;
+use App\Mcp\Tools\User\ListMyFeedbacksTool;
+use App\Mcp\Tools\User\ListMyReportsTool;
+use App\Mcp\Tools\User\ListPointsTool;
+use App\Mcp\Tools\User\ListSocialsTool;
+use App\Mcp\Tools\User\ListVisitsTool;
+use App\Mcp\Tools\User\Notification\ListNotificationsTool;
+use App\Mcp\Tools\User\Notification\ListUnreadNotificationsTool;
+use App\Mcp\Tools\Wallet\GetRechargeTool;
 use App\Mcp\Tools\Wallet\GetWalletOverviewTool;
+use App\Mcp\Tools\Wallet\GetWithdrawTool;
+use App\Mcp\Tools\Wallet\ListRechargesTool;
+use App\Mcp\Tools\Wallet\ListWalletTradesTool;
+use App\Mcp\Tools\Wallet\ListWithdrawAccountsTool;
+use App\Mcp\Tools\Wallet\ListWithdrawsTool;
+use App\Models\Invite\InviteRecord;
+use App\Models\Operation\Announcement;
 use App\Models\Operation\Banner;
 use App\Models\User;
+use App\Models\User\Address;
+use App\Models\Wallet\Recharge;
+use App\Models\Wallet\WithdrawAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -25,9 +62,6 @@ use Tests\TestCase;
  * C 端 API MCP Server 功能测试
  */
 #[CoversClass(ApiServer::class)]
-#[CoversClass(GetUserProfileTool::class)]
-#[CoversClass(GetWalletOverviewTool::class)]
-#[CoversClass(ListBannersTool::class)]
 #[Group('mcp')]
 class ApiServerTest extends TestCase
 {
@@ -78,13 +112,45 @@ class ApiServerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Server 注册了全部打样工具')]
+    #[TestDox('Server 注册了全部 35 个工具')]
     public function server_registers_all_tools(): void
     {
         ApiServer::tools()->assertRegistered([
             GetUserProfileTool::class,
+            ListLoginHistoriesTool::class,
+            ListPointsTool::class,
+            ListCoinsTool::class,
+            ListSocialsTool::class,
+            ListVisitsTool::class,
+            ListNotificationsTool::class,
+            ListUnreadNotificationsTool::class,
+            ListAddressesTool::class,
+            GetAddressTool::class,
+            ListMyFeedbacksTool::class,
+            ListMyReportsTool::class,
+            GetIdentityTool::class,
+            GetIdentityStatusTool::class,
             GetWalletOverviewTool::class,
+            ListWalletTradesTool::class,
+            ListRechargesTool::class,
+            GetRechargeTool::class,
+            ListWithdrawsTool::class,
+            GetWithdrawTool::class,
+            ListWithdrawAccountsTool::class,
+            ListCommentsTool::class,
+            ListCollectionsTool::class,
+            ListLikesTool::class,
+            ListFollowsTool::class,
+            ListTasksTool::class,
+            ListInviteRecordsTool::class,
+            GetInviteStatsTool::class,
             ListBannersTool::class,
+            ListAreasTool::class,
+            ListDictItemsTool::class,
+            ListAnnouncementsTool::class,
+            GetAnnouncementTool::class,
+            GetAgreementTool::class,
+            ListTokensTool::class,
         ]);
     }
 
@@ -121,6 +187,66 @@ class ApiServerTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('分页工具统一返回 items + pagination 结构')]
+    public function paginated_tools_return_unified_structure(): void
+    {
+        Address::factory()->count(20)->create(['user_id' => $this->user->id]);
+
+        ApiServer::actingAs($this->user)
+            ->tool(ListAddressesTool::class, ['page' => 2, 'per_page' => 8])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->has('items', 8)
+                ->where('pagination.total', 20)
+                ->where('pagination.per_page', 8)
+                ->where('pagination.current_page', 2)
+                ->where('pagination.last_page', 3)
+                ->where('pagination.has_more', true)
+            );
+    }
+
+    #[Test]
+    #[TestDox('user.address.get 越权访问他人地址返回错误')]
+    public function get_address_tool_rejects_other_users_address(): void
+    {
+        $other = User::factory()->create();
+        $foreignAddress = Address::factory()->create(['user_id' => $other->id]);
+
+        ApiServer::actingAs($this->user)
+            ->tool(GetAddressTool::class, ['id' => $foreignAddress->id])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('wallet.recharge.get 越权访问他人订单返回错误')]
+    public function get_recharge_tool_rejects_other_users_order(): void
+    {
+        $other = User::factory()->create();
+        $foreignRecharge = Recharge::factory()->forUser($other)->create();
+
+        ApiServer::actingAs($this->user)
+            ->tool(GetRechargeTool::class, ['id' => $foreignRecharge->id])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('wallet.withdraw_account.list 默认账户排最前')]
+    public function list_withdraw_accounts_tool_orders_default_first(): void
+    {
+        WithdrawAccount::factory()->forUser($this->user)->create(['is_default' => false]);
+        WithdrawAccount::factory()->forUser($this->user)->default()->create();
+
+        ApiServer::actingAs($this->user)
+            ->tool(ListWithdrawAccountsTool::class)
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->has('items', 2)
+                ->where('items.0.is_default', true)
+                ->etc()
+            );
+    }
+
+    #[Test]
     #[TestDox('common.banner.list 按广告位过滤且仅返回生效中的 Banner')]
     public function list_banners_tool_filters_by_position(): void
     {
@@ -145,5 +271,60 @@ class ApiServerTest extends TestCase
         ApiServer::actingAs($this->user)
             ->tool(ListBannersTool::class)
             ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('common.announcement.list 仅返回已发布公告')]
+    public function list_announcements_tool_only_returns_published(): void
+    {
+        Announcement::factory()->published()->create(['title' => '已发布公告']);
+        Announcement::factory()->draft()->create(['title' => '草稿公告']);
+
+        ApiServer::actingAs($this->user)
+            ->tool(ListAnnouncementsTool::class)
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->has('items', 1)
+                ->where('items.0.title', '已发布公告')
+                ->etc()
+            );
+    }
+
+    #[Test]
+    #[TestDox('common.announcement.get 不存在的公告返回错误')]
+    public function get_announcement_tool_returns_error_for_missing(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(GetAnnouncementTool::class, ['id' => 999])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('invite.stats.get 返回邀请统计')]
+    public function get_invite_stats_tool_returns_stats(): void
+    {
+        $invitee = User::factory()->create();
+        InviteRecord::factory()->forInviter($this->user)->forInvitee($invitee)->create();
+
+        ApiServer::actingAs($this->user)
+            ->tool(GetInviteStatsTool::class)
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('invitee_count', 1)
+                ->where('has_inviter', false)
+            );
+    }
+
+    #[Test]
+    #[TestDox('user.identity.status 未认证时返回未通过')]
+    public function get_identity_status_tool_returns_default(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(GetIdentityStatusTool::class)
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('is_verified', false)
+                ->etc()
+            );
     }
 }

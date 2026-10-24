@@ -10,11 +10,13 @@ namespace App\Models\User;
 use App\Models\Model;
 use App\Models\Traits\HasUser;
 use App\Policies\AddressPolicy;
+use Database\Factories\AddressFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -48,6 +50,8 @@ use Illuminate\Support\Carbon;
 #[UsePolicy(AddressPolicy::class)]
 class Address extends Model
 {
+    /** @use HasFactory<AddressFactory> */
+    use HasFactory;
     use HasUser;
     use SoftDeletes;
 
