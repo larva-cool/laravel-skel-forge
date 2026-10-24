@@ -7,7 +7,9 @@ declare(strict_types=1);
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\Auth\DeleteTokenTool;
 use App\Mcp\Tools\Auth\ListTokensTool;
+use App\Mcp\Tools\Auth\LogoutTool;
 use App\Mcp\Tools\Common\GetAgreementTool;
 use App\Mcp\Tools\Common\GetAnnouncementTool;
 use App\Mcp\Tools\Common\ListAnnouncementsTool;
@@ -30,8 +32,15 @@ use App\Mcp\Tools\Invite\GetInviteStatsTool;
 use App\Mcp\Tools\Invite\ListInviteRecordsTool;
 use App\Mcp\Tools\Task\ClaimTaskTool;
 use App\Mcp\Tools\Task\ListTasksTool;
+use App\Mcp\Tools\User\Address\CreateAddressTool;
+use App\Mcp\Tools\User\Address\DeleteAddressTool;
 use App\Mcp\Tools\User\Address\GetAddressTool;
 use App\Mcp\Tools\User\Address\ListAddressesTool;
+use App\Mcp\Tools\User\Address\SetDefaultAddressTool;
+use App\Mcp\Tools\User\Address\UpdateAddressTool;
+use App\Mcp\Tools\User\CreateFeedbackTool;
+use App\Mcp\Tools\User\CreateReportTool;
+use App\Mcp\Tools\User\DeleteAccountTool;
 use App\Mcp\Tools\User\GetUserProfileTool;
 use App\Mcp\Tools\User\Identity\GetIdentityStatusTool;
 use App\Mcp\Tools\User\Identity\GetIdentityTool;
@@ -42,6 +51,7 @@ use App\Mcp\Tools\User\ListMyReportsTool;
 use App\Mcp\Tools\User\ListPointsTool;
 use App\Mcp\Tools\User\ListSocialsTool;
 use App\Mcp\Tools\User\ListVisitsTool;
+use App\Mcp\Tools\User\Notification\ClearReadNotificationsTool;
 use App\Mcp\Tools\User\Notification\ListNotificationsTool;
 use App\Mcp\Tools\User\Notification\ListUnreadNotificationsTool;
 use App\Mcp\Tools\User\Notification\MarkAllNotificationsReadTool;
@@ -53,6 +63,10 @@ use App\Mcp\Tools\User\UpdatePasswordTool;
 use App\Mcp\Tools\User\UpdatePhoneTool;
 use App\Mcp\Tools\User\UpdateProfileTool;
 use App\Mcp\Tools\User\UpdateUsernameTool;
+use App\Mcp\Tools\Wallet\CreateRechargeTool;
+use App\Mcp\Tools\Wallet\CreateWithdrawAccountTool;
+use App\Mcp\Tools\Wallet\CreateWithdrawTool;
+use App\Mcp\Tools\Wallet\DeleteWithdrawAccountTool;
 use App\Mcp\Tools\Wallet\GetRechargeTool;
 use App\Mcp\Tools\Wallet\GetWalletOverviewTool;
 use App\Mcp\Tools\Wallet\GetWithdrawTool;
@@ -60,6 +74,8 @@ use App\Mcp\Tools\Wallet\ListRechargesTool;
 use App\Mcp\Tools\Wallet\ListWalletTradesTool;
 use App\Mcp\Tools\Wallet\ListWithdrawAccountsTool;
 use App\Mcp\Tools\Wallet\ListWithdrawsTool;
+use App\Mcp\Tools\Wallet\SetDefaultWithdrawAccountTool;
+use App\Mcp\Tools\Wallet\UpdateWithdrawAccountTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -74,7 +90,7 @@ use Laravel\Mcp\Server\Attributes\Version;
  */
 #[Name('skel-api')]
 #[Version('1.0.0')]
-#[Instructions('该 Server 封装了 C 端用户 API 能力，可查询当前登录用户的资料、钱包、通知、地址、实名、内容互动、任务、邀请，以及公开的 Banner/公告/协议/字典/地区等数据，并支持修改资料、发布评论/点赞/收藏/关注、领取任务奖励、标记通知已读等操作。所有工具均以当前认证用户身份执行；分页工具统一接受 page/per_page 入参，返回 items + pagination 结构。')]
+#[Instructions('该 Server 封装了 C 端用户 API 能力，覆盖查询、资料修改、内容互动、任务领取、钱包充值/提现、地址/收款账户管理、反馈举报、通知已读、会话管理与账户注销等全部 C 端操作。所有工具均以当前认证用户身份执行；分页工具统一接受 page/per_page 入参，返回 items + pagination 结构；资金与注销类操作带有 destructive 标记，调用前需确认。')]
 class ApiServer extends Server
 {
     /**
@@ -93,12 +109,19 @@ class ApiServer extends Server
         ListUnreadNotificationsTool::class,
         MarkAllNotificationsReadTool::class,
         MarkNotificationReadTool::class,
+        ClearReadNotificationsTool::class,
         // 地址
         ListAddressesTool::class,
         GetAddressTool::class,
+        CreateAddressTool::class,
+        UpdateAddressTool::class,
+        DeleteAddressTool::class,
+        SetDefaultAddressTool::class,
         // 反馈 / 举报
         ListMyFeedbacksTool::class,
         ListMyReportsTool::class,
+        CreateFeedbackTool::class,
+        CreateReportTool::class,
         // 实名认证
         GetIdentityTool::class,
         GetIdentityStatusTool::class,
@@ -107,9 +130,15 @@ class ApiServer extends Server
         ListWalletTradesTool::class,
         ListRechargesTool::class,
         GetRechargeTool::class,
+        CreateRechargeTool::class,
         ListWithdrawsTool::class,
         GetWithdrawTool::class,
+        CreateWithdrawTool::class,
         ListWithdrawAccountsTool::class,
+        CreateWithdrawAccountTool::class,
+        UpdateWithdrawAccountTool::class,
+        DeleteWithdrawAccountTool::class,
+        SetDefaultWithdrawAccountTool::class,
         // 内容互动（读）
         ListCommentsTool::class,
         ListCollectionsTool::class,
@@ -138,13 +167,16 @@ class ApiServer extends Server
         GetAgreementTool::class,
         // 会话
         ListTokensTool::class,
-        // 用户资料修改
+        DeleteTokenTool::class,
+        LogoutTool::class,
+        // 用户资料修改与账户注销
         UpdateProfileTool::class,
         UpdateUsernameTool::class,
         UpdateEmailTool::class,
         UpdatePhoneTool::class,
         UpdateAvatarTool::class,
         UpdatePasswordTool::class,
+        DeleteAccountTool::class,
         // 访问记录
         RecordVisitTool::class,
     ];

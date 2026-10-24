@@ -8,7 +8,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Mcp;
 
 use App\Mcp\Servers\ApiServer;
+use App\Mcp\Tools\Auth\DeleteTokenTool;
 use App\Mcp\Tools\Auth\ListTokensTool;
+use App\Mcp\Tools\Auth\LogoutTool;
 use App\Mcp\Tools\Common\GetAgreementTool;
 use App\Mcp\Tools\Common\GetAnnouncementTool;
 use App\Mcp\Tools\Common\ListAnnouncementsTool;
@@ -31,8 +33,15 @@ use App\Mcp\Tools\Invite\GetInviteStatsTool;
 use App\Mcp\Tools\Invite\ListInviteRecordsTool;
 use App\Mcp\Tools\Task\ClaimTaskTool;
 use App\Mcp\Tools\Task\ListTasksTool;
+use App\Mcp\Tools\User\Address\CreateAddressTool;
+use App\Mcp\Tools\User\Address\DeleteAddressTool;
 use App\Mcp\Tools\User\Address\GetAddressTool;
 use App\Mcp\Tools\User\Address\ListAddressesTool;
+use App\Mcp\Tools\User\Address\SetDefaultAddressTool;
+use App\Mcp\Tools\User\Address\UpdateAddressTool;
+use App\Mcp\Tools\User\CreateFeedbackTool;
+use App\Mcp\Tools\User\CreateReportTool;
+use App\Mcp\Tools\User\DeleteAccountTool;
 use App\Mcp\Tools\User\GetUserProfileTool;
 use App\Mcp\Tools\User\Identity\GetIdentityStatusTool;
 use App\Mcp\Tools\User\Identity\GetIdentityTool;
@@ -43,6 +52,7 @@ use App\Mcp\Tools\User\ListMyReportsTool;
 use App\Mcp\Tools\User\ListPointsTool;
 use App\Mcp\Tools\User\ListSocialsTool;
 use App\Mcp\Tools\User\ListVisitsTool;
+use App\Mcp\Tools\User\Notification\ClearReadNotificationsTool;
 use App\Mcp\Tools\User\Notification\ListNotificationsTool;
 use App\Mcp\Tools\User\Notification\ListUnreadNotificationsTool;
 use App\Mcp\Tools\User\Notification\MarkAllNotificationsReadTool;
@@ -54,6 +64,10 @@ use App\Mcp\Tools\User\UpdatePasswordTool;
 use App\Mcp\Tools\User\UpdatePhoneTool;
 use App\Mcp\Tools\User\UpdateProfileTool;
 use App\Mcp\Tools\User\UpdateUsernameTool;
+use App\Mcp\Tools\Wallet\CreateRechargeTool;
+use App\Mcp\Tools\Wallet\CreateWithdrawAccountTool;
+use App\Mcp\Tools\Wallet\CreateWithdrawTool;
+use App\Mcp\Tools\Wallet\DeleteWithdrawAccountTool;
 use App\Mcp\Tools\Wallet\GetRechargeTool;
 use App\Mcp\Tools\Wallet\GetWalletOverviewTool;
 use App\Mcp\Tools\Wallet\GetWithdrawTool;
@@ -61,6 +75,8 @@ use App\Mcp\Tools\Wallet\ListRechargesTool;
 use App\Mcp\Tools\Wallet\ListWalletTradesTool;
 use App\Mcp\Tools\Wallet\ListWithdrawAccountsTool;
 use App\Mcp\Tools\Wallet\ListWithdrawsTool;
+use App\Mcp\Tools\Wallet\SetDefaultWithdrawAccountTool;
+use App\Mcp\Tools\Wallet\UpdateWithdrawAccountTool;
 use App\Models\Invite\InviteRecord;
 use App\Models\Operation\Announcement;
 use App\Models\Operation\Banner;
@@ -130,7 +146,7 @@ class ApiServerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Server 注册了全部 53 个工具')]
+    #[TestDox('Server 注册了全部 70 个工具')]
     public function server_registers_all_tools(): void
     {
         ApiServer::tools()->assertRegistered([
@@ -144,19 +160,32 @@ class ApiServerTest extends TestCase
             ListUnreadNotificationsTool::class,
             MarkAllNotificationsReadTool::class,
             MarkNotificationReadTool::class,
+            ClearReadNotificationsTool::class,
             ListAddressesTool::class,
             GetAddressTool::class,
+            CreateAddressTool::class,
+            UpdateAddressTool::class,
+            DeleteAddressTool::class,
+            SetDefaultAddressTool::class,
             ListMyFeedbacksTool::class,
             ListMyReportsTool::class,
+            CreateFeedbackTool::class,
+            CreateReportTool::class,
             GetIdentityTool::class,
             GetIdentityStatusTool::class,
             GetWalletOverviewTool::class,
             ListWalletTradesTool::class,
             ListRechargesTool::class,
             GetRechargeTool::class,
+            CreateRechargeTool::class,
             ListWithdrawsTool::class,
             GetWithdrawTool::class,
+            CreateWithdrawTool::class,
             ListWithdrawAccountsTool::class,
+            CreateWithdrawAccountTool::class,
+            UpdateWithdrawAccountTool::class,
+            DeleteWithdrawAccountTool::class,
+            SetDefaultWithdrawAccountTool::class,
             ListCommentsTool::class,
             ListCollectionsTool::class,
             ListLikesTool::class,
@@ -180,12 +209,15 @@ class ApiServerTest extends TestCase
             GetAnnouncementTool::class,
             GetAgreementTool::class,
             ListTokensTool::class,
+            DeleteTokenTool::class,
+            LogoutTool::class,
             UpdateProfileTool::class,
             UpdateUsernameTool::class,
             UpdateEmailTool::class,
             UpdatePhoneTool::class,
             UpdateAvatarTool::class,
             UpdatePasswordTool::class,
+            DeleteAccountTool::class,
             RecordVisitTool::class,
         ]);
     }
@@ -502,5 +534,158 @@ class ApiServerTest extends TestCase
                 ->where('source_id', 1)
                 ->etc()
             );
+    }
+
+    // ==================== Phase 4: 高风险与账户管理工具测试 ====================
+
+    #[Test]
+    #[TestDox('wallet.recharge.create 创建充值订单成功')]
+    public function create_recharge_tool_creates_order(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(CreateRechargeTool::class, ['amount' => 100, 'pay_channel' => 'manual'])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('amount', '100.00')
+                ->where('pay_channel.value', 'manual')
+                ->where('pay_status.value', 'pending')
+                ->etc()
+            );
+    }
+
+    #[Test]
+    #[TestDox('wallet.recharge.create 金额低于最小值返回错误')]
+    public function create_recharge_tool_rejects_low_amount(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(CreateRechargeTool::class, ['amount' => 0.01, 'pay_channel' => 'manual'])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('user.address.create 添加地址并设为默认')]
+    public function create_address_tool_creates_and_marks_default(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(CreateAddressTool::class, [
+                'name' => '张三',
+                'phone' => '13800138000',
+                'province' => '浙江省',
+                'city' => '杭州市',
+                'district' => '西湖区',
+                'address' => '文三路 100 号',
+                'is_default' => true,
+            ])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('name', '张三')
+                ->where('is_default', true)
+                ->etc()
+            );
+    }
+
+    #[Test]
+    #[TestDox('user.address.set_default 越权设置他人地址返回错误')]
+    public function set_default_address_tool_rejects_other_users(): void
+    {
+        $other = User::factory()->create();
+        $foreignAddress = Address::factory()->create(['user_id' => $other->id]);
+
+        ApiServer::actingAs($this->user)
+            ->tool(SetDefaultAddressTool::class, ['id' => $foreignAddress->id])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('wallet.withdraw_account.create 添加收款账户成功')]
+    public function create_withdraw_account_tool_creates_account(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(CreateWithdrawAccountTool::class, [
+                'account_type' => 'alipay',
+                'real_name' => '张三',
+                'account_no' => 'zhangsan@example.com',
+            ])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('account_type.value', 'alipay')
+                ->where('real_name', '张三')
+                ->where('is_default', true)
+                ->etc()
+            );
+    }
+
+    #[Test]
+    #[TestDox('wallet.withdraw_account.create 重复绑定同类型同账号返回错误')]
+    public function create_withdraw_account_tool_rejects_duplicate(): void
+    {
+        WithdrawAccount::factory()->forUser($this->user)->create([
+            'account_type' => 'alipay',
+            'account_no' => 'zhangsan@example.com',
+        ]);
+
+        ApiServer::actingAs($this->user)
+            ->tool(CreateWithdrawAccountTool::class, [
+                'account_type' => 'alipay',
+                'real_name' => '张三',
+                'account_no' => 'zhangsan@example.com',
+            ])
+            ->assertHasErrors();
+    }
+
+    #[Test]
+    #[TestDox('user.feedback.create 提交反馈成功')]
+    public function create_feedback_tool_creates_feedback(): void
+    {
+        // 确保 feedback_type 字典存在
+        $dict = \App\Models\System\Dict::query()->firstOrCreate(
+            ['code' => 'feedback_type'],
+            ['name' => '反馈类型', 'status' => 1]
+        );
+        $dict->dictItems()->firstOrCreate(
+            ['value' => 'bug'],
+            ['label' => '功能异常', 'status' => 1, 'sort' => 1]
+        );
+
+        ApiServer::actingAs($this->user)
+            ->tool(CreateFeedbackTool::class, [
+                'title' => '无法登录',
+                'content' => '点击登录按钮无反应',
+                'type' => 'bug',
+            ])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('title', '无法登录')
+                ->where('type', 'bug')
+                ->etc()
+            );
+    }
+
+    #[Test]
+    #[TestDox('auth.token.delete 撤销指定令牌成功')]
+    public function delete_token_tool_revokes_token(): void
+    {
+        $token = $this->user->createToken('test-token');
+
+        ApiServer::actingAs($this->user)
+            ->tool(DeleteTokenTool::class, ['id' => $token->accessToken->id])
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('message', 'Token revoked successfully.')
+            );
+    }
+
+    #[Test]
+    #[TestDox('user.delete 注销账户成功')]
+    public function delete_account_tool_deletes_user(): void
+    {
+        ApiServer::actingAs($this->user)
+            ->tool(DeleteAccountTool::class)
+            ->assertOk()
+            ->assertStructuredContent(fn (AssertableJson $json) => $json
+                ->where('message', 'Account deleted successfully.')
+            );
+
+        $this->assertSoftDeleted('users', ['id' => $this->user->id]);
     }
 }
