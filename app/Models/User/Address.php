@@ -14,6 +14,7 @@ use Database\Factories\AddressFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -48,10 +49,12 @@ use Illuminate\Support\Carbon;
 ])]
 #[Hidden(['user_id'])]
 #[UsePolicy(AddressPolicy::class)]
+#[UseFactory(AddressFactory::class)]
 class Address extends Model
 {
     /** @use HasFactory<AddressFactory> */
     use HasFactory;
+
     use HasUser;
     use SoftDeletes;
 

@@ -194,7 +194,22 @@ php artisan test --compact --filter=name  # 按名称过滤
 - **端点**：`POST /mcp/v1`（JSON-RPC 2.0），认证走 Sanctum 个人访问令牌：`Authorization: Bearer <token>`
 - **服务定义**：`app/Mcp/Servers/ApiServer.php`，工具按业务域分目录放在 `app/Mcp/Tools/`
 - **调试**：`php artisan mcp:inspector mcp/v1`
-- **已封装工具**：`user.profile.get`（用户资料）、`wallet.overview.get`（钱包概览）、`common.banner.list`（广告位 Banner 列表）
+- **分页约定**：列表类工具统一接受 `page` / `per_page` 入参，返回 `items` + `pagination`（total/per_page/current_page/last_page/has_more）
+
+#### 已封装工具（35 个）
+
+| 域 | 工具 | 说明 |
+|---|---|---|
+| 用户 | `user.profile.get` / `user.login_histories.list` / `user.points.list` / `user.coins.list` / `user.socials.list` / `user.visits.list` | 资料、登录历史、积分/金币流水、第三方绑定、访问记录 |
+| 通知 | `user.notifications.list` / `user.notifications.unread` | 通知列表、未读列表 |
+| 地址 | `user.address.list` / `user.address.get` | 收货地址列表、详情（越权拦截） |
+| 反馈/举报 | `user.feedback.list` / `user.report.list` | 我的反馈、我的举报 |
+| 实名 | `user.identity.get` / `user.identity.status` | 最新认证记录、简要状态 |
+| 钱包 | `wallet.overview.get` / `wallet.trades.list` / `wallet.recharge.list` / `wallet.recharge.get` / `wallet.withdraw.list` / `wallet.withdraw.get` / `wallet.withdraw_account.list` | 概览、流水、充值/提现列表与详情、收款账户 |
+| 内容互动 | `content.comment.list` / `content.collection.list` / `content.like.list` / `content.follow.list` | 评论（公开已审）、收藏、点赞、关注 |
+| 任务/邀请 | `task.list` / `invite.record.list` / `invite.stats.get` | 任务中心、邀请记录、邀请统计 |
+| 公开数据 | `common.banner.list` / `common.area.list` / `common.dict_item.list` / `common.announcement.list` / `common.announcement.get` / `common.agreement.get` | Banner、地区、字典项、公告列表/详情、协议 |
+| 会话 | `auth.token.list` | 已签发的访问令牌列表 |
 
 ## 队列与定时任务
 
