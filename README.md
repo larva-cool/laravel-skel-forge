@@ -163,7 +163,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 监控 | `/admin/monitor`、`/admin/queue`、`/admin/debug` | Pulse 性能、Horizon 队列、Telescope 调试（仅 local） |
 | 审计 | `/admin/audit-logs`、`/admin/schedule-logs`、`/admin/login-histories` | 操作审计、调度日志与全局登录历史（跨管理员/前台用户，可按 guard、结果、时间过滤）。**导出支持**：用户/评论/反馈/审计日志/钱包流水/充值订单/提现申请列表与用户积分、金币流水均提供 `GET /export` 端点（同步/异步双通道，大数据量走队列生成并通过站内信推送下载链接） |
 | 仪表盘 | `/admin/dashboard` | 核心指标统计与趋势图 |
-| AI 聊天 | `/admin/chat` | SSE 流式对话、工具调用审批、会话管理；入口由 `chat.use` 权限点保护，工具按管理员角色权限动态过滤并在执行层兜底校验 |
+| AI 聊天 | `/admin/chat` | SSE 流式对话、工具调用审批、会话管理；入口由 `chat.use` 权限点保护，工具按管理员角色权限动态过滤并在执行层兜底校验；含分析型工具：财务趋势环比（GetFinanceTrends）、充值转化漏斗（GetRechargeFunnel）、提现异常扫描（DetectWithdrawAnomalies）、用户增长/留存分析（GetUserGrowthStats）、流失预警名单（GetChurnRiskUsers） |
 | AI 知识库 | `/admin/knowledge-documents` | RAG 知识库：文档 CRUD、保存后自动异步索引（段落分块 + Embedding 向量化，队列执行）、分块查看、启用/停用、重建索引、语义检索测试（余弦相似度 Top-N）；AI 助手内置 `SearchKnowledgeBase` 工具可按权限检索知识库回答业务问题；公众号文本消息由智能客服（`WechatAssistant` + 免权限的 `SearchPublicKnowledgeBase` 工具）基于知识库异步回复 |
 
 ### 前台 API（`/api/v1`）

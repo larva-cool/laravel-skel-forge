@@ -121,11 +121,11 @@ class AssistantToolPermissionsTest extends TestCase
     {
         $superAdmin = Admin::query()->where('username', 'admin')->firstOrFail();
 
-        $this->assertCount(57, $this->toolClasses($superAdmin));
+        $this->assertCount(59, $this->toolClasses($superAdmin));
     }
 
     #[Test]
-    #[TestDox('仅拥有 users.index 时只能看到用户查询工具')]
+    #[TestDox('仅拥有 users.index 时只能看到用户查询与增长/流失分析工具')]
     public function admin_with_users_index_only_sees_read_tools(): void
     {
         $admin = $this->createAdminWithPermissions(['users.index']);
@@ -134,10 +134,12 @@ class AssistantToolPermissionsTest extends TestCase
 
         $this->assertContains(ListUsers::class, $classes);
         $this->assertContains(GetUser::class, $classes);
+        $this->assertContains(\App\Ai\Tools\Stats\GetUserGrowthStats::class, $classes);
+        $this->assertContains(\App\Ai\Tools\Users\GetChurnRiskUsers::class, $classes);
         $this->assertNotContains(SetUserStatus::class, $classes);
         $this->assertNotContains(SetSetting::class, $classes);
         $this->assertNotContains(WebFetch::class, $classes);
-        $this->assertCount(3, $classes);
+        $this->assertCount(5, $classes);
     }
 
     #[Test]

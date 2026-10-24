@@ -10,7 +10,10 @@ namespace Tests\Unit\Ai\Agents;
 use App\Ai\Agents\Finance;
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Users\GetUser;
+use App\Ai\Tools\Wallet\DetectWithdrawAnomalies;
 use App\Ai\Tools\Wallet\GetFinanceStats;
+use App\Ai\Tools\Wallet\GetFinanceTrends;
+use App\Ai\Tools\Wallet\GetRechargeFunnel;
 use App\Ai\Tools\Wallet\ListRecharges;
 use App\Ai\Tools\Wallet\ListWalletTrades;
 use App\Ai\Tools\Wallet\ListWithdraws;
@@ -107,11 +110,11 @@ class FinanceToolPermissionsTest extends TestCase
     {
         $superAdmin = Admin::query()->where('username', 'admin')->firstOrFail();
 
-        $this->assertCount(6, $this->toolClasses($superAdmin));
+        $this->assertCount(9, $this->toolClasses($superAdmin));
     }
 
     #[Test]
-    #[TestDox('仅拥有 wallet.index 时只能看到流水查询与财务概览工具')]
+    #[TestDox('仅拥有 wallet.index 时只能看到流水查询与财务概览/趋势工具')]
     public function admin_with_wallet_index_only_sees_trade_read_tools(): void
     {
         $admin = $this->createAdminWithPermissions(['wallet.index']);
@@ -120,14 +123,15 @@ class FinanceToolPermissionsTest extends TestCase
 
         $this->assertContains(ListWalletTrades::class, $classes);
         $this->assertContains(GetFinanceStats::class, $classes);
+        $this->assertContains(GetFinanceTrends::class, $classes);
         $this->assertNotContains(ListRecharges::class, $classes);
         $this->assertNotContains(ListWithdraws::class, $classes);
         $this->assertNotContains(ReviewWithdraw::class, $classes);
-        $this->assertCount(2, $classes);
+        $this->assertCount(3, $classes);
     }
 
     #[Test]
-    #[TestDox('仅拥有 wallet.orders 时只能看到充值订单与财务概览工具')]
+    #[TestDox('仅拥有 wallet.orders 时只能看到充值订单与财务概览/趋势/漏斗工具')]
     public function admin_with_wallet_orders_only_sees_recharge_read_tools(): void
     {
         $admin = $this->createAdminWithPermissions(['wallet.orders']);
@@ -136,12 +140,14 @@ class FinanceToolPermissionsTest extends TestCase
 
         $this->assertContains(ListRecharges::class, $classes);
         $this->assertContains(GetFinanceStats::class, $classes);
+        $this->assertContains(GetFinanceTrends::class, $classes);
+        $this->assertContains(GetRechargeFunnel::class, $classes);
         $this->assertNotContains(ListWalletTrades::class, $classes);
-        $this->assertCount(2, $classes);
+        $this->assertCount(4, $classes);
     }
 
     #[Test]
-    #[TestDox('拥有 wallet.withdraws 时同时获得提现查询与审核工具')]
+    #[TestDox('拥有 wallet.withdraws 时同时获得提现查询、审核与异常扫描工具')]
     public function admin_with_wallet_withdraws_sees_review_tools(): void
     {
         $admin = $this->createAdminWithPermissions(['wallet.withdraws']);
@@ -151,7 +157,9 @@ class FinanceToolPermissionsTest extends TestCase
         $this->assertContains(ListWithdraws::class, $classes);
         $this->assertContains(ReviewWithdraw::class, $classes);
         $this->assertContains(GetFinanceStats::class, $classes);
-        $this->assertCount(3, $classes);
+        $this->assertContains(GetFinanceTrends::class, $classes);
+        $this->assertContains(DetectWithdrawAnomalies::class, $classes);
+        $this->assertCount(5, $classes);
     }
 
     #[Test]
