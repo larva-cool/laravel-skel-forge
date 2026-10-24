@@ -9,7 +9,10 @@ namespace App\Ai\Agents;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Users\GetUser;
+use App\Ai\Tools\Wallet\DetectWithdrawAnomalies;
 use App\Ai\Tools\Wallet\GetFinanceStats;
+use App\Ai\Tools\Wallet\GetFinanceTrends;
+use App\Ai\Tools\Wallet\GetRechargeFunnel;
 use App\Ai\Tools\Wallet\ListRecharges;
 use App\Ai\Tools\Wallet\ListWalletTrades;
 use App\Ai\Tools\Wallet\ListWithdraws;
@@ -55,21 +58,27 @@ class Finance implements Agent, Conversational, HasTools
    - 查询钱包流水按交易类型的收支汇总与净流入
    - 查询平台金币存量与用户冻结余额总额
 
-2. **充值订单管理**
+2. **财务趋势与风控分析**
+   - 按日分析充值/提现/净流入走势，并与上一等长周期对比给出环比变化（GetFinanceTrends）
+   - 分析充值下单→到账转化漏斗与分渠道成功率、平均支付耗时（GetRechargeFunnel）
+   - 扫描提现异常模式：大额聚集、短时密集申请、新注册即提现、同收款账户多账号、同 IP 多账号（DetectWithdrawAnomalies）
+   - 解读趋势与异常时给出明确结论与处置建议；异常样本中的收款账户已脱敏，保持脱敏
+
+3. **充值订单管理**
    - 查询充值订单列表（按用户、支付状态、支付渠道、订单号、下单时间范围筛选）
    - 不支持确认到账、关单等写操作
 
-3. **钱包流水查询**
+4. **钱包流水查询**
    - 查询全局钱包流水（按用户、交易类型、流水状态、描述关键字、交易时间范围筛选）
    - 流水金额正负语义：正数为入账，负数为出账
    - 不支持调账操作
 
-4. **提现申请审核**
+5. **提现申请审核**
    - 查询提现申请列表（按用户、提现状态、收款账户类型、提现单号、申请时间范围筛选）
    - 审核提现申请（通过/驳回，仅待审核状态可操作；驳回需填写原因，冻结金额自动解冻退回用户可用余额）
    - 不支持标记打款、标记失败等操作
 
-5. **用户身份核对**
+6. **用户身份核对**
    - 审核提现等敏感操作前，可查询用户详情核对身份与账户状态
 
 ## 工作原则
@@ -94,7 +103,7 @@ class Finance implements Agent, Conversational, HasTools
 4. 驳回提现时必须要求管理员提供驳回原因（reason），该原因会同步通知用户。
 5. 如果管理员在确认环节改变主意或信息有误，立即停止并按新的指示重新确认。
 
-对于查询类工具（GetFinanceStats、ListWalletTrades、ListRecharges、ListWithdraws、GetUser），无需确认，可直接调用。
+对于查询类工具（GetFinanceStats、GetFinanceTrends、GetRechargeFunnel、DetectWithdrawAnomalies、ListWalletTrades、ListRecharges、ListWithdraws、GetUser），无需确认，可直接调用。
 
 ## 安全与边界
 
@@ -123,11 +132,13 @@ PROMPT;
         $admin = $participant instanceof Admin ? $participant : null;
 
         $tools = [
-            // 财务数据概览
+            // 财务数据概览与趋势
             new GetFinanceStats,
+            new GetFinanceTrends,
 
             // 充值订单
             new ListRecharges,
+            new GetRechargeFunnel,
 
             // 钱包流水
             new ListWalletTrades,
@@ -135,6 +146,7 @@ PROMPT;
             // 提现申请
             new ListWithdraws,
             new ReviewWithdraw,
+            new DetectWithdrawAnomalies,
 
             // 用户身份核对
             new GetUser,

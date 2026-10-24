@@ -36,6 +36,7 @@ use App\Ai\Tools\Segments\SyncUserSegment;
 use App\Ai\Tools\Settings\GetSetting;
 use App\Ai\Tools\Settings\SetSetting;
 use App\Ai\Tools\Stats\GetDashboardStats;
+use App\Ai\Tools\Stats\GetUserGrowthStats;
 use App\Ai\Tools\System\AddSensitiveWord;
 use App\Ai\Tools\System\GetAreas;
 use App\Ai\Tools\System\ListAdmins;
@@ -50,6 +51,7 @@ use App\Ai\Tools\Tasks\ListTaskLogs;
 use App\Ai\Tools\Tasks\ListTasks;
 use App\Ai\Tools\Users\AdjustUserBalance;
 use App\Ai\Tools\Users\ExtendUserVip;
+use App\Ai\Tools\Users\GetChurnRiskUsers;
 use App\Ai\Tools\Users\GetUser;
 use App\Ai\Tools\Users\GetUserSocials;
 use App\Ai\Tools\Users\ListIdentityVerifications;
@@ -115,6 +117,8 @@ class Assistant implements Agent, Conversational, HasTools
 
 3. **数据统计与审计**
    - 查询平台用户规模、新增/活跃趋势、管理员数量、验证码发送量、近期登录记录等核心指标
+   - 用户增长分析：新增/活跃按日走势、新增环比、次日与 7 日留存率、VIP 转化规模（GetUserGrowthStats）
+   - 流失预警：查询超过 N 天未活跃但历史活跃的流失风险用户名单与资产沉淀汇总（GetChurnRiskUsers），供召回干预参考
    - 查询全局登录历史（可按前台用户/后台管理员、用户 ID、登录地址/设备/平台、时间范围筛选），用于安全审计
    - 查询短信/邮件验证码发送记录（按账号、使用状态、场景、时间范围筛选）
    - 查询后台管理员操作日志（按操作人、路由、请求方法、是否失败、时间范围筛选），用于操作审计
@@ -208,7 +212,7 @@ class Assistant implements Agent, Conversational, HasTools
 3. 等待管理员明确回复"确认"、"执行"等肯定意图后，再调用对应的写操作工具。
 4. 如果管理员在确认环节改变主意或信息有误，立即停止并按新的指示重新确认。
 
-对于查询类工具（ListUsers、GetUser、GetUserSocials、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、ListFailedJobs、ListSchedules、ListScheduleLogs、ListAppVersions、ListDicts、ListAdmins、ListRoles、ListReports、ListInviteRecords、ListAgreements、ListAttachments、ListOpenAccounts、GetSetting、GetDashboardStats、GetAreas、SystemInfo、WebFetch、SearchKnowledgeBase），无需确认，可直接调用。
+对于查询类工具（ListUsers、GetUser、GetUserSocials、GetChurnRiskUsers、ListLoginHistories、ListVerificationCodes、ListAuditLogs、ListWalletTrades、ListRecharges、ListWithdraws、ListFeedbacks、ListIdentityVerifications、ListAnnouncements、ListBanners、ListSensitiveWords、ListComments、ListUserSegments、ListTasks、ListTaskLogs、ListFailedJobs、ListSchedules、ListScheduleLogs、ListAppVersions、ListDicts、ListAdmins、ListRoles、ListReports、ListInviteRecords、ListAgreements、ListAttachments、ListOpenAccounts、GetSetting、GetDashboardStats、GetUserGrowthStats、GetAreas、SystemInfo、WebFetch、SearchKnowledgeBase），无需确认，可直接调用。
 
 ## 安全与边界
 
@@ -242,6 +246,7 @@ PROMPT;
             new ListUsers,
             new GetUser,
             new GetUserSocials,
+            new GetChurnRiskUsers,
             new SetUserStatus,
             new AdjustUserBalance,
             new ExtendUserVip,
@@ -314,8 +319,9 @@ PROMPT;
             new GetAreas,
             new SystemInfo,
 
-            // 数据统计概览
+            // 数据统计概览与增长分析
             new GetDashboardStats,
+            new GetUserGrowthStats,
 
             // 知识库语义检索
             new SearchKnowledgeBase,
