@@ -9,8 +9,8 @@ namespace App\Services\Ai;
 
 use App\Enums\KnowledgeDocumentStatus;
 use App\Jobs\Ai\ProcessKnowledgeDocumentJob;
-use App\Models\Ai\KnowledgeChunk;
 use App\Models\Ai\KnowledgeDocument;
+use App\Services\Ai\Contracts\KnowledgeSearchEngine;
 use Illuminate\Support\Collection;
 use Laravel\Ai\Embeddings;
 
@@ -18,8 +18,9 @@ use Laravel\Ai\Embeddings;
  * 知识库服务
  *
  * 负责知识库文档的分块、向量化索引与语义检索：
- * - 文档写入后通过 indexDocument() 完成「分块 → Embedding → 落库」
- * - search() 将查询文本向量化后与库内分块做余弦相似度计算，返回 Top-N 结果
+ * - 文档写入后通过 indexDocument() 完成「分块 → Embedding → 落库」，并同步至检索引擎
+ * - search() 将查询文本向量化后委派给 KnowledgeSearchEngine 检索，返回 Top-N 结果
+ *   （database 引擎为库内暴力余弦；meilisearch 引擎检索下沉至搜索引擎）
  *
  * @author Tongle Xu <xutongle@msn.com>
  */
@@ -30,6 +31,10 @@ class KnowledgeService
 
     /** Embedding 接口单批次最大输入条数 */
     public const EMBED_BATCH_SIZE = 10;
+
+    public function __construct(
+        protected readonly KnowledgeSearchEngine $engine,
+    ) {}
 
     /**
      * 将文本按段落聚合切分为分块
@@ -133,6 +138,8 @@ class KnowledgeService
 
             if ($chunks === []) {
                 $document->markReady(0, 0);
+                // 清空旧分块后同步引擎（移除已失效的索引数据）
+                $this->engine->syncDocument($document->refresh());
 
                 return;
             }
@@ -151,6 +158,7 @@ class KnowledgeService
             }
 
             $document->markReady(count($chunks), $result['tokens']);
+            $this->engine->syncDocument($document->refresh());
         } catch (\Throwable $e) {
             $document->markFailed($e->getMessage());
 
@@ -161,63 +169,45 @@ class KnowledgeService
     /**
      * 语义检索：返回与查询最相似的 Top-N 分块
      *
-     * 仅检索「已完成索引且启用」的文档分块，按余弦相似度降序。
+     * 仅检索「已完成索引且启用」的文档分块，由检索引擎按相关度降序返回。
      *
      * @return Collection<int, array{chunk_id: int, document_id: int, document_title: string, content: string, score: float}>
      */
     public function search(string $query, int $limit = 5): Collection
     {
         $queryVector = $this->embed([$query])['embeddings'][0] ?? [];
-        $queryNorm = $this->norm($queryVector);
 
-        if ($queryVector === [] || $queryNorm == 0.0) {
+        if ($queryVector === [] || $this->norm($queryVector) == 0.0) {
             return collect();
         }
 
-        return KnowledgeChunk::query()
-            ->select(['knowledge_chunks.id', 'knowledge_chunks.document_id', 'knowledge_chunks.content', 'knowledge_chunks.embedding', 'knowledge_documents.title'])
-            ->join('knowledge_documents', 'knowledge_documents.id', '=', 'knowledge_chunks.document_id')
-            ->where('knowledge_documents.is_enabled', true)
-            ->where('knowledge_documents.status', 'ready')
-            ->get()
-            ->map(function (KnowledgeChunk $chunk) use ($queryVector, $queryNorm): array {
-                return [
-                    'chunk_id' => $chunk->id,
-                    'document_id' => $chunk->document_id,
-                    'document_title' => $chunk->getAttribute('title'),
-                    'content' => $chunk->content,
-                    'score' => $this->cosineSimilarity($queryVector, $queryNorm, $chunk->embedding),
-                ];
-            })
-            ->sortByDesc('score')
-            ->take(max($limit, 1))
-            ->values();
+        return collect($this->engine->search($query, $queryVector, max($limit, 1)));
     }
 
     /**
-     * 计算两个向量的余弦相似度
+     * 同步文档在检索引擎中的可见性（启用且已就绪 → 同步，否则移除）
      *
-     * @param  array<int, float>  $query  查询向量
-     * @param  float  $queryNorm  查询向量模长
-     * @param  array<int, float>  $vector  待比较向量
+     * 用于启用状态切换、标题等元数据变更后的索引刷新。
      */
-    protected function cosineSimilarity(array $query, float $queryNorm, array $vector): float
+    public function syncVisibility(KnowledgeDocument $document): void
     {
-        $norm = $this->norm($vector);
-        if ($norm == 0.0) {
-            return 0.0;
+        if ($document->is_enabled && $document->status === KnowledgeDocumentStatus::READY) {
+            $this->engine->syncDocument($document);
+        } else {
+            $this->engine->removeDocument($document->id);
         }
-
-        $dot = 0.0;
-        foreach ($query as $i => $value) {
-            $dot += $value * ($vector[$i] ?? 0.0);
-        }
-
-        return $dot / ($queryNorm * $norm);
     }
 
     /**
-     * 向量模长
+     * 从检索引擎移除文档（文档删除前调用）
+     */
+    public function removeFromEngine(int $documentId): void
+    {
+        $this->engine->removeDocument($documentId);
+    }
+
+    /**
+     * 向量模长（用于零向量守卫）
      *
      * @param  array<int, float>  $vector
      */

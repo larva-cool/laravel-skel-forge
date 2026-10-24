@@ -93,6 +93,9 @@ class KnowledgeDocumentController extends Controller
 
         if ($document->wasChanged('content')) {
             $this->knowledgeService->queueIndexing($document);
+        } elseif ($document->wasChanged('title')) {
+            // 标题不参与检索但随索引载荷去规范化存储，需同步刷新
+            $this->knowledgeService->syncVisibility($document);
         }
 
         return new KnowledgeDocumentResource($document);
@@ -105,6 +108,8 @@ class KnowledgeDocumentController extends Controller
     {
         $document = KnowledgeDocument::query()->findOrFail($id);
         $document->update(['is_enabled' => ! $document->is_enabled]);
+
+        $this->knowledgeService->syncVisibility($document->refresh());
 
         return new KnowledgeDocumentResource($document);
     }
@@ -127,6 +132,7 @@ class KnowledgeDocumentController extends Controller
     public function destroy(int $id): JsonResponse
     {
         $document = KnowledgeDocument::query()->findOrFail($id);
+        $this->knowledgeService->removeFromEngine($document->id);
         $document->delete();
 
         return response()->json(status: 204);
