@@ -7,16 +7,6 @@
                 "boost:mcp"
             ],
             "cwd": "${workspaceFolder}"
-        },
-        "yunxiao": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "alibabacloud-devops-mcp-server"
-            ],
-            "env": {
-                "YUNXIAO_ACCESS_TOKEN": "pt-RPBdfM4KaIFovqyNu5pGRO1p_479ad67a-44c0-476b-8c18-d71e661d976c"
-            }
         }
     }
 }
