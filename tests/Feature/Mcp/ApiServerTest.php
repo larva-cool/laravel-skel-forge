@@ -15,13 +15,31 @@ use App\Mcp\Tools\Common\ListAnnouncementsTool;
 use App\Mcp\Tools\Common\ListAreasTool;
 use App\Mcp\Tools\Common\ListBannersTool;
 use App\Mcp\Tools\Common\ListDictItemsTool;
+use App\Mcp\Tools\Content\CreateCollectionTool;
+use App\Mcp\Tools\Content\CreateCommentTool;
+use App\Mcp\Tools\Content\CreateFollowTool;
+use App\Mcp\Tools\Content\CreateLikeTool;
+use App\Mcp\Tools\Content\DeleteCollectionTool;
+use App\Mcp\Tools\Content\DeleteCommentTool;
+use App\Mcp\Tools\Content\DeleteFollowTool;
+use App\Mcp\Tools\Content\DeleteLikeTool;
 use App\Mcp\Tools\Content\ListCollectionsTool;
 use App\Mcp\Tools\Content\ListCommentsTool;
 use App\Mcp\Tools\Content\ListFollowsTool;
 use App\Mcp\Tools\Content\ListLikesTool;
 use App\Mcp\Tools\Invite\GetInviteStatsTool;
 use App\Mcp\Tools\Invite\ListInviteRecordsTool;
+use App\Mcp\Tools\Task\ClaimTaskTool;
 use App\Mcp\Tools\Task\ListTasksTool;
+use App\Mcp\Tools\User\Notification\MarkAllNotificationsReadTool;
+use App\Mcp\Tools\User\Notification\MarkNotificationReadTool;
+use App\Mcp\Tools\User\RecordVisitTool;
+use App\Mcp\Tools\User\UpdateAvatarTool;
+use App\Mcp\Tools\User\UpdateEmailTool;
+use App\Mcp\Tools\User\UpdatePasswordTool;
+use App\Mcp\Tools\User\UpdatePhoneTool;
+use App\Mcp\Tools\User\UpdateProfileTool;
+use App\Mcp\Tools\User\UpdateUsernameTool;
 use App\Mcp\Tools\User\Address\GetAddressTool;
 use App\Mcp\Tools\User\Address\ListAddressesTool;
 use App\Mcp\Tools\User\GetUserProfileTool;
@@ -112,7 +130,7 @@ class ApiServerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Server 注册了全部 35 个工具')]
+    #[TestDox('Server 注册了全部 53 个工具')]
     public function server_registers_all_tools(): void
     {
         ApiServer::tools()->assertRegistered([
@@ -124,6 +142,8 @@ class ApiServerTest extends TestCase
             ListVisitsTool::class,
             ListNotificationsTool::class,
             ListUnreadNotificationsTool::class,
+            MarkAllNotificationsReadTool::class,
+            MarkNotificationReadTool::class,
             ListAddressesTool::class,
             GetAddressTool::class,
             ListMyFeedbacksTool::class,
@@ -141,7 +161,16 @@ class ApiServerTest extends TestCase
             ListCollectionsTool::class,
             ListLikesTool::class,
             ListFollowsTool::class,
+            CreateCommentTool::class,
+            DeleteCommentTool::class,
+            CreateLikeTool::class,
+            DeleteLikeTool::class,
+            CreateCollectionTool::class,
+            DeleteCollectionTool::class,
+            CreateFollowTool::class,
+            DeleteFollowTool::class,
             ListTasksTool::class,
+            ClaimTaskTool::class,
             ListInviteRecordsTool::class,
             GetInviteStatsTool::class,
             ListBannersTool::class,
@@ -151,6 +180,9 @@ class ApiServerTest extends TestCase
             GetAnnouncementTool::class,
             GetAgreementTool::class,
             ListTokensTool::class,
+            UpdateProfileTool::class,
+            UpdateUsernameTool::class,
+            UpdatePasswordTool::class,
         ]);
     }
 

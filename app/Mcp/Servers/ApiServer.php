@@ -14,12 +14,21 @@ use App\Mcp\Tools\Common\ListAnnouncementsTool;
 use App\Mcp\Tools\Common\ListAreasTool;
 use App\Mcp\Tools\Common\ListBannersTool;
 use App\Mcp\Tools\Common\ListDictItemsTool;
+use App\Mcp\Tools\Content\CreateCollectionTool;
+use App\Mcp\Tools\Content\CreateCommentTool;
+use App\Mcp\Tools\Content\CreateFollowTool;
+use App\Mcp\Tools\Content\CreateLikeTool;
+use App\Mcp\Tools\Content\DeleteCollectionTool;
+use App\Mcp\Tools\Content\DeleteCommentTool;
+use App\Mcp\Tools\Content\DeleteFollowTool;
+use App\Mcp\Tools\Content\DeleteLikeTool;
 use App\Mcp\Tools\Content\ListCollectionsTool;
 use App\Mcp\Tools\Content\ListCommentsTool;
 use App\Mcp\Tools\Content\ListFollowsTool;
 use App\Mcp\Tools\Content\ListLikesTool;
 use App\Mcp\Tools\Invite\GetInviteStatsTool;
 use App\Mcp\Tools\Invite\ListInviteRecordsTool;
+use App\Mcp\Tools\Task\ClaimTaskTool;
 use App\Mcp\Tools\Task\ListTasksTool;
 use App\Mcp\Tools\User\Address\GetAddressTool;
 use App\Mcp\Tools\User\Address\ListAddressesTool;
@@ -35,6 +44,15 @@ use App\Mcp\Tools\User\ListSocialsTool;
 use App\Mcp\Tools\User\ListVisitsTool;
 use App\Mcp\Tools\User\Notification\ListNotificationsTool;
 use App\Mcp\Tools\User\Notification\ListUnreadNotificationsTool;
+use App\Mcp\Tools\User\Notification\MarkAllNotificationsReadTool;
+use App\Mcp\Tools\User\Notification\MarkNotificationReadTool;
+use App\Mcp\Tools\User\RecordVisitTool;
+use App\Mcp\Tools\User\UpdateAvatarTool;
+use App\Mcp\Tools\User\UpdateEmailTool;
+use App\Mcp\Tools\User\UpdatePasswordTool;
+use App\Mcp\Tools\User\UpdatePhoneTool;
+use App\Mcp\Tools\User\UpdateProfileTool;
+use App\Mcp\Tools\User\UpdateUsernameTool;
 use App\Mcp\Tools\Wallet\GetRechargeTool;
 use App\Mcp\Tools\Wallet\GetWalletOverviewTool;
 use App\Mcp\Tools\Wallet\GetWithdrawTool;
@@ -56,7 +74,7 @@ use Laravel\Mcp\Server\Attributes\Version;
  */
 #[Name('skel-api')]
 #[Version('1.0.0')]
-#[Instructions('该 Server 封装了 C 端用户 API 能力，可查询当前登录用户的资料、钱包、通知、地址、实名、内容互动、任务、邀请，以及公开的 Banner/公告/协议/字典/地区等数据。所有工具均以当前认证用户身份执行；分页工具统一接受 page/per_page 入参，返回 items + pagination 结构。')]
+#[Instructions('该 Server 封装了 C 端用户 API 能力，可查询当前登录用户的资料、钱包、通知、地址、实名、内容互动、任务、邀请，以及公开的 Banner/公告/协议/字典/地区等数据，并支持修改资料、发布评论/点赞/收藏/关注、领取任务奖励、标记通知已读等操作。所有工具均以当前认证用户身份执行；分页工具统一接受 page/per_page 入参，返回 items + pagination 结构。')]
 class ApiServer extends Server
 {
     /**
@@ -73,6 +91,8 @@ class ApiServer extends Server
         // 通知
         ListNotificationsTool::class,
         ListUnreadNotificationsTool::class,
+        MarkAllNotificationsReadTool::class,
+        MarkNotificationReadTool::class,
         // 地址
         ListAddressesTool::class,
         GetAddressTool::class,
@@ -90,13 +110,23 @@ class ApiServer extends Server
         ListWithdrawsTool::class,
         GetWithdrawTool::class,
         ListWithdrawAccountsTool::class,
-        // 内容互动
+        // 内容互动（读）
         ListCommentsTool::class,
         ListCollectionsTool::class,
         ListLikesTool::class,
         ListFollowsTool::class,
+        // 内容互动（写）
+        CreateCommentTool::class,
+        DeleteCommentTool::class,
+        CreateLikeTool::class,
+        DeleteLikeTool::class,
+        CreateCollectionTool::class,
+        DeleteCollectionTool::class,
+        CreateFollowTool::class,
+        DeleteFollowTool::class,
         // 任务与邀请
         ListTasksTool::class,
+        ClaimTaskTool::class,
         ListInviteRecordsTool::class,
         GetInviteStatsTool::class,
         // 公开数据
@@ -108,5 +138,14 @@ class ApiServer extends Server
         GetAgreementTool::class,
         // 会话
         ListTokensTool::class,
+        // 用户资料修改
+        UpdateProfileTool::class,
+        UpdateUsernameTool::class,
+        UpdateEmailTool::class,
+        UpdatePhoneTool::class,
+        UpdateAvatarTool::class,
+        UpdatePasswordTool::class,
+        // 访问记录
+        RecordVisitTool::class,
     ];
 }
