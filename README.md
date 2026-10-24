@@ -87,6 +87,7 @@ app/
 │   └── Resources/   # Eloquent API Resources
 ├── Jobs/            # 队列任务
 ├── Mail/            # 邮件
+├── Mcp/             # MCP Server 与 Tools（C 端 API 能力封装）
 ├── Models/          # Admin/、App/、Coin/、Content/、Invite/、Operation/、Point/、System/、Task/、User/、UserSegment/、Wallet/
 ├── Policies/        # 授权策略
 ├── Providers/       # 服务提供者
@@ -101,6 +102,7 @@ app/
 | `web.php` | - | Web 路由 |
 | `admin.php` | `/admin` | 后台管理 API（Sanctum Token 认证） |
 | `api_v1.php` | `/api/v1` | 前台 API v1 |
+| `ai.php` | `/mcp/v1` | MCP Server（Sanctum Token 认证） |
 | `channels.php` | - | 广播频道 |
 | `console.php` | - | 定时任务 |
 
@@ -184,6 +186,15 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 反馈 | `/api/v1/user/feedbacks` | 提交反馈、我的反馈列表（均需登录，提交成功返回反馈单号） |
 | 举报 | `/api/v1/user/reports` | 提交举报（仅基础提交接口，目标类型支持 `comment` / `user`，需登录）与我的举报列表。同一人对同一目标在未结案前不可重复提交（防刷由后端校验，必要时可在网关层加 `throttle`） |
 | 微信 | `/api/v1/wechat` | 微信公众号与小程序绑定 |
+
+### MCP Server（`/mcp/v1`）
+
+将 C 端 API 能力封装为 MCP（Model Context Protocol）工具，供 AI 客户端直接调用。基于 `laravel/mcp`，进程内直调业务层，无 HTTP 转发开销。
+
+- **端点**：`POST /mcp/v1`（JSON-RPC 2.0），认证走 Sanctum 个人访问令牌：`Authorization: Bearer <token>`
+- **服务定义**：`app/Mcp/Servers/ApiServer.php`，工具按业务域分目录放在 `app/Mcp/Tools/`
+- **调试**：`php artisan mcp:inspector mcp/v1`
+- **已封装工具**：`user.profile.get`（用户资料）、`wallet.overview.get`（钱包概览）、`common.banner.list`（广告位 Banner 列表）
 
 ## 队列与定时任务
 
