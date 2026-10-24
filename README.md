@@ -1,6 +1,6 @@
 # Ai Forge API
 
-Ai Forge 企业级项目套件的后端 API 服务，基于 Laravel 13 构建，采用 DDD 架构并遵循 RESTful API 设计规范。
+Ai Forge 企业级项目套件的后端 API 服务，基于 Laravel 13 构建，采用 DDD 架构并遵循 RESTful API 设计规范。前台 API 已覆盖 APP 常见业务（注册登录、用户中心、钱包、任务、通知、地址、反馈、举报、微信绑定等），可直接作为 APP 项目的后端起点——只需实现具体业务逻辑。
 
 - 官方站点：<https://www.aiforge.cn>
 - 前端项目：[Ai Forge Admin](https://codeup.aliyun.com/xutongle/Skel/laravel-skel-admin)（管理后台 SPA）
@@ -196,7 +196,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 - **调试**：`php artisan mcp:inspector mcp/v1`
 - **分页约定**：列表类工具统一接受 `page` / `per_page` 入参，返回 `items` + `pagination`（total/per_page/current_page/last_page/has_more）
 
-#### 已封装工具（53 个）
+#### 已封装工具（70 个）
 
 **只读工具（35 个）**
 
@@ -213,7 +213,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 公开数据 | `common.banner.list` / `common.area.list` / `common.dict_item.list` / `common.announcement.list` / `common.announcement.get` / `common.agreement.get` | Banner、地区、字典项、公告列表/详情、协议 |
 | 会话 | `auth.token.list` | 已签发的访问令牌列表 |
 
-**写操作工具（18 个）**
+**写操作工具（35 个）**
 
 | 域 | 工具 | 说明 |
 |---|---|---|
@@ -222,9 +222,16 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 内容互动 | `content.collection.create` / `content.collection.delete` | 收藏（防重复）、取消收藏 |
 | 内容互动 | `content.follow.create` / `content.follow.delete` | 关注（防重复）、取消关注 |
 | 用户资料 | `user.profile.update` / `user.username.update` / `user.email.update` / `user.phone.update` / `user.avatar.update` / `user.password.update` | 修改资料/用户名/邮箱/手机/头像/密码 |
+| 地址 | `user.address.create` / `user.address.update` / `user.address.delete` / `user.address.set_default` | 地址增改删与默认设置 |
+| 反馈/举报 | `user.feedback.create` / `user.report.create` | 提交反馈、提交举报 |
+| 钱包 | `wallet.recharge.create` | 创建充值订单（destructive） |
+| 钱包 | `wallet.withdraw.create` | 提交提现申请（destructive） |
+| 钱包 | `wallet.withdraw_account.create` / `update` / `delete` / `set_default` | 收款账户增改删与默认设置 |
 | 任务 | `task.claim` | 领取任务奖励 |
-| 通知 | `notification.mark_all_read` / `notification.mark_read` | 全部已读、标记已读 |
+| 通知 | `notification.mark_all_read` / `notification.mark_read` / `notification.clear_read` | 全部已读、标记已读、清空已读 |
 | 访问记录 | `visit.record` | 记录一次访问 |
+| 会话 | `auth.token.delete` / `auth.logout` | 撤销指定令牌、退出登录 |
+| 账户 | `user.delete` | 注销账户（destructive，软删除） |
 
 ## 队列与定时任务
 
