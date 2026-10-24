@@ -284,7 +284,8 @@ class UserObserverTest extends TestCase
             'notifiable_id' => $user->id,
             'notifiable_type' => $user->getMorphClass(),
         ]);
-        $this->assertDatabaseMissing('sessions', ['user_id' => $user->id]);
+        // 会话不随强制删除清理：用户已不存在，孤儿会话无法再通过认证，按过期时间自然失效
+        $this->assertDatabaseHas('sessions', ['user_id' => $user->id]);
     }
 
     #[Test]

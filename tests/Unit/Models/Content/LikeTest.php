@@ -134,7 +134,7 @@ class LikeTest extends TestCase
     {
         $like = Like::factory()->forSource($this->createSource())->create(['user_id' => 999999]);
 
-        $this->assertSame('账号已注销', $like->user->name);
+        $this->assertSame('******', $like->user->name);
     }
 
     #[Test]

@@ -168,7 +168,7 @@ class FollowTest extends TestCase
     {
         $follow = Follow::factory()->forSource($this->createSource())->create(['user_id' => 999999]);
 
-        $this->assertSame('账号已注销', $follow->user->name);
+        $this->assertSame('******', $follow->user->name);
     }
 
     #[Test]

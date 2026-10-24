@@ -178,7 +178,7 @@ class CollectionTest extends TestCase
     {
         $collection = Collection::factory()->forSource($this->createSource())->create(['user_id' => 999999]);
 
-        $this->assertSame('账号已注销', $collection->user->name);
+        $this->assertSame('******', $collection->user->name);
     }
 
     #[Test]

@@ -186,7 +186,7 @@ class CommentTest extends TestCase
         $user = User::factory()->create();
         $comment = Comment::factory()->forSource($user)->create(['user_id' => 999999]);
 
-        $this->assertSame('账号已注销', $comment->user->name);
+        $this->assertSame('******', $comment->user->name);
     }
 
     #[Test]
