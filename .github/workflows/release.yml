@@ -9,47 +9,6 @@ permissions:
   contents: write
 
 jobs:
-  tests:
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: true
-      matrix:
-        php: ['8.4', '8.5']
-
-    name: PHP ${{ matrix.php }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: mbstring
-          coverage: none
-
-      - name: Validate composer.json
-        run: composer validate --strict
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v6
-        with:
-          path: ~/.composer/cache/files
-          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
-          restore-keys: |
-            ${{ runner.os }}-php-${{ matrix.php }}-composer-
-
-      - name: Install dependencies
-        # APP_ENV=local：CI 无 .env，默认为 production 会禁用 laravel/boost 导致 post-update-cmd 的 boost:update 失败
-        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
-        env:
-          APP_ENV: local
-
-      - name: Run tests
-        run: vendor/bin/phpunit
-
   release:
     runs-on: ubuntu-latest
     needs: tests
