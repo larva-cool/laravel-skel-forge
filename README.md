@@ -160,6 +160,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | Banner 管理 | `/admin/banners` | 轮播图 CRUD、状态切换、批量排序、展示位置选项（`positions`）；`POST /admin/banners/ai-copy` AI 生成标题与绘图提示词、`POST /admin/banners/ai-image` Seedream 生成配图 |
 | 公告管理 | `/admin/announcements` | 公告 CRUD 与状态流转（草稿/已发布/归档），支持状态切换；`POST /admin/announcements/ai-copy` AI 生成标题/摘要/正文 |
 | 任务系统 | `/admin/task-groups`、`/admin/tasks`、`/admin/task-logs` | 任务分组 CRUD（含 options/状态切换）、任务 CRUD（6 种任务类型 + 3 种奖励 + 自动/手动领取模式，含状态切换）、任务完成日志（只读，列表/详情，支持任务/奖励类型/关键词/时间筛选） |
+| 自动化运营 | `/admin/automation-rules`、`/admin/automation-festivals`、`/admin/automation-logs` | 自动化触达：规则 CRUD（生日/节日/注册周年三类触发，支持提前 N 天 + 定时点推送、绑定用户分群、模板变量 `{nickname}`/`{festival}`/`{date}`、可选积分/金币奖励、站内通知 + 微信小程序客服消息双渠道）、启停切换、手动触发（可指定日期补跑）；节日管理（公历/农历，农历经 chinese-calendar 转换）；触发日志只读（按规则/用户/状态/事件日期筛选）。由 `automation:run` 命令驱动（schedules 表默认每小时第 10 分钟执行），`automation_logs` 唯一索引保证同一事件对同一用户幂等，失败记录支持重试；闰年 2-29 生日在平年顺延 3-01 触达 |
 | 用户分群 | `/admin/user-segments`、`/admin/segment-tasks`、`/user/segment`、`/user/segment-task` | 用户分群（segment）CRUD：手动分群与规则分群两种类型，规则分群按 JSON 条件由定时任务每天 02:00 增量同步成员；支持为用户批量打标/移标（含笛卡尔批量，>1000 ID 自动转为异步任务入队，通过 `/admin/segment-tasks` 后端接口 + 前端 `/user/segment-task` 任务列表页轮询查询进度，完成/失败时站内信通知）、按分群筛选用户（AND 语义）、规则预览；公告群发可复用 `options` 接口拉取手动分群作为目标范围 |
 | 邀请记录 | `/admin/invite-records` | 邀请关系查询（只读）：分页列表与详情，支持按邀请人/被邀请人（多态类型 + ID）、描述关键词、邀请时间范围筛选。邀请人与被邀请人均为多态关联，可跨 `user`/`admin` 主体查询 |
 | 公共接口 | `/admin/common` | 与业务无关的通用选项（如 `source-types` 多态源类型下拉） |
