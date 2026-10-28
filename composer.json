@@ -27,6 +27,7 @@
         "larva/volcengine-tls-sdk-php": "^1.1",
         "maatwebsite/excel": "^4.0",
         "meilisearch/meilisearch-php": "^1.17",
+        "overtrue/chinese-calendar": "^1.1",
         "overtrue/easy-sms": "^3.5",
         "overtrue/pinyin": "^6.0",
         "predis/predis": "^3.5",

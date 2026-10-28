@@ -33,6 +33,7 @@ class GetUserSocials implements RequiresPermission, Tool
     {
         return 'users.index';
     }
+
     /**
      * 工具描述。
      */

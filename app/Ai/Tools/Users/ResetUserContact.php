@@ -9,7 +9,6 @@ namespace App\Ai\Tools\Users;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Approvals\Approval;

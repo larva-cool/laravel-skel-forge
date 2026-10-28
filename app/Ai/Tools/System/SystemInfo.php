@@ -32,6 +32,7 @@ class SystemInfo implements RequiresPermission, Tool
     {
         return 'chat.use';
     }
+
     /**
      * 工具描述。
      */

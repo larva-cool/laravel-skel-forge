@@ -31,6 +31,7 @@ class GetSetting implements RequiresPermission, Tool
     {
         return 'settings.index';
     }
+
     /**
      * 工具描述。
      */

@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\User\Notification;
 
-use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Carbon;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;

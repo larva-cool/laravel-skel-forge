@@ -34,6 +34,7 @@ class ListLoginHistories implements RequiresPermission, Tool
     {
         return 'login-histories.index';
     }
+
     /**
      * 工具描述。
      */

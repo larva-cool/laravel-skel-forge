@@ -18,4 +18,5 @@ return [
     'task' => \App\Models\Task\Task::class,
     'open_account' => \App\Models\Open\OpenAccount::class,
     'report' => \App\Models\Content\Report::class,
+    'automation_rule' => \App\Models\Automation\AutomationRule::class,
 ];

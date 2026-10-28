@@ -26,6 +26,7 @@ enum PointType: string implements \JsonSerializable
     case TYPE_RECOVERY = 'recovery'; // 过期回收积分
     case TYPE_ADMIN_RECHARGE = 'admin_recharge'; // 后台充值
     case TYPE_ADMIN_DEDUCT = 'admin_deduct'; // 后台扣减
+    case TYPE_AUTOMATION = 'automation'; // 自动化运营奖励
 
     /**
      * 获取积分交易类型的可读名称
@@ -40,6 +41,7 @@ enum PointType: string implements \JsonSerializable
             self::TYPE_RECOVERY => '过期回收',
             self::TYPE_ADMIN_RECHARGE => '后台充值',
             self::TYPE_ADMIN_DEDUCT => '后台扣减',
+            self::TYPE_AUTOMATION => '自动化运营奖励',
         };
     }
 }

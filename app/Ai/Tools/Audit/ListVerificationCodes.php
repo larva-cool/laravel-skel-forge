@@ -33,6 +33,7 @@ class ListVerificationCodes implements RequiresPermission, Tool
     {
         return ['phone-codes.index', 'mail-codes.index'];
     }
+
     /**
      * 工具描述。
      */

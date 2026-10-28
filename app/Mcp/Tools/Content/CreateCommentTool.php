@@ -12,7 +12,6 @@ use App\Http\Resources\Api\V1\CommentResource;
 use App\Models\Content\Comment;
 use App\Services\SensitiveWordService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;

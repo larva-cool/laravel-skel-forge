@@ -370,6 +370,25 @@ Route::apiResource('tasks', \App\Http\Controllers\Admin\TaskController::class);
 Route::apiResource('task-logs', \App\Http\Controllers\Admin\TaskLogController::class)
     ->only(['index', 'show']);
 
+// 自动化运营规则管理（运营管理）
+Route::group(['prefix' => 'automation-rules', 'as' => 'automation-rules.'], function (Registrar $registrar) {
+    $registrar->get('meta', [\App\Http\Controllers\Admin\AutomationRuleController::class, 'meta'])->name('meta');
+    $registrar->put('{id}/toggle-status', [\App\Http\Controllers\Admin\AutomationRuleController::class, 'toggleStatus'])->name('toggle-status');
+    $registrar->post('{id}/trigger', [\App\Http\Controllers\Admin\AutomationRuleController::class, 'trigger'])->name('trigger');
+});
+Route::apiResource('automation-rules', \App\Http\Controllers\Admin\AutomationRuleController::class);
+
+// 自动化运营节日管理（运营管理）
+Route::group(['prefix' => 'automation-festivals', 'as' => 'automation-festivals.'], function (Registrar $registrar) {
+    $registrar->get('options', [\App\Http\Controllers\Admin\AutomationFestivalController::class, 'options'])->name('options');
+    $registrar->put('{id}/toggle-status', [\App\Http\Controllers\Admin\AutomationFestivalController::class, 'toggleStatus'])->name('toggle-status');
+});
+Route::apiResource('automation-festivals', \App\Http\Controllers\Admin\AutomationFestivalController::class);
+
+// 自动化运营触发日志（运营管理）—— 只读
+Route::apiResource('automation-logs', \App\Http\Controllers\Admin\AutomationLogController::class)
+    ->only(['index', 'show']);
+
 // 用户分群管理（用户管理）
 Route::group(['prefix' => 'user-segments', 'as' => 'user-segments.'], function (Registrar $registrar) {
     $registrar->get('options', [\App\Http\Controllers\Admin\UserSegmentController::class, 'options'])->name('options');

@@ -9,7 +9,6 @@ namespace App\Ai\Tools\Web;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-
 use DOMDocument;
 use DOMNode;
 use DOMXPath;
@@ -38,6 +37,7 @@ class WebFetch implements RequiresPermission, Tool
     {
         return 'chat.use';
     }
+
     /**
      * 单次抓取最大返回字符数，超出截断。
      */

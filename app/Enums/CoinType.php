@@ -26,6 +26,7 @@ enum CoinType: string implements \JsonSerializable
     case TYPE_TRANS = 'trans'; // 交易
     case TYPE_ADMIN_RECHARGE = 'admin_recharge'; // 后台充值
     case TYPE_ADMIN_DEDUCT = 'admin_deduct'; // 后台扣减
+    case TYPE_AUTOMATION = 'automation'; // 自动化运营奖励
 
     /**
      * 获取金币交易类型的可读名称
@@ -40,6 +41,7 @@ enum CoinType: string implements \JsonSerializable
             self::TYPE_TRANS => '交易',
             self::TYPE_ADMIN_RECHARGE => '后台充值',
             self::TYPE_ADMIN_DEDUCT => '后台扣减',
+            self::TYPE_AUTOMATION => '自动化运营奖励',
         };
     }
 }

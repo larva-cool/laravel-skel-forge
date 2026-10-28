@@ -39,6 +39,7 @@ class GetDashboardStats implements RequiresPermission, Tool
     {
         return 'chat.use';
     }
+
     /**
      * 工具描述。
      */

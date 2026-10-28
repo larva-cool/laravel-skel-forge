@@ -320,7 +320,7 @@ class DetectWithdrawAnomalies implements RequiresPermission, Tool
         $n = count($times);
 
         for ($i = 0; $i < $n; $i++) {
-            while ($j < $n && $times[$j] - $times[$i] <= $windowSeconds) {
+            while ($j < $n && $windowSeconds >= $times[$j] - $times[$i]) {
                 $j++;
             }
             if ($j - $i >= $burstCount) {

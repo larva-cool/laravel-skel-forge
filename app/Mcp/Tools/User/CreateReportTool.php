@@ -29,7 +29,6 @@ use Laravel\Mcp\Server\Tool;
 class CreateReportTool extends Tool
 {
     private const REPORTABLE_TYPES = ['comment', 'user'];
-
     private const CATEGORIES = [
         'pornography', 'violence', 'political', 'ad',
         'insult', 'fake', 'infringement', 'illegal', 'other',

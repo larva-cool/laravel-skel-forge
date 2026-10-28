@@ -9,6 +9,14 @@
     "sail": false,
     "skills": [
         "infer-conventions",
+        "ai-sdk-development",
+        "laravel-best-practices",
+        "testing-best-practices",
+        "configuring-horizon",
+        "octane-development",
+        "pulse-development",
+        "scout-development",
+        "telescope-debugging",
         "echo-development",
         "tailwindcss-development"
     ]

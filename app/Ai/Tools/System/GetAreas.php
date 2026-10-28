@@ -34,6 +34,7 @@ class GetAreas implements RequiresPermission, Tool
     {
         return 'areas.index';
     }
+
     /**
      * 工具描述。
      */
