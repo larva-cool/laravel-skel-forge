@@ -20,6 +20,7 @@ Route::group(['prefix' => 'v1', 'as' => 'api.v1.'], function () {
      */
     Route::group(['prefix' => 'common', 'as' => 'common.'], function (Registrar $registrar) {
         $registrar->post('fpm', [\App\Http\Controllers\Api\V1\CommonController::class, 'fpm'])->name('fpm'); // reload fpm
+        $registrar->get('settings', [\App\Http\Controllers\Api\V1\CommonController::class, 'settings'])->name('settings'); // 系统配置
         $registrar->post('sms-captcha', [\App\Http\Controllers\Api\V1\CommonController::class, 'smsCaptcha'])->name('sms_captcha'); // 短信验证码
         $registrar->post('mail-captcha', [\App\Http\Controllers\Api\V1\CommonController::class, 'mailCaptcha'])->name('mail_captcha'); // 邮件验证码
         // 增加缓存Header

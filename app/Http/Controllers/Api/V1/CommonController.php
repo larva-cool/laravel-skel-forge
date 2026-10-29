@@ -47,6 +47,42 @@ class CommonController extends Controller
         return response()->json(['message' => __('system.successful_operation')]);
     }
 
+
+    /**
+     * 系统配置
+     */
+    public function settings(): JsonResponse
+    {
+        $settings = [
+            // 系统基本配置
+            'system' => [
+                'title' => settings('system.title'),
+                'keywords' => settings('system.keywords'),
+                'description' => settings('system.description'),
+                'icp_beian' => settings('system.icp_beian'),
+                'police_beian' => settings('system.police_beian'),
+                'support_email' => settings('system.support_email'),
+                'support_phone' => settings('system.support_phone'),
+                'lawyer_email' => settings('system.lawyer_email'),
+                'url' => settings('system.url'),
+                'm_url' => settings('system.m_url'),
+            ],
+            // 用户配置
+            'user' => [
+                'enable_register' => settings('user.enable_register', true),
+                'enable_phone_register' => settings('user.enable_phone_register', true),
+                'enable_email_register' => settings('user.enable_email_register', true),
+                'enable_wechat_login' => settings('user.enable_wechat_login', true),
+                'enable_phone_login' => settings('user.enable_phone_login', true),
+                'enable_password_login' => settings('user.enable_password_login', true),
+                'enable_change_username' => settings('user.username_change', 0) > 0,
+                'username_change' => settings('user.username_change', 0),
+            ],
+        ];
+
+        return response()->json($settings);
+    }
+
     /**
      * 短信验证码
      */
