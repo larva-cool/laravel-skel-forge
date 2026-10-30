@@ -47,7 +47,6 @@ class CommonController extends Controller
         return response()->json(['message' => __('system.successful_operation')]);
     }
 
-
     /**
      * 系统配置
      */
