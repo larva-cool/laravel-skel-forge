@@ -9,6 +9,7 @@ namespace App\Providers;
 
 use App\Models\System\Schedule;
 use App\Services\SettingManagerService;
+use Illuminate\Console\Application as ArtisanApplication;
 use Illuminate\Console\Scheduling\Schedule as BaseSchedule;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Config;
@@ -71,10 +72,7 @@ class DynamicConfigServiceProvider extends ServiceProvider
                     if ($task->command === 'custom') {
                         $event = $schedule->exec($task->command_custom ?? '');
                     } else {
-                        $event = $schedule->command(
-                            $task->command,
-                            $task->getArguments() + $task->getOptions()
-                        );
+                        $event = $schedule->exec($this->buildArtisanCommand($task));
                     }
 
                     $event->cron($task->expression);
@@ -100,6 +98,34 @@ class DynamicConfigServiceProvider extends ServiceProvider
                     }
                 });
         });
+    }
+
+    /**
+     * 将数据库中的 password.strength.* 配置转换为 Laravel Password 验证规则。
+     *
+     * 业务侧通过 Password::defaults() 或 Password::default() 获取默认规则。
+     */
+    protected function buildArtisanCommand(Schedule $task): string
+    {
+        $binary = ArtisanApplication::formatCommandString($task->command);
+
+        $parts = [$binary];
+
+        foreach ($task->getArguments() as $name => $value) {
+            $parts[] = is_numeric($name)
+                ? escapeshellarg((string) $value)
+                : "{$name}=".escapeshellarg((string) $value);
+        }
+
+        foreach ($task->getOptions() as $name => $value) {
+            if ($value === true) {
+                $parts[] = "--{$name}";
+            } else {
+                $parts[] = "--{$name}=".escapeshellarg((string) $value);
+            }
+        }
+
+        return implode(' ', $parts);
     }
 
     /**

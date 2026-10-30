@@ -158,7 +158,10 @@ class Schedule extends Model
     }
 
     /**
-     * 获取命令选项数组（供 Artisan::call 使用）
+     * 获取命令选项数组（供 Artisan::call / Schedule::command 使用）
+     *
+     * Laravel Schedule::compileParameters() 不会自动给选项补 -- 前缀，
+     * 必须由调用方确保 key 已经是 --option 或 --option=value 的格式。
      *
      * @return array<string, string|bool>
      */
@@ -166,23 +169,34 @@ class Schedule extends Model
     {
         $result = [];
 
-        // 无值选项：["force", "verbose"]
+        // 无值选项：["force", "verbose"] 或 [{"name": "force"}]
         foreach (($this->options ?? []) as $option) {
-            if (isset($option['name']) && ! empty($option['name'])) {
-                $result[$option['name']] = true;
-            } elseif (is_string($option) && $option !== '') {
-                $result[$option] = true;
+            $name = is_string($option) ? $option : ($option['name'] ?? null);
+            if (! empty($name)) {
+                $result[$this->normalizeOptionName($name)] = true;
             }
         }
 
         // 带值选项：[{"name": "hours", "value": "48"}]
         foreach (($this->options_with_value ?? []) as $option) {
             if (isset($option['name'], $option['value']) && $option['value'] !== '') {
-                $result[$option['name']] = $option['value'];
+                $result[$this->normalizeOptionName($option['name'])] = $option['value'];
             }
         }
 
         return $result;
+    }
+
+    /**
+     * 规范化选项名，确保以 -- 开头。
+     */
+    protected function normalizeOptionName(string $name): string
+    {
+        if (str_starts_with($name, '--')) {
+            return $name;
+        }
+
+        return '--'.$name;
     }
 
     /**
@@ -202,9 +216,9 @@ class Schedule extends Model
 
         foreach ($this->getOptions() as $name => $value) {
             if ($value === true) {
-                $parts[] = "--{$name}";
+                $parts[] = $name;
             } else {
-                $parts[] = "--{$name}={$value}";
+                $parts[] = "{$name}={$value}";
             }
         }
 
