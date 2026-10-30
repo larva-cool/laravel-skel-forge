@@ -149,6 +149,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 字典 | `/admin/dicts`、`/admin/dict-items` | 字典类型与字典项管理 |
 | 附件 | `/admin/attachments`、`/admin/uploader` | 附件列表、上传（中转/直传）、重命名、移动、删除 |
 | 验证码 | `/admin/phone-codes`、`/admin/mail-codes` | 短信/邮件验证码发送记录（只读） |
+| 微信公众号 | `/admin/wechat` | 只读查看微信公众号 AppID、AppSecret、Token、AES Key 与服务端回调 URL |
 | 通知 | `/admin/notifications` | 站内通知列表、未读数、标记已读、批量已读、清理已读 |
 | 应用版本 | `/admin/apps`、`/admin/apps/{app}/versions` | 客户端应用与版本发布/撤回/废弃 |
 | 前台用户 | `/admin/users` | 前台用户 CRUD、状态、积分/金币调整、VIP 延期、登录历史（可按 `result` 过滤）、社交账号、流水、回收站，列表与流水可导出 Excel；含用户钱包查询（余额/流水/调整） |

@@ -149,6 +149,9 @@ Route::get('phone-codes/{id}', [\App\Http\Controllers\Admin\PhoneCodeController:
 Route::get('mail-codes', [\App\Http\Controllers\Admin\MailCodeController::class, 'index'])->name('mail-codes.index');
 Route::get('mail-codes/{id}', [\App\Http\Controllers\Admin\MailCodeController::class, 'show'])->name('mail-codes.show');
 
+// 微信公众号配置（只读）
+Route::get('wechat', [\App\Http\Controllers\Admin\WechatController::class, 'show'])->name('wechat.show');
+
 // 上传管理
 Route::group(['prefix' => 'uploader', 'as' => 'uploader.'], function (Registrar $registrar) {
     $registrar->post('file', [\App\Http\Controllers\Admin\UploaderController::class, 'file'])->name('file');

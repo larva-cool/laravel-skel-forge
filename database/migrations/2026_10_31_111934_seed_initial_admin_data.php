@@ -384,6 +384,18 @@ return new class extends Migration
                             ['title' => '版本管理', 'permission' => 'app-versions.index'],
                         ],
                     ],
+                    [
+                        'key' => 'system.wechat',
+                        'path' => 'wechat',
+                        'name' => 'Wechat',
+                        'component' => '/system/wechat/index',
+                        'title' => '微信公众号',
+                        'icon' => 'ri:wechat-line',
+                        'type' => MenuType::MENU,
+                        'sort' => 13,
+                        'keep_alive' => true,
+                        'permission' => 'wechat.index',
+                    ],
                     [ // 应用版本管理 隐藏在应用管理下
                         'key' => 'system.app-version',
                         'path' => 'app/:id/versions',
