@@ -19,18 +19,28 @@ WORKDIR /app
 # 复制应用代码
 COPY . .
 
-# 先安装依赖以利用构建缓存；此时应用文件尚未复制，必须跳过 composer 脚本
+# 确保 www-data 用户/组存在（部分精简镜像可能未创建）
+RUN getent group www-data >/dev/null || addgroup -g 82 -S www-data; \
+    getent passwd www-data >/dev/null || adduser -u 82 -D -S -G www-data www-data
+
+# 安装生产依赖（跳过脚本，package:discover 延后到环境就绪后执行）
 RUN composer install --no-dev --prefer-dist --no-progress --optimize-autoloader --no-scripts
 
-# 环境文件、目录权限、自动加载优化（会触发 package:discover）
+# 创建运行时目录
 RUN mkdir -p storage/app/public storage/logs \
         storage/framework/cache storage/framework/sessions storage/framework/views \
-        bootstrap/cache \
-    && if [ -f ".env.${ENV}" ]; then mv ".env.${ENV}" .env; else cp .env.example .env; fi \
-    && chmod -R 775 storage bootstrap/cache \
+        bootstrap/cache
+
+# 环境文件：优先使用 .env.<ENV>，否则回退到 .env.example
+RUN if [ -f ".env.${ENV}" ]; then mv ".env.${ENV}" .env; else cp .env.example .env; fi
+
+# 目录权限
+RUN chmod -R 775 storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
-    && rm -f bootstrap/cache/*.php \
-    && composer dump-autoload --optimize
+    && rm -f bootstrap/cache/*.php
+
+# 生成优化自动加载并发现包（此时环境已就绪）
+RUN composer dump-autoload --optimize
 
 # 存储软链接（失败不阻断构建，如 public/storage 已存在）
 RUN php artisan storage:link || true
