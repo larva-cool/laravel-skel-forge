@@ -2,44 +2,48 @@ name: Tests
 
 on:
   push:
-    branches: [master, develop]
+    branches:
+      - master
+      - '*.x'
   pull_request:
-    branches: [master, develop]
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
 
 jobs:
   tests:
     runs-on: ubuntu-latest
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        php: ['8.4', '8.5']
-        dependency-version: [prefer-lowest, prefer-stable]
+        php: [8.4, 8.5]
 
-    name: PHP ${{ matrix.php }} - ${{ matrix.dependency-version }}
+    name: PHP ${{ matrix.php }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring,redis,sqlite
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
           coverage: none
 
-      - name: Cache Composer dependencies
-        uses: actions/cache@v6
-        with:
-          path: ~/.composer/cache/files
-          key: ${{ runner.os }}-php-${{ matrix.php }}-${{ matrix.dependency-version }}-composer-${{ hashFiles('composer.json') }}
-          restore-keys: |
-            ${{ runner.os }}-php-${{ matrix.php }}-${{ matrix.dependency-version }}-composer-
-            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Install dependencies
-        run: cp .env.example .env && composer install --prefer-dist --no-interaction --no-progress
+      - name: Copy environment file
+        run: cp .env.example .env
 
-      - name: Run tests
-        run: php artisan key::generate --force && php artisan test
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Execute tests
+        run: php artisan test
