@@ -16,12 +16,11 @@ ENV APP_ENV=production \
 
 WORKDIR /app
 
-# 先安装依赖以利用构建缓存；此时应用文件尚未复制，必须跳过 composer 脚本
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-progress --optimize-autoloader --no-scripts
-
 # 复制应用代码
 COPY . .
+
+# 先安装依赖以利用构建缓存；此时应用文件尚未复制，必须跳过 composer 脚本
+RUN composer install --no-dev --prefer-dist --no-progress --optimize-autoloader --no-scripts
 
 # 环境文件、目录权限、自动加载优化（会触发 package:discover）
 RUN mkdir -p storage/app/public storage/logs \
