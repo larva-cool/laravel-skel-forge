@@ -1,0 +1,65 @@
+# Version control
+.git
+.github
+.gitignore
+.gitattributes
+
+# IDE / Editor
+.idea
+.vscode
+.trae
+.workbuddy
+.codex
+.cursor
+.nova
+.zed
+
+# Dependencies (built in dedicated stages)
+node_modules
+vendor
+
+# Environment files (injected at runtime)
+# 注意：.env.prod 需保留在构建上下文中，供 Dockerfile 的 ARG ENV 使用
+.env
+.env.local
+.env.development
+.env.testing
+!.env.example
+!.env.prod
+
+# Build artifacts
+public/build
+public/hot
+public/storage
+public/fonts-manifest.dev.json
+
+# Logs & cache
+*.log
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/pail
+storage/*.key
+bootstrap/cache/*.php
+
+# Tests & dev tooling
+tests
+phpunit.xml
+.pint.json
+pint.json
+.phpunit.result.cache
+.phpunit.cache
+.php-cs-fixer.cache
+_ide_helper.php
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Misc
+.DS_Store
+Thumbs.db
+*.profraw
+auth.json
