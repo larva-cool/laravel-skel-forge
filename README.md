@@ -1,5 +1,9 @@
 # Ai Forge API
 
+[![Tests](https://github.com/larva-cool/laravel-skel-forge/actions/workflows/tests.yml/badge.svg)](https://github.com/larva-cool/laravel-skel-forge/actions/workflows/tests.yml)
+[![Docker](https://github.com/larva-cool/laravel-skel-forge/actions/workflows/docker.yml/badge.svg)](https://github.com/larva-cool/laravel-skel-forge/actions/workflows/docker.yml)
+
+
 Ai Forge 企业级项目套件的后端 API 服务，基于 Laravel 13 构建，采用 DDD 架构并遵循 RESTful API 设计规范。前台 API 已覆盖 APP 常见业务（注册登录、用户中心、钱包、任务、通知、地址、反馈、举报、微信绑定等），可直接作为 APP 项目的后端起点——只需实现具体业务逻辑。
 
 - 官方站点：<https://www.aiforge.cn>
