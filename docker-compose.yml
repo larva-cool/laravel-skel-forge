@@ -33,6 +33,10 @@ x-app-environment: &app-environment
   REVERB_SCHEME: http
   REVERB_SERVER_HOST: 0.0.0.0
   REVERB_SERVER_PORT: 9502
+  KNOWLEDGE_ENGINE: ${KNOWLEDGE_ENGINE:-meilisearch}
+  KNOWLEDGE_MEILI_INDEX: ${KNOWLEDGE_MEILI_INDEX:-knowledge_chunks}
+  MEILISEARCH_HOST: http://meilisearch:7700
+  MEILISEARCH_KEY: ${MEILISEARCH_KEY:-forge-meilisearch-master-key}
 
 x-app-volumes: &app-volumes
   - app_storage:/app/storage/app
@@ -49,6 +53,8 @@ x-app-common: &app-common
       condition: service_healthy
     redis:
       condition: service_healthy
+    meilisearch:
+      condition: service_started
 
 services:
   api:
@@ -114,8 +120,21 @@ services:
       timeout: 3s
       retries: 10
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    restart: unless-stopped
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-forge-meilisearch-master-key}
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "${MEILISEARCH_EXTERNAL_PORT:-7700}:7700"
+    volumes:
+      - meilisearch_data:/meili_data
+
 volumes:
   app_storage:
   app_logs:
   mysql_data:
   redis_data:
+  meilisearch_data:
