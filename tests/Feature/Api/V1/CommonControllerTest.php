@@ -11,7 +11,9 @@ use App\Http\Controllers\Api\V1\CommonController;
 use App\Models\System\Area;
 use App\Models\System\Dict;
 use App\Models\System\DictItem;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +29,38 @@ use Tests\TestCase;
 class CommonControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    #[TestDox('公开首页统计返回用户总量、今日新增和今日活跃')]
+    public function stats_returns_public_user_counts(): void
+    {
+        $baseline = [
+            'total_users' => User::query()->count(),
+            'today_new_users' => User::query()->whereDate('created_at', Carbon::today())->count(),
+            'today_active_users' => User::query()->whereDate('last_active_at', Carbon::today())->count(),
+        ];
+
+        User::factory()->create([
+            'created_at' => Carbon::yesterday(),
+            'last_active_at' => Carbon::today(),
+        ]);
+        User::factory()->create([
+            'created_at' => Carbon::today(),
+            'last_active_at' => Carbon::today(),
+        ]);
+        User::factory()->create([
+            'created_at' => Carbon::today()->subDays(2),
+            'last_active_at' => Carbon::today()->subDays(2),
+        ]);
+
+        $this->getJson(route('api.v1.common.stats'))
+            ->assertOk()
+            ->assertExactJson([
+                'total_users' => $baseline['total_users'] + 3,
+                'today_new_users' => $baseline['today_new_users'] + 1,
+                'today_active_users' => $baseline['today_active_users'] + 2,
+            ]);
+    }
 
     #[Test]
     #[TestDox('未传 area_id 时返回顶级地区，并按 sort、id 升序排列')]

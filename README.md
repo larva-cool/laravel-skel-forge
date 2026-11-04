@@ -187,6 +187,7 @@ php artisan test --compact --filter=name  # 按名称过滤
 | 访问记录 | `/api/v1/visits`、`/api/v1/user/visits` | 多态访问埋点（记录一次访问 + 我的访问记录列表，分页，按 `source_type` 过滤），用于 PV/UV 与"最近浏览"等业务场景 |
 | 邀请 | `/api/v1/invite` | 我的邀请记录列表（分页）、邀请统计（邀请人数、是否有邀请人）。用户注册时携带 `invite_code` 即自动建立邀请关系（通过 `InviteRegistered` 事件 + 队列异步处理，不阻塞注册）；每个用户创建时自动分配唯一邀请码，可从用户资料的 `invite_code` 字段获取 |
 | 任务中心 | `/api/v1/tasks` | 任务列表（按分组返回，含用户进度）、手动领取任务奖励；完善资料等任务由事件驱动自动判定发奖 |
+| 公共数据 | `/api/v1/common` | 系统公开配置、地区、字典项与公开首页统计（累计用户、今日新增、今日活跃） |
 | Banner | `/api/v1/banners` | 轮播图公开列表（无需认证，必传 `position` 位置参数，仅返回当前生效内容） |
 | 公告 | `/api/v1/announcements` | 公告公开列表与详情（无需认证，仅已发布内容） |
 | 通知 | `/api/v1/notifications` | 客户端通知列表、未读数、已读 |

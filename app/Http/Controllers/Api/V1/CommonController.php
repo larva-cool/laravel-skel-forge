@@ -13,11 +13,13 @@ use App\Http\Requests\Api\V1\Common\SmsCaptchaRequest;
 use App\Http\Resources\Api\V1\PublicDictItemResource;
 use App\Models\System\Area;
 use App\Models\System\Dict;
+use App\Models\User;
 use App\Services\MailCaptchaService;
 use App\Services\SmsCaptchaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Carbon;
 
 /**
  * 公共接口
@@ -80,6 +82,18 @@ class CommonController extends Controller
         ];
 
         return response()->json($settings);
+    }
+
+    /**
+     * 公开首页统计
+     */
+    public function stats(): JsonResponse
+    {
+        return response()->json([
+            'total_users' => User::query()->count(),
+            'today_new_users' => User::query()->whereDate('created_at', Carbon::today())->count(),
+            'today_active_users' => User::query()->whereDate('last_active_at', Carbon::today())->count(),
+        ]);
     }
 
     /**
