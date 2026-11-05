@@ -30,7 +30,7 @@ return new class extends Migration
         }
 
         foreach ($this->nicknames as $i => $emoji) {
-            UserHelper::createByPhone('测试号'.$emoji, '14000000'.str_pad((string) $i, 3, '0', STR_PAD_LEFT), 'password');
+            UserHelper::createByPhone('测试号'.$emoji, '14000000'.str_pad((string) $i, 3, '0', STR_PAD_LEFT), '12345678');
         }
     }
 
