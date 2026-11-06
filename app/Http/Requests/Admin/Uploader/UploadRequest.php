@@ -107,7 +107,7 @@ abstract class UploadRequest extends FormRequest
         $directory = $this->getDirectory();
 
         if ($this->imageOptimize) {
-            return Image::fromUpload($file)->quality(60)->toWebp()->storePubliclyAs($directory, $fileName, $disk);
+            return Image::fromUpload($file)->quality(65)->toWebp()->storePubliclyAs($directory, $fileName, $disk);
         }
 
         return Storage::disk($disk)->putFileAs($directory, $file, $fileName);
