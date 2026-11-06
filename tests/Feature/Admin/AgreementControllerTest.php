@@ -76,7 +76,7 @@ class AgreementControllerTest extends TestCase
 
         $response->assertOk()
             ->assertJsonStructure(['data', 'links', 'meta'])
-            ->assertJsonPath('meta.total', 3);
+            ->assertJsonPath('meta.total', 5);
     }
 
     #[Test]
@@ -89,7 +89,7 @@ class AgreementControllerTest extends TestCase
 
         $response = $this->actingAsAdmin()->getJson('/admin/agreements?status='.AgreementStatus::PUBLISHED->value);
 
-        $response->assertOk()->assertJsonPath('meta.total', 3);
+        $response->assertOk()->assertJsonPath('meta.total', 5);
     }
 
     #[Test]
@@ -101,7 +101,7 @@ class AgreementControllerTest extends TestCase
 
         $response = $this->actingAsAdmin()->getJson('/admin/agreements?category=privacy_policy');
 
-        $response->assertOk()->assertJsonPath('meta.total', 3);
+        $response->assertOk()->assertJsonPath('meta.total', 4);
     }
 
     #[Test]
@@ -113,7 +113,7 @@ class AgreementControllerTest extends TestCase
 
         $response = $this->actingAsAdmin()->getJson('/admin/agreements?keyword='.rawurlencode('用户'));
 
-        $response->assertOk()->assertJsonPath('meta.total', 1);
+        $response->assertOk()->assertJsonPath('meta.total', 2);
     }
 
     #[Test]

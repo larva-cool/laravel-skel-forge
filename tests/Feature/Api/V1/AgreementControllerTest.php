@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\AgreementController;
 use App\Models\Operation\Agreement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
@@ -25,6 +26,33 @@ use Tests\TestCase;
 class AgreementControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * @return array<string, array{string, string, string}>
+     */
+    public static function defaultAgreementProvider(): array
+    {
+        return [
+            '用户协议' => ['user_agreement', '用户协议', '四、用户行为规范'],
+            '隐私政策' => ['privacy_policy', '隐私政策', '二、我们收集的信息'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('defaultAgreementProvider')]
+    #[TestDox('默认协议已发布并可通过公开接口获取')]
+    public function default_agreements_are_published(string $category, string $title, string $expectedContent): void
+    {
+        $response = $this->getJson("/api/v1/agreements/{$category}");
+
+        $response->assertOk()
+            ->assertJsonPath('title', $title)
+            ->assertJsonPath('category', $category)
+            ->assertJsonPath('version', 'v1.0');
+
+        $this->assertNotNull($response->json('effective_at'));
+        $this->assertStringContainsString($expectedContent, (string) $response->json('content'));
+    }
 
     #[Test]
     #[TestDox('按类别获取最新已发布协议')]
@@ -65,10 +93,10 @@ class AgreementControllerTest extends TestCase
     public function draft_agreement_not_returned(): void
     {
         Agreement::factory()->draft()->create([
-            'category' => 'privacy_policy',
+            'category' => 'community_guidelines',
         ]);
 
-        $this->getJson('/api/v1/agreements/privacy_policy')
+        $this->getJson('/api/v1/agreements/community_guidelines')
             ->assertNotFound();
     }
 
