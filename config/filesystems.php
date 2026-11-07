@@ -107,8 +107,8 @@ return [
             'driver'            => 'kodo',
             'access_key'        => env('QINIU_ACCESS_KEY'),
             'secret_key'        => env('QINIU_SECRET_KEY'),
-            'bucket'            => env('QINIU_BUCKET'),
-            'url'               => env('QINIU_BUCKET_URL'), // CDN 或自定义域名，末尾不要斜杠，如 https://cdn.example.com
+            'bucket'            => env('QINIU_BUCKET', ''),
+            'url'               => env('QINIU_BUCKET_URL', ''), // CDN 或自定义域名，末尾不要斜杠，如 https://cdn.example.com
             'root'              => env('QINIU_ROOT', ''), // 存储路径前缀，可选
             'is_custom_domain'  => false, // 如果 endpoint 是绑定的自定义域名，设置为 true，同时 url 设置无效
             'endpoint'          => env('QINIU_ENDPOINT', ''), // 自定义域名（当 is_custom_domain 为 true 时使用）
@@ -116,7 +116,9 @@ return [
             'upload_url'        => env('QINIU_UPLOAD_URL', 'https://upload.qiniup.com'), // 上传端点，可选
             'visibility'        => 'public', // 默认文件可见性：public 或 private
             'directory_visibility' => 'public', // 默认目录可见性：public 或 private，可选
-            'options'           => [], // 传递给底层 Kodo 适配器的额外选项，可选
+            'options'           => [ // 传递给底层 Kodo 适配器的额外选项，可选
+                'max_age' => '31536000'
+            ],
             'throw'             => false,
             'report'            => false,
         ],
