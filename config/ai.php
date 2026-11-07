@@ -19,7 +19,7 @@ return [
     |
     */
 
-    'default' => 'volc',
+    'default' => env('AI_DEFAULT_PROVIDER', 'volc'),
     'default_for_images' => 'volc',
     'default_for_audio' => 'volc',
     'default_for_transcription' => 'volc', //不支持转录相关功能
@@ -105,6 +105,39 @@ return [
                 // 视频生成（Seedance，异步任务）
                 'video' => [
                     'default' => env('VOLC_VIDEO_MODEL', 'doubao-seedance-2-5-260628'),
+                ],
+            ],
+        ],
+        // 阿里云百炼（通义千问 / Qwen）
+        'qwen' => [
+            'driver' => 'qwen',
+            'key' => env('DASHSCOPE_API_KEY'),
+            // 文本 / 向量走 OpenAI 兼容接口
+            'url' => env('QWEN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+            // TTS / 图像 / 视频走百炼原生接口
+            'api_url' => env('QWEN_API_URL', 'https://dashscope.aliyuncs.com/api/v1'),
+            'models' => [
+                'text' => [
+                    'default' => env('QWEN_TEXT_MODEL', 'qwen3.7-plus'),
+                ],
+                'embeddings' => [
+                    'default' => env('QWEN_EMBEDDINGS_MODEL', 'text-embedding-v4'),
+                    'dimensions' => env('QWEN_EMBEDDINGS_DIMENSIONS', 1024),
+                ],
+                'audio' => [
+                    'default' => env('QWEN_AUDIO_MODEL', 'qwen3-tts-flash'),
+                    'voice' => env('QWEN_AUDIO_VOICE', 'Cherry'),
+                    'male_voice' => env('QWEN_AUDIO_MALE_VOICE', 'Ethan'),
+                    'language_type' => env('QWEN_AUDIO_LANGUAGE', 'Auto'),
+                    'format' => env('QWEN_AUDIO_FORMAT', 'wav'),
+                ],
+                'image' => [
+                    'default' => env('QWEN_IMAGE_MODEL', 'qwen-image-2.0-pro'),
+                    'watermark' => env('QWEN_IMAGE_WATERMARK', false),
+                    'prompt_extend' => env('QWEN_IMAGE_PROMPT_EXTEND', true),
+                ],
+                'video' => [
+                    'default' => env('QWEN_VIDEO_MODEL', 'wan3.0-video'),
                 ],
             ],
         ],
