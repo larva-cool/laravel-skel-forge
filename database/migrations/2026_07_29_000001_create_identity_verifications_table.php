@@ -40,6 +40,7 @@ return new class extends Migration
             $table->string('company_name', 128)->nullable()->comment('企业名称');
             $table->string('credit_code', 32)->nullable()->comment('统一社会信用代码');
             $table->string('legal_person_name', 64)->nullable()->comment('法人姓名');
+            $table->string('legal_person_phone', 30)->nullable()->comment('法人手机号');
             $table->string('legal_person_id_card_no', 32)->nullable()->comment('法人身份证号（密文存储）');
             $table->string('business_license')->nullable()->comment('营业执照图片路径');
             $table->string('opening_permit')->nullable()->comment('开户许可证图片路径');

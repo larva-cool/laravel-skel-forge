@@ -39,6 +39,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $company_name 企业名称
  * @property string|null $credit_code 统一社会信用代码
  * @property string|null $legal_person_name 法人姓名
+ * @property string|null $legal_person_phone 法人手机号
  * @property string|null $legal_person_id_card_no 法人身份证号（密文）
  * @property string|null $business_license 营业执照图片路径
  * @property string|null $opening_permit 开户许可证图片路径
@@ -61,7 +62,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'verifiable_type', 'verifiable_id', 'type', 'status',
     'real_name', 'id_card_no', 'id_card_front', 'id_card_back', 'handheld',
-    'company_name', 'credit_code', 'legal_person_name', 'legal_person_id_card_no',
+    'company_name', 'credit_code', 'legal_person_name', 'legal_person_phone', 'legal_person_id_card_no',
     'business_license', 'opening_permit', 'bank_account', 'bank_name',
     'admin_id', 'reject_reason', 'reject_remark',
     'submitted_at', 'reviewed_at', 'expires_at',
