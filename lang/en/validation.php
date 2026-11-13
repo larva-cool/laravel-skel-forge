@@ -270,6 +270,7 @@ return [
         'company_name' => 'Company name',
         'credit_code' => 'Unified social credit code',
         'legal_person_name' => 'Legal person name',
+        'legal_person_phone' => 'Legal person phone',
         'legal_person_id_card_no' => 'Legal person ID card number',
         'business_license' => 'Business license image',
         'opening_permit' => 'Opening permit image',

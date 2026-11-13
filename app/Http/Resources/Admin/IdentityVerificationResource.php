@@ -50,6 +50,7 @@ class IdentityVerificationResource extends JsonResource
             'company_name' => $this->company_name,
             'credit_code' => $this->credit_code,
             'legal_person_name' => $this->legal_person_name,
+            'legal_person_phone' => $this->legal_person_phone,
             'legal_person_id_card_no' => $this->legal_person_id_card_no,
             'business_license' => $this->business_license,
             'opening_permit' => $this->opening_permit,

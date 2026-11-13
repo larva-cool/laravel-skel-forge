@@ -9,6 +9,7 @@ namespace App\Http\Requests\Api\V1\User\Identity;
 
 use App\Enums\IdentityType;
 use App\Rules\IdCardRule;
+use App\Rules\PhoneRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,6 +25,7 @@ use Illuminate\Validation\Rule;
  * @property-read string|null $company_name 企业名称
  * @property-read string|null $credit_code 统一社会信用代码
  * @property-read string|null $legal_person_name 法人姓名
+ * @property-read string|null $legal_person_phone 法人手机号
  * @property-read string|null $legal_person_id_card_no 法人身份证号
  * @property-read string|null $business_license 营业执照图片路径
  * @property-read string|null $opening_permit 开户许可证图片路径
@@ -56,6 +58,7 @@ class SubmitIdentityRequest extends FormRequest
                 'regex:/^[0-9A-HJ-NPQRTUWXY]{18}$/i',
             ],
             'legal_person_name' => ['required_if:type,enterprise', 'nullable', 'string', 'max:64'],
+            'legal_person_phone' => ['required_if:type,enterprise', 'nullable', 'string', new PhoneRule],
             'legal_person_id_card_no' => [
                 'required_if:type,enterprise', 'nullable', 'string', 'max:32', new IdCardRule,
             ],

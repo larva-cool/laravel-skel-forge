@@ -124,7 +124,7 @@ class IdentityControllerTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors([
                 'company_name', 'credit_code', 'legal_person_name',
-                'legal_person_id_card_no', 'business_license',
+                'legal_person_phone', 'legal_person_id_card_no', 'business_license',
             ]);
     }
 
@@ -137,6 +137,7 @@ class IdentityControllerTest extends TestCase
             'company_name' => '示例科技有限公司',
             'credit_code' => '91110000XXXXXXXX1X',
             'legal_person_name' => '李四',
+            'legal_person_phone' => '13800138000',
             'legal_person_id_card_no' => '110102199003078538',
             'business_license' => 'identity/business-license.jpg',
         ];

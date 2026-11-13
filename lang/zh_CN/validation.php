@@ -270,6 +270,7 @@ return [
         'company_name' => '企业名称',
         'credit_code' => '统一社会信用代码',
         'legal_person_name' => '法人姓名',
+        'legal_person_phone' => '法人手机号',
         'legal_person_id_card_no' => '法人身份证号',
         'business_license' => '营业执照',
         'opening_permit' => '开户许可证',
