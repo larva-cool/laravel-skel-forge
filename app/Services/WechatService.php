@@ -8,6 +8,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use EasyWeChat\Kernel\Exceptions\InvalidConfigException;
+use EasyWeChat\Kernel\Form\File;
+use EasyWeChat\Kernel\Form\Form;
 use EasyWeChat\OfficialAccount\Application;
 use EasyWeChat\OfficialAccount\Server;
 use EasyWeChat\OfficialAccount\Utils;
@@ -317,6 +319,134 @@ class WechatService
     }
 
     /**
+     * 上传临时素材
+     *
+     * @param  string  $type  素材类型，image / voice / video / thumb
+     * @param  string  $path  本地文件路径
+     * @return array<string, mixed> 含 media_id 的上传结果，失败时返回含 errcode 的数组
+     */
+    public function uploadTemporaryMedia(string $type, string $path): array
+    {
+        return $this->upload('cgi-bin/media/upload', $path, ['type' => $type]);
+    }
+
+    /**
+     * 获取临时素材
+     *
+     * @param  string  $mediaId  素材 media_id
+     * @return array<string, mixed>|string 成功时返回文件内容或视频信息，失败时返回含 errcode 的数组
+     */
+    public function getTemporaryMedia(string $mediaId): array|string
+    {
+        return $this->download('get', 'cgi-bin/media/get', ['media_id' => $mediaId]);
+    }
+
+    /**
+     * 上传图文消息内的图片
+     *
+     * 所上传图片不占用公众号素材库配额，仅用于图文消息正文。
+     *
+     * @param  string  $path  本地图片路径
+     * @return array<string, mixed> 含 url 的上传结果，失败时返回含 errcode 的数组
+     */
+    public function uploadArticleImage(string $path): array
+    {
+        return $this->upload('cgi-bin/media/uploadimg', $path);
+    }
+
+    /**
+     * 新增永久素材
+     *
+     * @param  string  $type  素材类型，image / voice / video / thumb
+     * @param  string  $path  本地文件路径
+     * @param  array{title?: string, introduction?: string}  $description  视频素材的标题与描述
+     * @return array<string, mixed> 含 media_id 的新增结果，失败时返回含 errcode 的数组
+     */
+    public function addMaterial(string $type, string $path, array $description = []): array
+    {
+        return $this->upload('cgi-bin/material/add_material', $path, ['type' => $type], $description);
+    }
+
+    /**
+     * 新增永久图文素材
+     *
+     * @param  array<int, array<string, mixed>>  $articles  图文消息列表，单次最多 8 篇
+     * @return array<string, mixed> 含 media_id 的新增结果，失败时返回含 errcode 的数组
+     */
+    public function addNewsMaterial(array $articles): array
+    {
+        return $this->call('postJson', 'cgi-bin/material/add_news', [
+            'articles' => array_values($articles),
+        ]);
+    }
+
+    /**
+     * 更新永久图文素材中的指定文章
+     *
+     * @param  string  $mediaId  图文素材 media_id
+     * @param  int  $index  要更新的文章在图文列表中的位置，从 0 开始
+     * @param  array<string, mixed>  $article  文章内容
+     */
+    public function updateNewsMaterial(string $mediaId, int $index, array $article): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/material/update_news', [
+            'media_id' => $mediaId,
+            'index' => $index,
+            'articles' => $article,
+        ]));
+    }
+
+    /**
+     * 获取永久素材
+     *
+     * @param  string  $mediaId  素材 media_id
+     * @return array<string, mixed>|string 图文素材返回数组，其他素材返回文件内容，失败时返回含 errcode 的数组
+     */
+    public function getMaterial(string $mediaId): array|string
+    {
+        return $this->download('postJson', 'cgi-bin/material/get_material', ['media_id' => $mediaId]);
+    }
+
+    /**
+     * 删除永久素材
+     *
+     * @param  string  $mediaId  素材 media_id
+     */
+    public function deleteMaterial(string $mediaId): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/material/del_material', [
+            'media_id' => $mediaId,
+        ]));
+    }
+
+    /**
+     * 获取素材总数
+     *
+     * @return array<string, mixed> 各类型素材数量，失败时返回含 errcode 的数组
+     */
+    public function getMaterialCount(): array
+    {
+        return $this->call('get', 'cgi-bin/material/get_materialcount');
+    }
+
+    /**
+     * 分页获取素材列表
+     *
+     * @param  string  $type  素材类型，image / video / voice / news
+     * @param  int  $offset  起始位置，从 0 开始
+     * @param  int  $count  获取数量，1-20，超出范围时自动修正
+     * @return array<string, mixed> 含 total_count / item_count / item 的列表，失败时返回含 errcode 的数组
+     */
+    public function listMaterials(string $type, int $offset = 0, int $count = 20): array
+    {
+        return $this->call('postJson', 'cgi-bin/material/batchget_material', [
+            'type' => $type,
+            'offset' => max(0, $offset),
+            'count' => min(20, max(1, $count)),
+        ]);
+    }
+
+    /**
      * 发送模板消息
      *
      * @param  array<string, mixed>  $params  模板消息参数
@@ -496,6 +626,69 @@ class WechatService
     public function getUtils(): Utils
     {
         return $this->getApp()->getUtils();
+    }
+
+    /**
+     * 上传素材文件
+     *
+     * @param  string  $uri  接口路径
+     * @param  string  $path  本地文件路径
+     * @param  array<string, mixed>  $query  查询参数
+     * @param  array{title?: string, introduction?: string}  $description  视频素材描述
+     * @return array<string, mixed> 接口响应，异常时返回 errcode 为 -1 的数组
+     */
+    protected function upload(string $uri, string $path, array $query = [], array $description = []): array
+    {
+        try {
+            $fields = ['media' => File::fromPath($path)];
+
+            if ($description !== []) {
+                $fields['description'] = json_encode($description, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            }
+
+            $options = Form::create($fields)->toOptions();
+
+            if ($query !== []) {
+                $options['query'] = $query;
+            }
+        } catch (\Throwable $e) {
+            Log::error("微信素材 {$uri} 上传异常：".$e->getMessage(), ['exception' => $e]);
+
+            return ['errcode' => -1, 'errmsg' => $e->getMessage()];
+        }
+
+        return $this->call('post', $uri, $options);
+    }
+
+    /**
+     * 下载素材，二进制响应直接返回内容，JSON / XML 响应按数组处理
+     *
+     * @param  string  $method  客户端方法名，get / post / postJson
+     * @param  string  $uri  接口路径
+     * @param  array<string, mixed>  $params  请求参数
+     * @return array<string, mixed>|string 文件内容或接口响应，异常时返回 errcode 为 -1 的数组
+     */
+    protected function download(string $method, string $uri, array $params = []): array|string
+    {
+        try {
+            $httpResponse = $this->getApp()->getClient()->{$method}($uri, $params);
+
+            if (! $httpResponse->is('json') && ! $httpResponse->is('xml')) {
+                return $httpResponse->getContent();
+            }
+
+            $response = $httpResponse->toArray();
+        } catch (\Throwable $e) {
+            Log::error("微信素材 {$uri} 下载异常：".$e->getMessage(), ['exception' => $e]);
+
+            return ['errcode' => -1, 'errmsg' => $e->getMessage()];
+        }
+
+        if (! $this->isSuccessful($response)) {
+            Log::error("微信素材 {$uri} 返回错误：".($response['errmsg'] ?? '未知错误'), ['response' => $response]);
+        }
+
+        return $response;
     }
 
     /**

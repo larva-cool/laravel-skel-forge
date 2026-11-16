@@ -94,6 +94,7 @@ class IdentityVerification extends Model
             'verifiable_id' => 'integer',
             'type' => IdentityType::class,
             'status' => IdentityStatus::class,
+            'legal_person_phone' => 'string',
             'id_card_front' => AsAttachmentUrl::class,
             'id_card_back' => AsAttachmentUrl::class,
             'handheld' => AsAttachmentUrl::class,

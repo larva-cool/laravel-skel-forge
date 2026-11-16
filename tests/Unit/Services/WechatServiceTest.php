@@ -531,6 +531,167 @@ class WechatServiceTest extends TestCase
         ], $service->lastCall['params']);
         $this->assertSame(['o_1', 'o_2'], $result['data']);
     }
+
+    #[Test]
+    #[TestDox('uploadTemporaryMedia 以 multipart 上传 media 文件并携带素材类型')]
+    public function upload_temporary_media_builds_multipart_request(): void
+    {
+        $service = $this->fakeService(['media_id' => 'media_1', 'type' => 'image']);
+
+        $result = $service->uploadTemporaryMedia('image', __FILE__);
+
+        $this->assertSame('media_1', $result['media_id']);
+        $this->assertSame('post', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/media/upload', $service->lastCall['uri']);
+        $this->assertSame(['type' => 'image'], $service->lastCall['params']['query']);
+        $this->assertStringContainsString('name="media"', $service->lastCall['params']['body']);
+        $this->assertStringContainsString('WechatServiceTest.php', $service->lastCall['params']['body']);
+    }
+
+    #[Test]
+    #[TestDox('上传素材时本地文件不存在返回 errcode -1')]
+    public function upload_media_returns_error_when_file_is_missing(): void
+    {
+        $service = $this->fakeService();
+
+        $result = $service->uploadTemporaryMedia('image', '/path/to/missing-image.jpg');
+
+        $this->assertSame(-1, $result['errcode']);
+        $this->assertSame([], $service->lastCall);
+    }
+
+    #[Test]
+    #[TestDox('getTemporaryMedia 返回二进制内容并提交 media_id')]
+    public function get_temporary_media_returns_binary_content(): void
+    {
+        $service = $this->fakeService();
+        $service->downloadResponse = 'binary-content';
+
+        $result = $service->getTemporaryMedia('media_1');
+
+        $this->assertSame('binary-content', $result);
+        $this->assertSame('get', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/media/get', $service->lastCall['uri']);
+        $this->assertSame(['media_id' => 'media_1'], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('uploadArticleImage 使用图文图片接口且不携带素材类型')]
+    public function upload_article_image_uses_uploadimg_endpoint(): void
+    {
+        $service = $this->fakeService(['url' => 'https://mmbiz.qpic.cn/image/1']);
+
+        $result = $service->uploadArticleImage(__FILE__);
+
+        $this->assertSame('https://mmbiz.qpic.cn/image/1', $result['url']);
+        $this->assertSame('cgi-bin/media/uploadimg', $service->lastCall['uri']);
+        $this->assertArrayNotHasKey('query', $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('addMaterial 上传永久视频素材并附加 description')]
+    public function add_material_includes_video_description(): void
+    {
+        $service = $this->fakeService(['media_id' => 'media_video']);
+
+        $result = $service->addMaterial('video', __FILE__, [
+            'title' => '视频标题',
+            'introduction' => '视频描述',
+        ]);
+
+        $this->assertSame('media_video', $result['media_id']);
+        $this->assertSame('cgi-bin/material/add_material', $service->lastCall['uri']);
+        $this->assertSame(['type' => 'video'], $service->lastCall['params']['query']);
+        $this->assertStringContainsString('name="description"', $service->lastCall['params']['body']);
+        $this->assertStringContainsString('视频标题', $service->lastCall['params']['body']);
+        $this->assertStringContainsString('视频描述', $service->lastCall['params']['body']);
+    }
+
+    #[Test]
+    #[TestDox('addNewsMaterial 提交图文列表并重置数组索引')]
+    public function add_news_material_submits_article_list(): void
+    {
+        $service = $this->fakeService(['media_id' => 'media_news']);
+
+        $result = $service->addNewsMaterial([2 => ['title' => '图文标题']]);
+
+        $this->assertSame('media_news', $result['media_id']);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/material/add_news', $service->lastCall['uri']);
+        $this->assertSame([['title' => '图文标题']], $service->lastCall['params']['articles']);
+    }
+
+    #[Test]
+    #[TestDox('updateNewsMaterial 提交 media_id、index 与单篇图文内容')]
+    public function update_news_material_submits_article_and_index(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+        $article = ['title' => '更新标题', 'content' => '更新内容'];
+
+        $this->assertTrue($service->updateNewsMaterial('media_news', 1, $article));
+        $this->assertSame('cgi-bin/material/update_news', $service->lastCall['uri']);
+        $this->assertSame([
+            'media_id' => 'media_news',
+            'index' => 1,
+            'articles' => $article,
+        ], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('getMaterial 通过 POST JSON 获取图文素材')]
+    public function get_material_returns_news_items(): void
+    {
+        $service = $this->fakeService();
+        $service->downloadResponse = ['news_item' => [['title' => '图文标题']]];
+
+        $result = $service->getMaterial('media_news');
+
+        $this->assertSame('图文标题', $result['news_item'][0]['title']);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/material/get_material', $service->lastCall['uri']);
+        $this->assertSame(['media_id' => 'media_news'], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('deleteMaterial 提交待删除素材 media_id')]
+    public function delete_material_submits_media_id(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->deleteMaterial('media_1'));
+        $this->assertSame('cgi-bin/material/del_material', $service->lastCall['uri']);
+        $this->assertSame(['media_id' => 'media_1'], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('getMaterialCount 返回各类素材数量')]
+    public function get_material_count_returns_counts(): void
+    {
+        $service = $this->fakeService(['image_count' => 3, 'video_count' => 1]);
+
+        $result = $service->getMaterialCount();
+
+        $this->assertSame(3, $result['image_count']);
+        $this->assertSame('get', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/material/get_materialcount', $service->lastCall['uri']);
+    }
+
+    #[Test]
+    #[TestDox('listMaterials 修正分页范围并返回素材列表')]
+    public function list_materials_normalizes_pagination(): void
+    {
+        $service = $this->fakeService(['total_count' => 1, 'item_count' => 1, 'item' => [['media_id' => 'media_1']]]);
+
+        $result = $service->listMaterials('news', -1, 21);
+
+        $this->assertSame('media_1', $result['item'][0]['media_id']);
+        $this->assertSame('cgi-bin/material/batchget_material', $service->lastCall['uri']);
+        $this->assertSame([
+            'type' => 'news',
+            'offset' => 0,
+            'count' => 20,
+        ], $service->lastCall['params']);
+    }
 }
 
 /**
@@ -544,6 +705,13 @@ class FakeWechatService extends WechatService
      * @var array{method: string, uri: string, params: array<string, mixed>}
      */
     public array $lastCall = [];
+
+    /**
+     * 下载接口桩响应
+     *
+     * @var array<string, mixed>|string
+     */
+    public array|string $downloadResponse = [];
 
     /**
      * @param  array<string, mixed>  $stubResponse  桩响应
@@ -561,5 +729,15 @@ class FakeWechatService extends WechatService
         $this->lastCall = compact('method', 'uri', 'params');
 
         return $this->stubResponse;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function download(string $method, string $uri, array $params = []): array|string
+    {
+        $this->lastCall = compact('method', 'uri', 'params');
+
+        return $this->downloadResponse;
     }
 }

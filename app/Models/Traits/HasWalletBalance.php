@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * 钱包余额能力
  *
  * 任何主表包含 balance / frozen_balance 两列的模型 use 此 trait 即可获得钱包能力。
- * 当前仅 User 模型接入。
+ * 由用户、开放账户及各业务主体模型按需接入。
  *
  * @property float $balance 可用余额
  * @property float $frozen_balance 冻结余额

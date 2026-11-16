@@ -55,7 +55,7 @@ class IdentityRejected implements ShouldBroadcast, ShouldHandleEventsAfterCommit
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel(class_basename($this->verifiable).'.'.$this->verifiable->id),
+            new PrivateChannel(class_basename($this->verifiable).'.'.$this->verifiable->getKey()),
         ];
     }
 }
