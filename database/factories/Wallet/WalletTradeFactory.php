@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\Wallet;
 
-use App\Enums\WalletTradeStatus;
-use App\Enums\WalletTradeType;
+use App\Enums\Wallet\WalletTradeStatus;
+use App\Enums\Wallet\WalletTradeType;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

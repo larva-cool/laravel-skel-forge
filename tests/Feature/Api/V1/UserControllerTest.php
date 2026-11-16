@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
-use App\Enums\SocialProvider;
+use App\Enums\Auth\SocialProvider;
 use App\Events\User\UserProfileUpdated;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Models\System\Social;

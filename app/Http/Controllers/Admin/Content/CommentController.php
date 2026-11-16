@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Content;
 
-use App\Enums\ReviewStatus;
+use App\Enums\Content\ReviewStatus;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Comment\CommentReviewRequest;
 use App\Http\Resources\Admin\CommentResource;

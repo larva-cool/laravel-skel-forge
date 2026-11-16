@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Automation;
 
-use App\Enums\AutomationLogStatus;
+use App\Enums\Automation\AutomationLogStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 

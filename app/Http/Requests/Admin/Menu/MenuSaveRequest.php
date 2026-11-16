@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Menu;
 
-use App\Enums\MenuType;
+use App\Enums\System\MenuType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

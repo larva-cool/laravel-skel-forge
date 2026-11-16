@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Content;
 
-use App\Enums\ReportStatus;
+use App\Enums\Content\ReportStatus;
 use App\Models\Admin\Admin;
 use App\Models\Model;
 use App\Models\User;

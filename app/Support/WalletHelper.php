@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use App\Enums\WalletTradeStatus;
-use App\Enums\WalletTradeType;
+use App\Enums\Wallet\WalletTradeStatus;
+use App\Enums\Wallet\WalletTradeType;
 use App\Exceptions\InsufficientBalanceException;
 use App\Exceptions\InsufficientFrozenBalanceException;
 use App\Models\Wallet\WalletTrade;

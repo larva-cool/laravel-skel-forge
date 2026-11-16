@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Auth;
 
-use App\Enums\SocialProvider;
+use App\Enums\Auth\SocialProvider;
 use App\Models\System\Social;
 use App\Models\User;
 use App\Services\WechatService;

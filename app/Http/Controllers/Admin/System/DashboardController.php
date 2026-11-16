@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\System;
 
-use App\Enums\AdminStatus;
-use App\Enums\RechargeStatus;
-use App\Enums\WithdrawStatus;
+use App\Enums\System\AdminStatus;
+use App\Enums\Wallet\RechargeStatus;
+use App\Enums\Wallet\WithdrawStatus;
 use App\Http\Controllers\Admin\Controller;
 use App\Models\Admin\Admin;
 use App\Models\System\LoginHistory;

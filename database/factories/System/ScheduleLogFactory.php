@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\System;
 
-use App\Enums\ScheduleStatus;
+use App\Enums\Monitor\ScheduleStatus;
 use App\Models\System\ScheduleLog;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

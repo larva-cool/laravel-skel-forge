@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Admin;
 
-use App\Enums\MenuType;
+use App\Enums\System\MenuType;
 use App\Models\Admin\AdminMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;

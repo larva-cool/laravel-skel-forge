@@ -9,7 +9,7 @@ namespace App\Ai\Tools\Content;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\ReportStatus;
+use App\Enums\Content\ReportStatus;
 use App\Models\Content\Report;
 use App\Services\ReportService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

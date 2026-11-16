@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
-use App\Enums\Gender;
+use App\Enums\User\Gender;
 use App\Http\Controllers\Api\V1\TaskController;
 use App\Models\Task\Task;
 use App\Models\Task\TaskGroup;

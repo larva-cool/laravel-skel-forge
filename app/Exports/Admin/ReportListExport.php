@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Exports\Admin;
 
-use App\Enums\ReportStatus;
+use App\Enums\Content\ReportStatus;
 use App\Exports\AbstractExport;
 use App\Models\Content\Comment;
 use App\Models\User;

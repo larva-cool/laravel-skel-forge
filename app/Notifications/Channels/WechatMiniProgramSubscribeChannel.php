@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Notifications\Channels;
 
-use App\Enums\SocialProvider;
+use App\Enums\Auth\SocialProvider;
 use App\Models\System\Social;
 use App\Services\WechatMiniService;
 use Illuminate\Database\Eloquent\Model;

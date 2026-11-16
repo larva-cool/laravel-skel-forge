@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\System;
 
-use App\Enums\ScheduleStatus;
+use App\Enums\Monitor\ScheduleStatus;
 use App\Models\System\ScheduleLog;
 use Illuminate\Console\Scheduling\CacheEventMutex;
 use Illuminate\Console\Scheduling\CallbackEvent;

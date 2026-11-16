@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\AppVersion;
 
-use App\Enums\AppPlatform;
-use App\Enums\ReleaseStatus;
+use App\Enums\App\AppPlatform;
+use App\Enums\App\ReleaseStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

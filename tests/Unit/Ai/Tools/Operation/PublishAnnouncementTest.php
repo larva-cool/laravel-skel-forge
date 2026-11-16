@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Operation;
 
 use App\Ai\Tools\Operation\PublishAnnouncement;
-use App\Enums\AdminStatus;
-use App\Enums\AnnouncementStatus;
+use App\Enums\Operation\AnnouncementStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\Operation\Announcement;

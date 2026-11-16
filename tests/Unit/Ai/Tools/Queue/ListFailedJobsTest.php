@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Queue;
 
 use App\Ai\Tools\Queue\ListFailedJobs;
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;

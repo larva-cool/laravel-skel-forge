@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Content;
 
 use App\Ai\Tools\Content\HandleReport;
-use App\Enums\AdminStatus;
-use App\Enums\ReportStatus;
+use App\Enums\Content\ReportStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\Content\Report;

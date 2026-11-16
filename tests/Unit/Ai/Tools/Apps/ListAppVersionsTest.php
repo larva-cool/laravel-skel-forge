@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Apps;
 
 use App\Ai\Tools\Apps\ListAppVersions;
-use App\Enums\AdminStatus;
-use App\Enums\AppPlatform;
-use App\Enums\ReleaseStatus;
+use App\Enums\App\AppPlatform;
+use App\Enums\App\ReleaseStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\App\AppRelease;

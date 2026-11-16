@@ -9,7 +9,7 @@ namespace App\Ai\Tools\Content;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\ReviewStatus;
+use App\Enums\Content\ReviewStatus;
 use App\Models\Content\Comment;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Approvals\Approval;

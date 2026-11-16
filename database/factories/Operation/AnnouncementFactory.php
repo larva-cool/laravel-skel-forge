@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Operation;
 
-use App\Enums\AnnouncementStatus;
+use App\Enums\Operation\AnnouncementStatus;
 use App\Models\Operation\Announcement;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

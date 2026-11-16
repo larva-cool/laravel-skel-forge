@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\System;
 
 use App\Ai\Tools\System\AddSensitiveWord;
-use App\Enums\AdminStatus;
-use App\Enums\SensitiveCategory;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveCategory;
+use App\Enums\Content\SensitiveLevel;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\System\SensitiveWord;

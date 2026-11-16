@@ -7,11 +7,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Automation;
 
-use App\Enums\AutomationLogStatus;
-use App\Enums\AutomationRewardType;
-use App\Enums\FestivalDateType;
-use App\Enums\PointType;
-use App\Enums\UserStatus;
+use App\Enums\Automation\AutomationLogStatus;
+use App\Enums\Automation\AutomationRewardType;
+use App\Enums\Automation\FestivalDateType;
+use App\Enums\Point\PointType;
+use App\Enums\User\UserStatus;
 use App\Models\Automation\AutomationFestival;
 use App\Models\Automation\AutomationLog;
 use App\Models\Automation\AutomationRule;

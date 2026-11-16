@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\System;
 
-use App\Enums\SensitiveCategory;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveCategory;
+use App\Enums\Content\SensitiveLevel;
 use App\Models\System\SensitiveWord;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

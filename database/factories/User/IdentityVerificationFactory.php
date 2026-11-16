@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\User;
 
-use App\Enums\IdentityStatus;
-use App\Enums\IdentityType;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\IdentityType;
 use App\Models\User\IdentityVerification;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

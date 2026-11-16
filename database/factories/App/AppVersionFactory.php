@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\App;
 
-use App\Enums\AppPlatform;
-use App\Enums\ReleaseStatus;
+use App\Enums\App\AppPlatform;
+use App\Enums\App\ReleaseStatus;
 use App\Models\App\AppVersion;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

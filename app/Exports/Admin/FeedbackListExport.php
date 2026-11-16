@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Exports\Admin;
 
-use App\Enums\FeedbackPriority;
-use App\Enums\FeedbackStatus;
+use App\Enums\Operation\FeedbackPriority;
+use App\Enums\Operation\FeedbackStatus;
 use App\Exports\AbstractExport;
 use App\Models\System\Feedback;
 use Illuminate\Database\Eloquent\Builder;

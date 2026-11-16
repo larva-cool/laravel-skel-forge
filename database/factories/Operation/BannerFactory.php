@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Operation;
 
-use App\Enums\LinkType;
+use App\Enums\Operation\LinkType;
 use App\Models\Operation\Banner;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

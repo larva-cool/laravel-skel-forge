@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Banner;
 
-use App\Enums\LinkType;
+use App\Enums\Operation\LinkType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

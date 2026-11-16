@@ -204,7 +204,7 @@ class AiAssistEndpointsTest extends TestCase
     public function admin_can_ai_review_comment(): void
     {
         SensitiveWord::factory()->review()->create(['word' => '垃圾']);
-        $comment = $this->createComment(['content' => '这个垃圾处理器质量很好', 'status' => \App\Enums\ReviewStatus::PENDING]);
+        $comment = $this->createComment(['content' => '这个垃圾处理器质量很好', 'status' => \App\Enums\Content\ReviewStatus::PENDING]);
 
         ContentReviewer::fake(['{"suggestion":"approve","reason":"商品名称，属于误杀"}']);
 

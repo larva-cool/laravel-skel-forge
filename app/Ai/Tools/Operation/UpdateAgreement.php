@@ -9,7 +9,7 @@ namespace App\Ai\Tools\Operation;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\AgreementStatus;
+use App\Enums\Operation\AgreementStatus;
 use App\Models\Operation\Agreement;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Approvals\Approval;

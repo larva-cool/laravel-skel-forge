@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Operation;
 
-use App\Enums\LinkType;
+use App\Enums\Operation\LinkType;
 use App\Models\Model;
 use Database\Factories\Operation\BannerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

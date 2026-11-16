@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Automation;
 
-use App\Enums\FestivalDateType;
+use App\Enums\Automation\FestivalDateType;
 use App\Models\Automation\AutomationFestival;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

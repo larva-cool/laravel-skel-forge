@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Contracts\IdentityVerifiable;
-use App\Enums\IdentityStatus;
+use App\Enums\User\IdentityStatus;
 use App\Events\User\IdentityRejected;
 use App\Events\User\IdentityVerified;
 use App\Models\Admin\Admin;

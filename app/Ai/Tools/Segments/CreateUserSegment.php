@@ -9,9 +9,9 @@ namespace App\Ai\Tools\Segments;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\SegmentRuleField;
-use App\Enums\SegmentRuleOperator;
-use App\Enums\SegmentType;
+use App\Enums\Segment\SegmentRuleField;
+use App\Enums\Segment\SegmentRuleOperator;
+use App\Enums\Segment\SegmentType;
 use App\Models\UserSegment\Segment;
 use App\Services\Segment\SegmentRuleEvaluator;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

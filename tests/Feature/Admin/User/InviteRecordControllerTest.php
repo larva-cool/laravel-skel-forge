@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\User;
 
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Http\Controllers\Admin\User\InviteRecordController;
 use App\Models\Admin\Admin;
 use App\Models\Invite\InviteRecord;

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\User;
 
-use App\Enums\Gender;
+use App\Enums\User\Gender;
 use App\Models\System\Area;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

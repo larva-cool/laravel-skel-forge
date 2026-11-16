@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Operation;
 
-use App\Enums\AgreementStatus;
+use App\Enums\Operation\AgreementStatus;
 use App\Http\Controllers\Admin\Operation\AgreementController;
 use App\Models\Admin\Admin;
 use App\Models\Operation\Agreement;

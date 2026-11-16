@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
-use App\Enums\AppPlatform;
+use App\Enums\App\AppPlatform;
 use App\Http\Controllers\Api\V1\AppController;
 use App\Models\App\AppRelease;
 use App\Models\App\AppVersion;
@@ -190,7 +190,7 @@ class AppControllerTest extends TestCase
             'app_release_id' => $app->id,
             'platform' => AppPlatform::IOS,
             'build' => 10001,
-            'status' => \App\Enums\ReleaseStatus::DRAFT,
+            'status' => \App\Enums\App\ReleaseStatus::DRAFT,
         ]);
 
         // Android 有更新

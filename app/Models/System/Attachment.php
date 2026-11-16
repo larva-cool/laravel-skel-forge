@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\System;
 
-use App\Enums\AttachmentType;
+use App\Enums\Storage\AttachmentType;
 use App\Models\Model;
 use Database\Factories\System\AttachmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

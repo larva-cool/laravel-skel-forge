@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Observers;
 
-use App\Enums\SocialProvider;
-use App\Enums\WalletTradeStatus;
-use App\Enums\WalletTradeType;
+use App\Enums\Auth\SocialProvider;
+use App\Enums\Wallet\WalletTradeStatus;
+use App\Enums\Wallet\WalletTradeType;
 use App\Models\Content\Collection;
 use App\Models\Content\Comment;
 use App\Models\Content\Follow;

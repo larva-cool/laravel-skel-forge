@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Wallet;
 
 use App\Ai\Tools\Wallet\ReviewWithdraw;
-use App\Enums\AdminStatus;
-use App\Enums\WalletTradeType;
-use App\Enums\WithdrawStatus;
+use App\Enums\System\AdminStatus;
+use App\Enums\Wallet\WalletTradeType;
+use App\Enums\Wallet\WithdrawStatus;
 use App\Events\Wallet\WithdrawApproved;
 use App\Events\Wallet\WithdrawRejected;
 use App\Models\Admin\Admin;

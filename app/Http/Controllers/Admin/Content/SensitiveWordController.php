@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Content;
 
-use App\Enums\SensitiveCategory;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveCategory;
+use App\Enums\Content\SensitiveLevel;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\SensitiveWord\SensitiveWordImportRequest;
 use App\Http\Requests\Admin\SensitiveWord\SensitiveWordIndexRequest;

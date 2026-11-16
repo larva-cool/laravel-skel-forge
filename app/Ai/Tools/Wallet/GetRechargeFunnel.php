@@ -9,7 +9,7 @@ namespace App\Ai\Tools\Wallet;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\RechargeStatus;
+use App\Enums\Wallet\RechargeStatus;
 use App\Models\Wallet\Recharge;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Carbon;

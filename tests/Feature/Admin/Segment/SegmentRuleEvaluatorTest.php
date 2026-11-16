@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Segment;
 
-use App\Enums\SegmentRuleField;
-use App\Enums\SegmentRuleOperator;
-use App\Enums\SocialProvider;
+use App\Enums\Auth\SocialProvider;
+use App\Enums\Segment\SegmentRuleField;
+use App\Enums\Segment\SegmentRuleOperator;
 use App\Models\Invite\InviteRecord;
 use App\Models\System\Social;
 use App\Models\User;

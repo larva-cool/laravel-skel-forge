@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Operation;
 
-use App\Enums\AnnouncementStatus;
+use App\Enums\Operation\AnnouncementStatus;
 use App\Models\Admin\Admin;
 use App\Models\Model;
 use Database\Factories\Operation\AnnouncementFactory;

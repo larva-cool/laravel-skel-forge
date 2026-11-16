@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
-use App\Enums\FeedbackStatus;
+use App\Enums\Operation\FeedbackStatus;
 use App\Models\System\Feedback;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

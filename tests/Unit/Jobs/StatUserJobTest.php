@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Jobs;
 
-use App\Enums\CoinType;
-use App\Enums\PointType;
+use App\Enums\Coin\CoinType;
+use App\Enums\Point\PointType;
 use App\Jobs\User\StatUserJob;
 use App\Models\Coin\CoinTrade;
 use App\Models\Point\PointTrade;

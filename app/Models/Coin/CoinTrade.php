@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Coin;
 
-use App\Enums\CoinType;
+use App\Enums\Coin\CoinType;
 use App\Models\Model;
 use App\Models\Traits\HasUser;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

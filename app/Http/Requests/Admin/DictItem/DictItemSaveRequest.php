@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\DictItem;
 
-use App\Enums\DictLabelType;
-use App\Enums\DictStatus;
+use App\Enums\System\DictLabelType;
+use App\Enums\System\DictStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

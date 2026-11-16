@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Services\Segment;
 
-use App\Enums\SegmentRuleField;
-use App\Enums\SegmentRuleOperator;
+use App\Enums\Segment\SegmentRuleField;
+use App\Enums\Segment\SegmentRuleOperator;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;

@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace App\Models\Open;
 
-use App\Enums\IdentityStatus;
-use App\Enums\IdentityType;
-use App\Enums\UserStatus;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\IdentityType;
+use App\Enums\User\UserStatus;
 use App\Models\Traits\DateTimeFormatter;
 use App\Models\Traits\HasWalletBalance;
 use Database\Factories\Open\OpenAccountFactory;

@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\Wallet;
 
-use App\Enums\WithdrawAccountType;
-use App\Enums\WithdrawStatus;
+use App\Enums\Wallet\WithdrawAccountType;
+use App\Enums\Wallet\WithdrawStatus;
 use App\Models\User;
 use App\Models\Wallet\Withdraw;
 use Illuminate\Database\Eloquent\Factories\Factory;

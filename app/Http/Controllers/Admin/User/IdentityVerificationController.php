@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\User;
 
-use App\Enums\IdentityStatus;
+use App\Enums\User\IdentityStatus;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Identity\IdentityIndexRequest;
 use App\Http\Requests\Admin\Identity\RejectIdentityRequest;

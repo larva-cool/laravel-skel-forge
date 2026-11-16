@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-use App\Enums\AgreementStatus;
+use App\Enums\Operation\AgreementStatus;
 use App\Models\Operation\Agreement;
 use Illuminate\Database\Migrations\Migration;
 

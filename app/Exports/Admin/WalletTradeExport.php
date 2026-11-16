@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Exports\Admin;
 
-use App\Enums\WalletTradeStatus;
-use App\Enums\WalletTradeType;
+use App\Enums\Wallet\WalletTradeStatus;
+use App\Enums\Wallet\WalletTradeType;
 use App\Exports\AbstractExport;
 use App\Models\Wallet\WalletTrade;
 use Illuminate\Database\Eloquent\Builder;

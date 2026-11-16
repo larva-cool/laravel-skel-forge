@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
-use App\Enums\UserStatus;
+use App\Enums\User\UserStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;

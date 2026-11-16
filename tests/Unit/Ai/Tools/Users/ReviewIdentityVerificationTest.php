@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Users;
 
 use App\Ai\Tools\Users\ReviewIdentityVerification;
-use App\Enums\AdminStatus;
-use App\Enums\IdentityStatus;
-use App\Enums\IdentityType;
+use App\Enums\System\AdminStatus;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\IdentityType;
 use App\Events\User\IdentityRejected;
 use App\Events\User\IdentityVerified;
 use App\Models\Admin\Admin;

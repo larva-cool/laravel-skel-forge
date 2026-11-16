@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Automation;
 
-use App\Enums\AutomationRewardType;
-use App\Enums\AutomationTriggerType;
+use App\Enums\Automation\AutomationRewardType;
+use App\Enums\Automation\AutomationTriggerType;
 use App\Http\Controllers\Admin\Automation\AutomationRuleController;
 use App\Models\Admin\Admin;
 use App\Models\Automation\AutomationFestival;

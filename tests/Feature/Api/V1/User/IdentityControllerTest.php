@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1\User;
 
-use App\Enums\IdentityStatus;
-use App\Enums\IdentityType;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\IdentityType;
 use App\Http\Controllers\Api\V1\User\IdentityController;
 use App\Models\User;
 use Database\Factories\User\IdentityVerificationFactory;

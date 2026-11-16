@@ -9,8 +9,8 @@ namespace App\Ai\Tools\Users;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\CoinType;
-use App\Enums\PointType;
+use App\Enums\Coin\CoinType;
+use App\Enums\Point\PointType;
 use App\Exceptions\InsufficientCoinsException;
 use App\Exceptions\InsufficientPointsException;
 use App\Models\User;

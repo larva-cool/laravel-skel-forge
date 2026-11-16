@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Content;
 
-use App\Enums\ReviewStatus;
+use App\Enums\Content\ReviewStatus;
 use App\Models\Model;
 use App\Models\Traits\HasLikeable;
 use App\Models\Traits\HasReportable;

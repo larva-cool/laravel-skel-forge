@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Feedbacks;
 
 use App\Ai\Tools\Feedbacks\ReplyFeedback;
-use App\Enums\AdminStatus;
-use App\Enums\FeedbackStatus;
+use App\Enums\Operation\FeedbackStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\System\Feedback;

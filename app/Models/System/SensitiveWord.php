@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Models\System;
 
-use App\Enums\SensitiveCategory;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveCategory;
+use App\Enums\Content\SensitiveLevel;
 use App\Models\Model;
 use Database\Factories\System\SensitiveWordFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

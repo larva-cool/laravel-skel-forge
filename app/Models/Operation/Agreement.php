@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Models\Operation;
 
-use App\Enums\AgreementStatus;
 use App\Enums\CacheKey;
+use App\Enums\Operation\AgreementStatus;
 use App\Models\Admin\Admin;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

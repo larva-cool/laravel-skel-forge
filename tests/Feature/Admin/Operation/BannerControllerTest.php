@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Operation;
 
-use App\Enums\LinkType;
+use App\Enums\Operation\LinkType;
 use App\Http\Controllers\Admin\Operation\BannerController;
 use App\Models\Admin\Admin;
 use App\Models\Operation\Banner;

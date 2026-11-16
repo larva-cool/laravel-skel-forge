@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\WalletTradeType;
-use App\Enums\WithdrawStatus;
+use App\Enums\Wallet\WalletTradeType;
+use App\Enums\Wallet\WithdrawStatus;
 use App\Events\Wallet\WithdrawApproved;
 use App\Events\Wallet\WithdrawFailed;
 use App\Events\Wallet\WithdrawRejected;

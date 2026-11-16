@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\User;
 
-use App\Enums\IdentityStatus;
+use App\Enums\User\IdentityStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\User\Identity\SubmitIdentityRequest;
 use App\Http\Resources\Api\V1\IdentityVerificationResource;

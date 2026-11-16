@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\AnnouncementStatus;
+use App\Enums\Operation\AnnouncementStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\AnnouncementResource;
 use App\Models\Operation\Announcement;

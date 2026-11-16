@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Automation;
 
-use App\Enums\AutomationLogStatus;
+use App\Enums\Automation\AutomationLogStatus;
 use App\Models\Model;
 use App\Models\User;
 use Database\Factories\Automation\AutomationLogFactory;

@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\CoinType;
-use App\Enums\Gender;
-use App\Enums\PointType;
+use App\Enums\Coin\CoinType;
+use App\Enums\Point\PointType;
 use App\Enums\Task\TaskProgressStatus;
 use App\Enums\Task\TaskResetType;
 use App\Enums\Task\TaskRewardType;
 use App\Enums\Task\TaskType;
+use App\Enums\User\Gender;
 use App\Models\Task\Task;
 use App\Models\Task\TaskGroup;
 use App\Models\Task\TaskLog;

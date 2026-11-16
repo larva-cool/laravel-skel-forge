@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Feedbacks;
 
 use App\Ai\Tools\Feedbacks\ListFeedbacks;
-use App\Enums\AdminStatus;
-use App\Enums\FeedbackPriority;
-use App\Enums\FeedbackStatus;
+use App\Enums\Operation\FeedbackPriority;
+use App\Enums\Operation\FeedbackStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\System\Feedback;

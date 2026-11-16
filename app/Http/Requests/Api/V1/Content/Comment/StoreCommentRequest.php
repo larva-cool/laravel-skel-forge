@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Content\Comment;
 
-use App\Enums\ReviewStatus;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\ReviewStatus;
+use App\Enums\Content\SensitiveLevel;
 use App\Rules\SensitiveTextRule;
 use App\Services\SensitiveWordService;
 use Illuminate\Foundation\Http\FormRequest;

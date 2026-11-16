@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Operation;
 
-use App\Enums\AnnouncementStatus;
+use App\Enums\Operation\AnnouncementStatus;
 use App\Http\Controllers\Admin\Operation\AnnouncementController;
 use App\Models\Admin\Admin;
 use App\Models\Operation\Announcement;

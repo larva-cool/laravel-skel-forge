@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\FeedbackPriority;
-use App\Enums\FeedbackStatus;
+use App\Enums\Operation\FeedbackPriority;
+use App\Enums\Operation\FeedbackStatus;
 use App\Models\System\Feedback;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

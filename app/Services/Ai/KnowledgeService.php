@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Services\Ai;
 
-use App\Enums\KnowledgeDocumentStatus;
+use App\Enums\Ai\KnowledgeDocumentStatus;
 use App\Jobs\Ai\ProcessKnowledgeDocumentJob;
 use App\Models\Ai\KnowledgeDocument;
 use App\Services\Ai\Contracts\KnowledgeSearchEngine;

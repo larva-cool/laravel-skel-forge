@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Contracts;
 
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveLevel;
 
 /**
  * 内容审核结果（本地 DFA 与云审核统一返回结构）

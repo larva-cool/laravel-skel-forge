@@ -9,7 +9,7 @@ namespace App\Services\Ai;
 
 use App\Ai\Agents\ContentReviewer;
 use App\Ai\Agents\Copywriter;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveLevel;
 use App\Models\Content\Comment;
 use App\Models\Content\Report;
 use App\Models\System\Feedback;
@@ -163,7 +163,7 @@ class ContentAssistService
         $hits = array_map(static fn (array $hit): array => [
             'word' => $hit['word'],
             'level' => $hit['level'] instanceof SensitiveLevel ? $hit['level']->value : (string) $hit['level'],
-            'category' => $hit['category'] instanceof \App\Enums\SensitiveCategory ? $hit['category']->value : (string) $hit['category'],
+            'category' => $hit['category'] instanceof \App\Enums\Content\SensitiveCategory ? $hit['category']->value : (string) $hit['category'],
         ], $moderation->hits);
 
         // 无命中词时无需 AI 复核

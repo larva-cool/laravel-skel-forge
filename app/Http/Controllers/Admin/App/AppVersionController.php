@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\App;
 
-use App\Enums\ReleaseStatus;
+use App\Enums\App\ReleaseStatus;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\AppVersion\AppVersionIndexRequest;
 use App\Http\Requests\Admin\AppVersion\AppVersionSaveRequest;

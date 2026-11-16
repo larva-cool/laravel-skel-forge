@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Operation;
 
 use App\Ai\Tools\Operation\ListAgreements;
-use App\Enums\AdminStatus;
-use App\Enums\AgreementStatus;
+use App\Enums\Operation\AgreementStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\Operation\Agreement;

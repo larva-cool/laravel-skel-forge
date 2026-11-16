@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Setting;
 
-use App\Enums\SettingInputType;
+use App\Enums\System\SettingInputType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

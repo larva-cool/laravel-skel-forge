@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Models\Wallet;
 
-use App\Enums\PayChannel;
-use App\Enums\RechargeStatus;
+use App\Enums\Wallet\PayChannel;
+use App\Enums\Wallet\RechargeStatus;
 use App\Models\Model;
 use App\Policies\RechargePolicy;
 use Database\Factories\Wallet\RechargeFactory;

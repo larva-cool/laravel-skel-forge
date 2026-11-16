@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\UserSegment;
 
-use App\Enums\SegmentType;
+use App\Enums\Segment\SegmentType;
 use App\Models\UserSegment\Segment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

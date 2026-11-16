@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Wallet;
 
-use App\Enums\PayChannel;
+use App\Enums\Wallet\PayChannel;
 use App\Http\Controllers\Admin\Wallet\RechargeController;
 use App\Models\Admin\Admin;
 use App\Models\User;

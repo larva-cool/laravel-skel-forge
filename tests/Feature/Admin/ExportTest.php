@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
-use App\Enums\UserStatus;
-use App\Enums\WalletTradeType;
+use App\Enums\User\UserStatus;
+use App\Enums\Wallet\WalletTradeType;
 use App\Exports\Admin\AuditLogListExport;
 use App\Exports\Admin\CommentListExport;
 use App\Exports\Admin\FeedbackListExport;
@@ -303,8 +303,8 @@ class ExportTest extends TestCase
     public function feedback_export_status_mapping(): void
     {
         $feedback = FeedbackFactory::new()->create([
-            'status' => \App\Enums\FeedbackStatus::PENDING,
-            'priority' => \App\Enums\FeedbackPriority::URGENT,
+            'status' => \App\Enums\Operation\FeedbackStatus::PENDING,
+            'priority' => \App\Enums\Operation\FeedbackPriority::URGENT,
         ]);
 
         $export = new FeedbackListExport;

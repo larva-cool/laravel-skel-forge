@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\UserSegment;
 
-use App\Enums\SegmentTaskStatus;
-use App\Enums\SegmentTaskType;
+use App\Enums\Segment\SegmentTaskStatus;
+use App\Enums\Segment\SegmentTaskType;
 use App\Models\UserSegment\SegmentTask;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

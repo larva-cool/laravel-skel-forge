@@ -9,7 +9,7 @@ namespace App\Ai\Tools\Open;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\UserStatus;
+use App\Enums\User\UserStatus;
 use App\Models\Open\OpenAccount;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\User;
 
-use App\Enums\Gender;
+use App\Enums\User\Gender;
 use App\Models\System\Area;
 use App\Rules\NameRule;
 use App\Rules\SensitiveTextRule;

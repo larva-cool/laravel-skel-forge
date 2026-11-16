@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Wallet;
 
-use App\Enums\PayChannel;
-use App\Enums\RechargeStatus;
+use App\Enums\Wallet\PayChannel;
+use App\Enums\Wallet\RechargeStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

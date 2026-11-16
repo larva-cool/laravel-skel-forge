@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\ReportStatus;
-use App\Enums\ReviewStatus;
-use App\Enums\UserStatus;
+use App\Enums\Content\ReportStatus;
+use App\Enums\Content\ReviewStatus;
+use App\Enums\User\UserStatus;
 use App\Models\Admin\Admin;
 use App\Models\Content\Comment;
 use App\Models\Content\Report;

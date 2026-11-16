@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Content;
 
 use App\Ai\Tools\Content\ListComments;
-use App\Enums\AdminStatus;
-use App\Enums\ReviewStatus;
+use App\Enums\Content\ReviewStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\Content\Comment;

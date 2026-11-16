@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\UserSegment;
 
-use App\Enums\SegmentType;
+use App\Enums\Segment\SegmentType;
 use App\Models\Model;
 use App\Models\User;
 use Database\Factories\UserSegment\SegmentFactory;

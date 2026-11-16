@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Ai;
 
-use App\Enums\KnowledgeDocumentStatus;
+use App\Enums\Ai\KnowledgeDocumentStatus;
 use App\Models\Ai\KnowledgeDocument;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

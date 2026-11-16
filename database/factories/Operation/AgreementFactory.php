@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Operation;
 
-use App\Enums\AgreementStatus;
+use App\Enums\Operation\AgreementStatus;
 use App\Models\Operation\Agreement;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

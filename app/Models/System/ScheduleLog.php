@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\System;
 
-use App\Enums\ScheduleStatus;
+use App\Enums\Monitor\ScheduleStatus;
 use App\Models\Model;
 use Database\Factories\System\ScheduleLogFactory;
 use Illuminate\Console\Scheduling\CallbackEvent;

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
-use App\Enums\IdentityStatus;
+use App\Enums\User\IdentityStatus;
 use App\Models\User\IdentityVerification;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

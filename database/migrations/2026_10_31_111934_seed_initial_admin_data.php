@@ -5,8 +5,8 @@
  */
 declare(strict_types=1);
 
-use App\Enums\AdminStatus;
-use App\Enums\MenuType;
+use App\Enums\System\AdminStatus;
+use App\Enums\System\MenuType;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\System\Permission;

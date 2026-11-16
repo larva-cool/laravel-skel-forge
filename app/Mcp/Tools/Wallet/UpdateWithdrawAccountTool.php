@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\Wallet;
 
-use App\Enums\WithdrawAccountStatus;
+use App\Enums\Wallet\WithdrawAccountStatus;
 use App\Http\Resources\Api\V1\WithdrawAccountResource;
 use App\Models\Wallet\WithdrawAccount;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

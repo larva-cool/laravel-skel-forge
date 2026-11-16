@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\User\Identity;
 
-use App\Enums\IdentityType;
+use App\Enums\User\IdentityType;
 use App\Rules\IdCardRule;
 use App\Rules\PhoneRule;
 use Illuminate\Foundation\Http\FormRequest;

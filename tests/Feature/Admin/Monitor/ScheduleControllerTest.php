@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Monitor;
 
-use App\Enums\ScheduleTaskStatus;
+use App\Enums\Monitor\ScheduleTaskStatus;
 use App\Http\Controllers\Admin\Monitor\ScheduleController;
 use App\Models\Admin\Admin;
 use Database\Factories\System\ScheduleFactory;

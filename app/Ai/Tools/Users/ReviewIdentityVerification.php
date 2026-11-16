@@ -9,7 +9,7 @@ namespace App\Ai\Tools\Users;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\IdentityStatus;
+use App\Enums\User\IdentityStatus;
 use App\Models\User\IdentityVerification;
 use App\Services\IdentityVerificationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

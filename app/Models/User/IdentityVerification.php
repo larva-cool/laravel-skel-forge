@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace App\Models\User;
 
 use App\Casts\AsAttachmentUrl;
-use App\Enums\IdentityStatus;
-use App\Enums\IdentityType;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\IdentityType;
 use App\Models\Admin\Admin;
 use App\Models\Model;
 use App\Policies\IdentityVerificationPolicy;

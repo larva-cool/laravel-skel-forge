@@ -9,9 +9,9 @@ namespace App\Ai\Tools\Wallet;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\RechargeStatus;
-use App\Enums\WalletTradeType;
-use App\Enums\WithdrawStatus;
+use App\Enums\Wallet\RechargeStatus;
+use App\Enums\Wallet\WalletTradeType;
+use App\Enums\Wallet\WithdrawStatus;
 use App\Models\User;
 use App\Models\Wallet\Recharge;
 use App\Models\Wallet\WalletTrade;

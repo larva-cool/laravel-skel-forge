@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\Wallet;
 
-use App\Enums\PayChannel;
-use App\Enums\RechargeStatus;
+use App\Enums\Wallet\PayChannel;
+use App\Enums\Wallet\RechargeStatus;
 use App\Models\User;
 use App\Models\Wallet\Recharge;
 use Illuminate\Database\Eloquent\Factories\Factory;

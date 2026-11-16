@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Models\System;
 
-use App\Enums\FeedbackPriority;
-use App\Enums\FeedbackStatus;
+use App\Enums\Operation\FeedbackPriority;
+use App\Enums\Operation\FeedbackStatus;
 use App\Models\Admin\Admin;
 use App\Models\Model;
 use App\Models\User;

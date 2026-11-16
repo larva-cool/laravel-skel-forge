@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\System;
 
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Admin\AdminChangePasswordRequest;
 use App\Http\Requests\Admin\Admin\AdminCreateRequest;

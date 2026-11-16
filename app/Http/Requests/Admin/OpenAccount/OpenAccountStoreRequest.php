@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\OpenAccount;
 
-use App\Enums\UserStatus;
+use App\Enums\User\UserStatus;
 use App\Models\Open\OpenAccount;
 use App\Rules\NameRule;
 use App\Rules\PhoneRule;

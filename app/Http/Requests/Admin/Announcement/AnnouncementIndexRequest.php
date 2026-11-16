@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Announcement;
 
-use App\Enums\AnnouncementStatus;
+use App\Enums\Operation\AnnouncementStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

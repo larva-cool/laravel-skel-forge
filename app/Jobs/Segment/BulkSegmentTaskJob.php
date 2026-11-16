@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Jobs\Segment;
 
-use App\Enums\SegmentTaskStatus;
-use App\Enums\SegmentTaskType;
+use App\Enums\Segment\SegmentTaskStatus;
+use App\Enums\Segment\SegmentTaskType;
 use App\Models\Admin\Admin;
 use App\Models\UserSegment\Segment;
 use App\Models\UserSegment\SegmentTask;

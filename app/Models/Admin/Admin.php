@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Admin;
 
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\System\LoginHistory;
 use App\Models\System\Social;
 use App\Models\Traits\DateTimeFormatter;

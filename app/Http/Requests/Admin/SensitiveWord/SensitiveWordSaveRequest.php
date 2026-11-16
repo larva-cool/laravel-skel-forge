@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\SensitiveWord;
 
-use App\Enums\SensitiveCategory;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveCategory;
+use App\Enums\Content\SensitiveLevel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

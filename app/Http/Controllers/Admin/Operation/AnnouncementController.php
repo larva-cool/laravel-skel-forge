@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Operation;
 
-use App\Enums\AnnouncementStatus;
+use App\Enums\Operation\AnnouncementStatus;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Ai\AiCopyRequest;
 use App\Http\Requests\Admin\Announcement\AnnouncementIndexRequest;

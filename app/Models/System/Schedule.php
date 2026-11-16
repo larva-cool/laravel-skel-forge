@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\System;
 
-use App\Enums\ScheduleTaskStatus;
+use App\Enums\Monitor\ScheduleTaskStatus;
 use App\Models\Model;
 use Database\Factories\System\ScheduleFactory;
 use Illuminate\Console\Scheduling\ManagesFrequencies;

@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Stats;
 
 use App\Ai\Tools\Stats\GetUserGrowthStats;
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\User;

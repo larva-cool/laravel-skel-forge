@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Content;
 
-use App\Enums\ReviewStatus;
+use App\Enums\Content\ReviewStatus;
 use App\Http\Controllers\Admin\Content\CommentController;
 use App\Models\Admin\Admin;
 use App\Models\Content\Comment;

@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Models\App;
 
-use App\Enums\AppPlatform;
-use App\Enums\ReleaseStatus;
+use App\Enums\App\AppPlatform;
+use App\Enums\App\ReleaseStatus;
 use App\Models\Admin\Admin;
 use App\Models\Model;
 use Database\Factories\App\AppVersionFactory;

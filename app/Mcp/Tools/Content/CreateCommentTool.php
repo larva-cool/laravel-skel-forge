@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\Content;
 
-use App\Enums\ReviewStatus;
+use App\Enums\Content\ReviewStatus;
 use App\Http\Resources\Api\V1\CommentResource;
 use App\Models\Content\Comment;
 use App\Services\SensitiveWordService;
@@ -48,7 +48,7 @@ class CreateCommentTool extends Tool
         $service = app(SensitiveWordService::class);
         $result = $service->detect((string) $arguments['content']);
         $arguments['content'] = $result->filtered;
-        $arguments['status'] = $result->maxLevel === \App\Enums\SensitiveLevel::REVIEW
+        $arguments['status'] = $result->maxLevel === \App\Enums\Content\SensitiveLevel::REVIEW
             ? ReviewStatus::PENDING->value
             : ReviewStatus::APPROVED->value;
 

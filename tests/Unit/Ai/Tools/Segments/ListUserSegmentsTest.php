@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Segments;
 
 use App\Ai\Tools\Segments\ListUserSegments;
-use App\Enums\AdminStatus;
-use App\Enums\SegmentType;
+use App\Enums\Segment\SegmentType;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\UserSegment\Segment;

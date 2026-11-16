@@ -29,7 +29,7 @@ use App\Ai\Tools\Wallet\ListWalletTrades;
 use App\Ai\Tools\Wallet\ListWithdraws;
 use App\Ai\Tools\Wallet\ReviewWithdraw;
 use App\Ai\Tools\Web\WebFetch;
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\User;

@@ -83,7 +83,7 @@ class CommentListExport extends AbstractExport
 
     private function statusLabel(mixed $status): string
     {
-        if ($status instanceof \App\Enums\ReviewStatus) {
+        if ($status instanceof \App\Enums\Content\ReviewStatus) {
             return $status->label();
         }
 

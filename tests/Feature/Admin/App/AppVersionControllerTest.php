@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\App;
 
-use App\Enums\AppPlatform;
-use App\Enums\ReleaseStatus;
+use App\Enums\App\AppPlatform;
+use App\Enums\App\ReleaseStatus;
 use App\Http\Controllers\Admin\App\AppVersionController;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;

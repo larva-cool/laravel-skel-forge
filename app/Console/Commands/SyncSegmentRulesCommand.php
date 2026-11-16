@@ -108,7 +108,7 @@ class SyncSegmentRulesCommand extends Command
         $ids = array_values(array_filter(array_map('intval', $ids), fn ($v) => $v > 0));
         $codes = array_values(array_filter(array_map('trim', $codes), fn ($v) => $v !== ''));
 
-        $query = Segment::query()->where('type', \App\Enums\SegmentType::RULE->value);
+        $query = Segment::query()->where('type', \App\Enums\Segment\SegmentType::RULE->value);
 
         if ($ids !== [] || $codes !== []) {
             $query->where(function ($q) use ($ids, $codes) {

@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Contracts\IdentityVerifiable;
-use App\Enums\IdentityStatus;
-use App\Enums\IdentityType;
-use App\Enums\UserStatus;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\IdentityType;
+use App\Enums\User\UserStatus;
 use App\Events\User\EmailReset;
 use App\Events\User\EmailVerified;
 use App\Events\User\PhoneReset;

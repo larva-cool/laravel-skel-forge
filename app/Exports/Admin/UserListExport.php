@@ -115,7 +115,7 @@ class UserListExport extends AbstractExport
 
     private function statusLabel(mixed $status): string
     {
-        if ($status instanceof \App\Enums\UserStatus) {
+        if ($status instanceof \App\Enums\User\UserStatus) {
             return $status->label();
         }
 

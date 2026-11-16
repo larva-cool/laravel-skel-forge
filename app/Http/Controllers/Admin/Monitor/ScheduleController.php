@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Monitor;
 
-use App\Enums\ScheduleStatus;
-use App\Enums\ScheduleTaskStatus;
+use App\Enums\Monitor\ScheduleStatus;
+use App\Enums\Monitor\ScheduleTaskStatus;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Schedule\ScheduleIndexRequest;
 use App\Http\Requests\Admin\Schedule\ScheduleSaveRequest;

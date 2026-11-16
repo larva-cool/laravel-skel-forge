@@ -85,7 +85,7 @@ class ReportControllerTest extends TestCase
         $this->assertSame($comment->getMorphClass(), $report->reportable_type);
         $this->assertSame($comment->id, $report->reportable_id);
         $this->assertSame('ad', $report->category);
-        $this->assertSame(\App\Enums\ReportStatus::PENDING, $report->status);
+        $this->assertSame(\App\Enums\Content\ReportStatus::PENDING, $report->status);
     }
 
     #[Test]
@@ -190,7 +190,7 @@ class ReportControllerTest extends TestCase
         // 先创建一条已驳回
         ReportFactory::new()->forTarget($comment)->create([
             'user_id' => $this->user->id,
-            'status' => \App\Enums\ReportStatus::REJECTED,
+            'status' => \App\Enums\Content\ReportStatus::REJECTED,
         ]);
 
         // 重新举报可成功

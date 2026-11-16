@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Admin;
 
-use App\Enums\MenuType;
+use App\Enums\System\MenuType;
 use App\Models\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;

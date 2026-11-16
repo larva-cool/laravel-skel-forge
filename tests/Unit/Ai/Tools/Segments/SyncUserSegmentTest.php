@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Segments;
 
 use App\Ai\Tools\Segments\SyncUserSegment;
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\User;
@@ -88,7 +88,7 @@ class SyncUserSegmentTest extends TestCase
     public function handle_syncs_rule_segment(): void
     {
         $admin = $this->createAdminWithPermissions(['segments.edit']);
-        User::factory()->count(2)->create(['status' => \App\Enums\UserStatus::ACTIVE]);
+        User::factory()->count(2)->create(['status' => \App\Enums\User\UserStatus::ACTIVE]);
         $segment = Segment::factory()->rule()->create();
 
         $result = (new SyncUserSegment)->forAdmin($admin)->handle(new Request(['id' => $segment->id]));

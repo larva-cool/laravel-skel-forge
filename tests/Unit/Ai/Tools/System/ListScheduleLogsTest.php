@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\System;
 
 use App\Ai\Tools\System\ListScheduleLogs;
-use App\Enums\AdminStatus;
-use App\Enums\ScheduleStatus;
+use App\Enums\Monitor\ScheduleStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\System\ScheduleLog;

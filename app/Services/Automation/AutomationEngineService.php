@@ -7,14 +7,14 @@ declare(strict_types=1);
 
 namespace App\Services\Automation;
 
-use App\Enums\AutomationChannel;
-use App\Enums\AutomationLogStatus;
-use App\Enums\AutomationRewardType;
-use App\Enums\AutomationTriggerType;
-use App\Enums\CoinType;
-use App\Enums\FestivalDateType;
-use App\Enums\PointType;
-use App\Enums\UserStatus;
+use App\Enums\Automation\AutomationChannel;
+use App\Enums\Automation\AutomationLogStatus;
+use App\Enums\Automation\AutomationRewardType;
+use App\Enums\Automation\AutomationTriggerType;
+use App\Enums\Automation\FestivalDateType;
+use App\Enums\Coin\CoinType;
+use App\Enums\Point\PointType;
+use App\Enums\User\UserStatus;
 use App\Models\Automation\AutomationFestival;
 use App\Models\Automation\AutomationLog;
 use App\Models\Automation\AutomationRule;

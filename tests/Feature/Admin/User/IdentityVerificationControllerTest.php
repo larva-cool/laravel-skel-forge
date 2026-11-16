@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\User;
 
-use App\Enums\IdentityStatus;
+use App\Enums\User\IdentityStatus;
 use App\Http\Controllers\Admin\User\IdentityVerificationController;
 use App\Models\Admin\Admin;
 use App\Models\User;

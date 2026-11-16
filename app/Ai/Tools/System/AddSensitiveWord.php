@@ -9,8 +9,8 @@ namespace App\Ai\Tools\System;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\SensitiveCategory;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveCategory;
+use App\Enums\Content\SensitiveLevel;
 use App\Models\System\SensitiveWord;
 use App\Services\SensitiveWordService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

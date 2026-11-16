@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Segment;
 
-use App\Enums\SegmentType;
+use App\Enums\Segment\SegmentType;
 use App\Models\Admin\Admin;
 use App\Models\User;
 use App\Models\UserSegment\Membership;

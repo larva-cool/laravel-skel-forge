@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\User;
 
-use App\Enums\Gender;
+use App\Enums\User\Gender;
 use App\Events\User\UserProfileUpdated;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\System\Area;

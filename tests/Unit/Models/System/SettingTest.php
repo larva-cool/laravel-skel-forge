@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\System;
 
-use App\Enums\SettingType;
+use App\Enums\System\SettingType;
 use App\Models\System\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;

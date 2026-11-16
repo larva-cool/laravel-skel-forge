@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Content;
 
-use App\Enums\ReportStatus;
+use App\Enums\Content\ReportStatus;
 use App\Exports\Admin\ReportListExport;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Report\ReportProcessRequest;

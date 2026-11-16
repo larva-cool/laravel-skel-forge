@@ -9,7 +9,7 @@ namespace App\Ai\Tools\Stats;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\UserStatus;
+use App\Enums\User\UserStatus;
 use App\Models\User;
 use App\Models\User\UserStat;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

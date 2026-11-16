@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\Wallet;
 
-use App\Enums\PayChannel;
+use App\Enums\Wallet\PayChannel;
 use App\Http\Resources\Api\V1\RechargeResource;
 use App\Services\RechargeService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

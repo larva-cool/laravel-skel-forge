@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Automation;
 
-use App\Enums\AutomationChannel;
-use App\Enums\AutomationRewardType;
-use App\Enums\AutomationTriggerType;
+use App\Enums\Automation\AutomationChannel;
+use App\Enums\Automation\AutomationRewardType;
+use App\Enums\Automation\AutomationTriggerType;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Automation\AutomationRuleIndexRequest;
 use App\Http\Requests\Admin\Automation\AutomationRuleSaveRequest;

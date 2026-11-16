@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Ai;
 
-use App\Enums\KnowledgeDocumentStatus;
+use App\Enums\Ai\KnowledgeDocumentStatus;
 use App\Models\Ai\KnowledgeDocument;
 use App\Services\Ai\KnowledgeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\Content;
 
-use App\Enums\ReviewStatus;
+use App\Enums\Content\ReviewStatus;
 use App\Models\Content\Comment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

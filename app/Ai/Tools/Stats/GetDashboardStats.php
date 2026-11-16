@@ -9,8 +9,8 @@ namespace App\Ai\Tools\Stats;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\AdminStatus;
-use App\Enums\UserStatus;
+use App\Enums\System\AdminStatus;
+use App\Enums\User\UserStatus;
 use App\Models\Admin\Admin;
 use App\Models\System\LoginHistory;
 use App\Models\System\MailCode;

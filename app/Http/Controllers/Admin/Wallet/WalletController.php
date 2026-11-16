@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Wallet;
 
-use App\Enums\WalletTradeType;
+use App\Enums\Wallet\WalletTradeType;
 use App\Exceptions\InsufficientBalanceException;
 use App\Exports\Admin\WalletTradeExport;
 use App\Exports\HandlesExports;

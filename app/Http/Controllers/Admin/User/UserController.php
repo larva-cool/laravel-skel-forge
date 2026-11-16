@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\User;
 
-use App\Enums\CoinType;
-use App\Enums\PointType;
-use App\Enums\UserStatus;
+use App\Enums\Coin\CoinType;
+use App\Enums\Point\PointType;
+use App\Enums\User\UserStatus;
 use App\Exceptions\InsufficientCoinsException;
 use App\Exceptions\InsufficientPointsException;
 use App\Http\Controllers\Admin\Controller;

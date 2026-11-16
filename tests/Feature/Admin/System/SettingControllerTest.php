@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\System;
 
-use App\Enums\SettingInputType;
+use App\Enums\System\SettingInputType;
 use App\Http\Controllers\Admin\System\SettingController;
 use App\Models\Admin\Admin;
 use App\Models\System\Setting;

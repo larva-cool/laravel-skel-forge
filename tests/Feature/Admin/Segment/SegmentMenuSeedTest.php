@@ -43,7 +43,7 @@ class SegmentMenuSeedTest extends TestCase
         // 查找"用户分群"目录菜单
         $groupMenu = AdminMenu::query()
             ->where('path', 'segment-group')
-            ->where('type', \App\Enums\MenuType::DIRECTORY)
+            ->where('type', \App\Enums\System\MenuType::DIRECTORY)
             ->first();
         $this->assertNotNull($groupMenu, 'user.segment-group 目录菜单未注册');
         $this->assertSame('用户分群', $groupMenu->title);
@@ -56,7 +56,7 @@ class SegmentMenuSeedTest extends TestCase
         // 验证子菜单
         $children = AdminMenu::query()
             ->where('parent_id', $groupMenu->id)
-            ->where('type', \App\Enums\MenuType::MENU)
+            ->where('type', \App\Enums\System\MenuType::MENU)
             ->orderBy('sort')
             ->get();
         $this->assertCount(3, $children);
@@ -106,7 +106,7 @@ class SegmentMenuSeedTest extends TestCase
             ->firstOrFail();
         $buttons = AdminMenu::query()
             ->where('parent_id', $segmentMenu->id)
-            ->where('type', \App\Enums\MenuType::BUTTON)
+            ->where('type', \App\Enums\System\MenuType::BUTTON)
             ->get();
 
         $this->assertCount(4, $buttons);
@@ -128,7 +128,7 @@ class SegmentMenuSeedTest extends TestCase
             ->firstOrFail();
         $buttons = AdminMenu::query()
             ->where('parent_id', $memberMenu->id)
-            ->where('type', \App\Enums\MenuType::BUTTON)
+            ->where('type', \App\Enums\System\MenuType::BUTTON)
             ->get();
 
         $this->assertCount(1, $buttons);

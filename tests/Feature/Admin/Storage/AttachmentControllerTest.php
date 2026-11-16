@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Storage;
 
-use App\Enums\AttachmentType;
+use App\Enums\Storage\AttachmentType;
 use App\Http\Controllers\Admin\Storage\AttachmentController;
 use App\Models\Admin\Admin;
 use App\Models\System\Attachment;

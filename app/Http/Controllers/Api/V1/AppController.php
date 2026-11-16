@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\AppPlatform;
+use App\Enums\App\AppPlatform;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\App\CheckUpdateRequest;
 use App\Http\Resources\Api\V1\AppVersionResource;

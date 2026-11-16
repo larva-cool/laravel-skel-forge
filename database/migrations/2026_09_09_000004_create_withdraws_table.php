@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-use App\Enums\WithdrawStatus;
+use App\Enums\Wallet\WithdrawStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

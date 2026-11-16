@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-use App\Enums\IdentityStatus;
+use App\Enums\User\IdentityStatus;
 use App\Models\System\Dict;
 use App\Models\System\DictItem;
 use Illuminate\Database\Migrations\Migration;

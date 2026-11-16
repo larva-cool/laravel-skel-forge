@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
-use App\Enums\LinkType;
+use App\Enums\Operation\LinkType;
 use App\Http\Controllers\Api\V1\BannerController;
 use App\Models\Operation\Banner;
 use Illuminate\Foundation\Testing\RefreshDatabase;

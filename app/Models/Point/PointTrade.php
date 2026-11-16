@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Point;
 
-use App\Enums\PointType;
+use App\Enums\Point\PointType;
 use App\Models\Model;
 use App\Models\Traits\HasUser;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

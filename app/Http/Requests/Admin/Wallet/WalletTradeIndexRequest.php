@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Wallet;
 
-use App\Enums\WalletTradeStatus;
-use App\Enums\WalletTradeType;
+use App\Enums\Wallet\WalletTradeStatus;
+use App\Enums\Wallet\WalletTradeType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

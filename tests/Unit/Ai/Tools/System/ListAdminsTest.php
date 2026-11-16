@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\System;
 
 use App\Ai\Tools\System\ListAdmins;
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\System;
 
-use App\Enums\SettingInputType;
+use App\Enums\System\SettingInputType;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Setting\SettingSaveRequest;
 use App\Http\Requests\Admin\Setting\StoreConfigRequest;

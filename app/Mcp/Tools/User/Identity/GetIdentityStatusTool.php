@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\User\Identity;
 
-use App\Enums\IdentityStatus;
+use App\Enums\User\IdentityStatus;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;

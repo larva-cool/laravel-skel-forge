@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Wallet;
 
-use App\Enums\RechargeStatus;
+use App\Enums\Wallet\RechargeStatus;
 use App\Exports\Admin\RechargeExport;
 use App\Exports\HandlesExports;
 use App\Http\Controllers\Admin\Controller;

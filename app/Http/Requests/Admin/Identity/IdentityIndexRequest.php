@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Identity;
 
-use App\Enums\IdentityStatus;
-use App\Enums\IdentityType;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\IdentityType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

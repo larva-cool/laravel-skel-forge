@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\Common;
 
-use App\Enums\AnnouncementStatus;
+use App\Enums\Operation\AnnouncementStatus;
 use App\Http\Resources\Api\V1\AnnouncementResource;
 use App\Models\Operation\Announcement;
 use Illuminate\Contracts\JsonSchema\JsonSchema;

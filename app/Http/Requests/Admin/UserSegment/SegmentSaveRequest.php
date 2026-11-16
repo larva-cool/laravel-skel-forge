@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\UserSegment;
 
-use App\Enums\SegmentType;
+use App\Enums\Segment\SegmentType;
 use App\Services\Segment\SegmentRuleEvaluator;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;

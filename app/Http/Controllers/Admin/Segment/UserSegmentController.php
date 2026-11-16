@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Segment;
 
-use App\Enums\SegmentType;
+use App\Enums\Segment\SegmentType;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\UserSegment\SegmentAttachRequest;
 use App\Http\Requests\Admin\UserSegment\SegmentBatchAttachRequest;
@@ -257,7 +257,7 @@ class UserSegmentController extends Controller
         if (count($userIds) > \App\Services\Segment\SegmentService::BATCH_LIMIT) {
             $task = $this->segments->dispatchTask(
                 adminId: $admin?->id ?? 0,
-                type: \App\Enums\SegmentTaskType::ATTACH,
+                type: \App\Enums\Segment\SegmentTaskType::ATTACH,
                 segmentIds: [$segment->id],
                 userIds: $userIds,
             );
@@ -298,7 +298,7 @@ class UserSegmentController extends Controller
         if (count($userIds) > \App\Services\Segment\SegmentService::BATCH_LIMIT) {
             $task = $this->segments->dispatchTask(
                 adminId: $admin?->id ?? 0,
-                type: \App\Enums\SegmentTaskType::DETACH,
+                type: \App\Enums\Segment\SegmentTaskType::DETACH,
                 segmentIds: [$segment->id],
                 userIds: $userIds,
             );
@@ -338,7 +338,7 @@ class UserSegmentController extends Controller
         if ($this->segments->shouldEnqueue($segmentIds, $userIds)) {
             $task = $this->segments->dispatchTask(
                 adminId: $admin?->id ?? 0,
-                type: \App\Enums\SegmentTaskType::ATTACH,
+                type: \App\Enums\Segment\SegmentTaskType::ATTACH,
                 segmentIds: $segmentIds,
                 userIds: $userIds,
             );
@@ -379,7 +379,7 @@ class UserSegmentController extends Controller
         if ($this->segments->shouldEnqueue($segmentIds, $userIds)) {
             $task = $this->segments->dispatchTask(
                 adminId: $admin?->id ?? 0,
-                type: \App\Enums\SegmentTaskType::DETACH,
+                type: \App\Enums\Segment\SegmentTaskType::DETACH,
                 segmentIds: $segmentIds,
                 userIds: $userIds,
             );

@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Enums\Gender;
 use App\Enums\Task\TaskProgressStatus;
 use App\Enums\Task\TaskRewardType;
+use App\Enums\User\Gender;
 use App\Models\Task\Task;
 use App\Models\Task\TaskGroup;
 use App\Models\Task\TaskProgress;

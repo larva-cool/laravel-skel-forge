@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\OpenAccount;
 
-use App\Enums\IdentityStatus;
-use App\Enums\UserStatus;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\UserStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

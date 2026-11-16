@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules;
 
-use App\Enums\SensitiveCategory;
-use App\Enums\SensitiveLevel;
+use App\Enums\Content\SensitiveCategory;
+use App\Enums\Content\SensitiveLevel;
 use App\Models\System\SensitiveWord;
 use App\Rules\SensitiveTextRule;
 use App\Services\SensitiveWordService;

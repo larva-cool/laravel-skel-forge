@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\Automation;
 
-use App\Enums\AutomationChannel;
-use App\Enums\AutomationLogStatus;
+use App\Enums\Automation\AutomationChannel;
+use App\Enums\Automation\AutomationLogStatus;
 use App\Models\Automation\AutomationLog;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

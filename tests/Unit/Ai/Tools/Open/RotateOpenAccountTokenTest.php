@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Open;
 
 use App\Ai\Tools\Open\RotateOpenAccountToken;
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\Open\OpenAccount;

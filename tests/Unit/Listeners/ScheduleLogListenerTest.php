@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Listeners;
 
-use App\Enums\ScheduleStatus;
+use App\Enums\Monitor\ScheduleStatus;
 use App\Listeners\System\ScheduleLogListener;
 use App\Models\System\ScheduleLog;
 use Illuminate\Console\Events\ScheduledTaskFailed;

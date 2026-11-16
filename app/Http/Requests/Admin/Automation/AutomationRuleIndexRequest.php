@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Automation;
 
-use App\Enums\AutomationTriggerType;
+use App\Enums\Automation\AutomationTriggerType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 

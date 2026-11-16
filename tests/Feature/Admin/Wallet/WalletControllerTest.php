@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\Wallet;
 
-use App\Enums\WalletTradeType;
+use App\Enums\Wallet\WalletTradeType;
 use App\Http\Controllers\Admin\Wallet\WalletController;
 use App\Models\Admin\Admin;
 use App\Models\User;

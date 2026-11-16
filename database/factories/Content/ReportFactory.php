@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Content;
 
-use App\Enums\ReportStatus;
+use App\Enums\Content\ReportStatus;
 use App\Models\Content\Comment;
 use App\Models\Content\Report;
 use App\Models\User;

@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Wallet;
 
-use App\Enums\WithdrawAccountType;
-use App\Enums\WithdrawStatus;
+use App\Enums\Wallet\WithdrawAccountType;
+use App\Enums\Wallet\WithdrawStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

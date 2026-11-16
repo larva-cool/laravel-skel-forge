@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin\User;
 
-use App\Enums\CoinType;
-use App\Enums\PointType;
+use App\Enums\Coin\CoinType;
+use App\Enums\Point\PointType;
 use App\Http\Controllers\Admin\User\UserController;
 use App\Models\Admin\Admin;
 use App\Models\User;

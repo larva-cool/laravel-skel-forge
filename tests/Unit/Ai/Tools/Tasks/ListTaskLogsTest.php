@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Tasks;
 
 use App\Ai\Tools\Tasks\ListTaskLogs;
-use App\Enums\AdminStatus;
+use App\Enums\System\AdminStatus;
 use App\Enums\Task\TaskClaimMode;
 use App\Enums\Task\TaskGroupType;
 use App\Enums\Task\TaskResetType;

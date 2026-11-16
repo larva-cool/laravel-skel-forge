@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\AttachmentType;
+use App\Enums\Storage\AttachmentType;
 use App\Models\System\Attachment;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Model;

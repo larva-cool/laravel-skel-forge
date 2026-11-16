@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Operation;
 
-use App\Enums\AgreementStatus;
+use App\Enums\Operation\AgreementStatus;
 use App\Http\Controllers\Admin\Controller;
 use App\Http\Requests\Admin\Agreement\AgreementIndexRequest;
 use App\Http\Requests\Admin\Agreement\AgreementSaveRequest;

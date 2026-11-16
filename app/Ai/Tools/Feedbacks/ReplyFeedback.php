@@ -9,7 +9,7 @@ namespace App\Ai\Tools\Feedbacks;
 
 use App\Ai\Contracts\RequiresPermission;
 use App\Ai\Tools\Concerns\AuthorizesAdmin;
-use App\Enums\FeedbackStatus;
+use App\Enums\Operation\FeedbackStatus;
 use App\Models\System\Feedback;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Approvals\Approval;

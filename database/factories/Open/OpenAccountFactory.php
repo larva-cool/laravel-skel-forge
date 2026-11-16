@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\Open;
 
-use App\Enums\IdentityStatus;
-use App\Enums\UserStatus;
+use App\Enums\User\IdentityStatus;
+use App\Enums\User\UserStatus;
 use App\Models\Open\OpenAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;

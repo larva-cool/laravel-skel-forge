@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Wallet;
 
-use App\Enums\WalletTradeType;
-use App\Enums\WithdrawStatus;
+use App\Enums\Wallet\WalletTradeType;
+use App\Enums\Wallet\WithdrawStatus;
 use App\Events\Wallet\WithdrawApproved;
 use App\Events\Wallet\WithdrawFailed;
 use App\Events\Wallet\WithdrawRejected;
@@ -235,7 +235,7 @@ class WithdrawServiceTest extends TestCase
     public function submit_rejects_when_account_disabled(): void
     {
         $account = $this->createAccount();
-        $account->update(['status' => \App\Enums\WithdrawAccountStatus::DISABLED]);
+        $account->update(['status' => \App\Enums\Wallet\WithdrawAccountStatus::DISABLED]);
 
         $this->expectException(ValidationException::class);
         $this->service->submit($this->user, 200, $account);

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\Ai;
 
-use App\Enums\KnowledgeDocumentStatus;
+use App\Enums\Ai\KnowledgeDocumentStatus;
 use App\Models\Model;
 use Database\Factories\Ai\KnowledgeDocumentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Feedback;
 
-use App\Enums\FeedbackPriority;
-use App\Enums\FeedbackStatus;
+use App\Enums\Operation\FeedbackPriority;
+use App\Enums\Operation\FeedbackStatus;
 use App\Models\System\Feedback;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

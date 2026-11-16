@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin\Wallet;
 
-use App\Enums\WithdrawStatus;
+use App\Enums\Wallet\WithdrawStatus;
 use App\Exports\Admin\WithdrawExport;
 use App\Exports\HandlesExports;
 use App\Http\Controllers\Admin\Controller;

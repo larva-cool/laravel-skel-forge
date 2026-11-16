@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models\System;
 
-use App\Enums\SocialProvider;
+use App\Enums\Auth\SocialProvider;
 use App\Models\Admin\Admin;
 use App\Models\System\Social;
 use App\Models\User;

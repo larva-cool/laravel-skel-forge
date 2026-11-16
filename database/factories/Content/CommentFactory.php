@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Content;
 
-use App\Enums\ReviewStatus;
+use App\Enums\Content\ReviewStatus;
 use App\Models\Content\Comment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;

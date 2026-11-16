@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Ai\Tools\Users;
 
 use App\Ai\Tools\Users\GetChurnRiskUsers;
-use App\Enums\AdminStatus;
-use App\Enums\UserStatus;
+use App\Enums\System\AdminStatus;
+use App\Enums\User\UserStatus;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
 use App\Models\User;

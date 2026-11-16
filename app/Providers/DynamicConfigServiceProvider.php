@@ -67,7 +67,7 @@ class DynamicConfigServiceProvider extends ServiceProvider
             }
 
             Schedule::query()
-                ->where('status', \App\Enums\ScheduleTaskStatus::ACTIVE)
+                ->where('status', \App\Enums\Monitor\ScheduleTaskStatus::ACTIVE)
                 ->each(function (Schedule $task) use ($schedule): void {
                     if ($task->command === 'custom') {
                         $event = $schedule->exec($task->command_custom ?? '');

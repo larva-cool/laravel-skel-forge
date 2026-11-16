@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-use App\Enums\ScheduleTaskStatus;
+use App\Enums\Monitor\ScheduleTaskStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 

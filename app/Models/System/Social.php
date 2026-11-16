@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace App\Models\System;
 
-use App\Enums\SocialProvider;
+use App\Enums\Auth\SocialProvider;
 use App\Models\Admin\Admin;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
