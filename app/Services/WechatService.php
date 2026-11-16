@@ -132,6 +132,18 @@ class WechatService
     }
 
     /**
+     * 获取全部关注用户 openid
+     *
+     * 自动遍历关注用户分页并去除重复 openid，接口失败或没有更多数据时停止。
+     *
+     * @return array<int, string> 关注用户 openid 列表
+     */
+    public function listAllFollowers(): array
+    {
+        return $this->collectOpenids(fn (?string $nextOpenid): array => $this->listFollowers($nextOpenid));
+    }
+
+    /**
      * 转换 openid（公众号 / 服务号迁移场景）
      *
      * 用于将原账号下关注用户 / 授权关系用户 / 卡券关联用户的 openid 转换为新账号下的 openid。
@@ -201,6 +213,18 @@ class WechatService
         $response['data'] = $response['data']['openid'] ?? [];
 
         return $response;
+    }
+
+    /**
+     * 获取黑名单中的全部用户 openid
+     *
+     * 自动遍历黑名单分页并去除重复 openid，接口失败或没有更多数据时停止。
+     *
+     * @return array<int, string> 黑名单用户 openid 列表
+     */
+    public function listAllBlacklist(): array
+    {
+        return $this->collectOpenids(fn (?string $nextOpenid): array => $this->getBlacklist($nextOpenid));
     }
 
     /**
@@ -316,6 +340,52 @@ class WechatService
         $response['data'] = $response['data']['openid'] ?? [];
 
         return $response;
+    }
+
+    /**
+     * 获取指定标签下的全部粉丝 openid
+     *
+     * 自动遍历标签粉丝分页并去除重复 openid，接口失败或没有更多数据时停止。
+     *
+     * @return array<int, string> 标签粉丝 openid 列表
+     */
+    public function listAllTagFans(int $tagId): array
+    {
+        return $this->collectOpenids(fn (?string $nextOpenid): array => $this->getTagFans($tagId, $nextOpenid));
+    }
+
+    /**
+     * 获取用户增减数据
+     *
+     * @param  string  $beginDate  起始日期，格式 yyyy-MM-dd
+     * @param  string  $endDate  结束日期，格式 yyyy-MM-dd，最大跨度 7 天
+     * @return array<int, array<string, mixed>> 用户增减数据列表，失败时返回空数组
+     */
+    public function getUserSummary(string $beginDate, string $endDate): array
+    {
+        $response = $this->call('postJson', 'datacube/getusersummary', [
+            'begin_date' => $beginDate,
+            'end_date' => $endDate,
+        ]);
+
+        return $response['list'] ?? [];
+    }
+
+    /**
+     * 获取累计用户数据
+     *
+     * @param  string  $beginDate  起始日期，格式 yyyy-MM-dd
+     * @param  string  $endDate  结束日期，格式 yyyy-MM-dd，最大跨度 7 天
+     * @return array<int, array<string, mixed>> 累计用户数据列表，失败时返回空数组
+     */
+    public function getUserCumulate(string $beginDate, string $endDate): array
+    {
+        $response = $this->call('postJson', 'datacube/getusercumulate', [
+            'begin_date' => $beginDate,
+            'end_date' => $endDate,
+        ]);
+
+        return $response['list'] ?? [];
     }
 
     /**
@@ -626,6 +696,39 @@ class WechatService
     public function getUtils(): Utils
     {
         return $this->getApp()->getUtils();
+    }
+
+    /**
+     * 自动收集分页接口中的 openid，并通过游标去重避免循环请求
+     *
+     * @param  callable(string|null): array<string, mixed>  $fetchPage  分页获取回调
+     * @return array<int, string> 去重后的 openid 列表
+     */
+    protected function collectOpenids(callable $fetchPage): array
+    {
+        $openids = [];
+        $nextOpenid = null;
+        $visitedOpenids = [];
+
+        while (true) {
+            $response = $fetchPage($nextOpenid);
+            $pageOpenids = $response['data'] ?? [];
+
+            if ($pageOpenids === []) {
+                break;
+            }
+
+            $openids = array_merge($openids, $pageOpenids);
+            $nextOpenid = (string) ($response['next_openid'] ?? '');
+
+            if ($nextOpenid === '' || isset($visitedOpenids[$nextOpenid])) {
+                break;
+            }
+
+            $visitedOpenids[$nextOpenid] = true;
+        }
+
+        return array_values(array_unique($openids));
     }
 
     /**

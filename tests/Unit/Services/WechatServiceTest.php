@@ -533,6 +533,96 @@ class WechatServiceTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('getUserSummary 提交日期范围并返回用户增减数据')]
+    public function get_user_summary_returns_user_changes(): void
+    {
+        $service = $this->fakeService([
+            'list' => [['ref_date' => '2026-11-15', 'user_source' => 0, 'new_user' => 8, 'cancel_user' => 2]],
+        ]);
+
+        $result = $service->getUserSummary('2026-11-09', '2026-11-15');
+
+        $this->assertSame(8, $result[0]['new_user']);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('datacube/getusersummary', $service->lastCall['uri']);
+        $this->assertSame([
+            'begin_date' => '2026-11-09',
+            'end_date' => '2026-11-15',
+        ], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('getUserCumulate 提交日期范围并返回累计用户数据')]
+    public function get_user_cumulate_returns_total_users(): void
+    {
+        $service = $this->fakeService([
+            'list' => [['ref_date' => '2026-11-15', 'cumulate_user' => 1024]],
+        ]);
+
+        $result = $service->getUserCumulate('2026-11-09', '2026-11-15');
+
+        $this->assertSame(1024, $result[0]['cumulate_user']);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('datacube/getusercumulate', $service->lastCall['uri']);
+        $this->assertSame([
+            'begin_date' => '2026-11-09',
+            'end_date' => '2026-11-15',
+        ], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('listAllFollowers 自动遍历分页、去重并防止重复游标循环')]
+    public function list_all_followers_collects_pages_and_stops_on_repeated_cursor(): void
+    {
+        $service = $this->fakeService();
+        $service->callQueue = [
+            ['data' => ['openid' => ['o_1', 'o_2']], 'next_openid' => 'o_2'],
+            ['data' => ['openid' => ['o_2', 'o_3']], 'next_openid' => 'o_2'],
+        ];
+
+        $this->assertSame(['o_1', 'o_2', 'o_3'], $service->listAllFollowers());
+        $this->assertSame([
+            [],
+            ['next_openid' => 'o_2'],
+        ], array_column($service->calls, 'params'));
+        $this->assertCount(2, $service->calls);
+    }
+
+    #[Test]
+    #[TestDox('listAllBlacklist 自动遍历黑名单分页并去重')]
+    public function list_all_blacklist_collects_all_pages(): void
+    {
+        $service = $this->fakeService();
+        $service->callQueue = [
+            ['data' => ['openid' => ['o_1', 'o_2']], 'next_openid' => 'o_2'],
+            ['data' => ['openid' => ['o_2', 'o_3']], 'next_openid' => ''],
+        ];
+
+        $this->assertSame(['o_1', 'o_2', 'o_3'], $service->listAllBlacklist());
+        $this->assertSame([
+            ['begin_openid' => ''],
+            ['begin_openid' => 'o_2'],
+        ], array_column($service->calls, 'params'));
+    }
+
+    #[Test]
+    #[TestDox('listAllTagFans 自动遍历标签粉丝分页并保留 tagid')]
+    public function list_all_tag_fans_collects_all_pages(): void
+    {
+        $service = $this->fakeService();
+        $service->callQueue = [
+            ['data' => ['openid' => ['o_1']], 'next_openid' => 'o_1'],
+            ['data' => ['openid' => ['o_2']], 'next_openid' => ''],
+        ];
+
+        $this->assertSame(['o_1', 'o_2'], $service->listAllTagFans(101));
+        $this->assertSame([
+            ['tagid' => 101, 'next_openid' => ''],
+            ['tagid' => 101, 'next_openid' => 'o_1'],
+        ], array_column($service->calls, 'params'));
+    }
+
+    #[Test]
     #[TestDox('uploadTemporaryMedia 以 multipart 上传 media 文件并携带素材类型')]
     public function upload_temporary_media_builds_multipart_request(): void
     {
@@ -707,6 +797,20 @@ class FakeWechatService extends WechatService
     public array $lastCall = [];
 
     /**
+     * 全部接口调用记录
+     *
+     * @var array<int, array{method: string, uri: string, params: array<string, mixed>}>
+     */
+    public array $calls = [];
+
+    /**
+     * 按顺序返回的接口桩响应队列
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $callQueue = [];
+
+    /**
      * 下载接口桩响应
      *
      * @var array<string, mixed>|string
@@ -727,6 +831,11 @@ class FakeWechatService extends WechatService
     protected function call(string $method, string $uri, array $params = []): array
     {
         $this->lastCall = compact('method', 'uri', 'params');
+        $this->calls[] = $this->lastCall;
+
+        if ($this->callQueue !== []) {
+            return array_shift($this->callQueue);
+        }
 
         return $this->stubResponse;
     }
