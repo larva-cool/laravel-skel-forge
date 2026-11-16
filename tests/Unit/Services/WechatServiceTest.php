@@ -782,6 +782,95 @@ class WechatServiceTest extends TestCase
             'count' => 20,
         ], $service->lastCall['params']);
     }
+
+    #[Test]
+    #[TestDox('addDraft 提交文章列表并返回草稿 media_id')]
+    public function add_draft_submits_articles(): void
+    {
+        $service = $this->fakeService(['media_id' => 'draft_1']);
+
+        $result = $service->addDraft([2 => ['title' => '草稿标题', 'content' => '草稿内容']]);
+
+        $this->assertSame('draft_1', $result['media_id']);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/draft/add', $service->lastCall['uri']);
+        $this->assertSame([
+            ['title' => '草稿标题', 'content' => '草稿内容'],
+        ], $service->lastCall['params']['articles']);
+    }
+
+    #[Test]
+    #[TestDox('getDraft 提交 media_id 并返回草稿详情')]
+    public function get_draft_returns_news_items(): void
+    {
+        $service = $this->fakeService(['news_item' => [['title' => '草稿标题', 'url' => 'https://example.test/draft']]]);
+
+        $result = $service->getDraft('draft_1');
+
+        $this->assertSame('草稿标题', $result['news_item'][0]['title']);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/draft/get', $service->lastCall['uri']);
+        $this->assertSame(['media_id' => 'draft_1'], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('updateDraft 提交草稿位置与文章内容')]
+    public function update_draft_submits_article_and_index(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+        $article = ['article_type' => 'news', 'title' => '更新草稿', 'content' => '更新内容'];
+
+        $this->assertTrue($service->updateDraft('draft_1', 1, $article));
+        $this->assertSame('cgi-bin/draft/update', $service->lastCall['uri']);
+        $this->assertSame([
+            'media_id' => 'draft_1',
+            'index' => 1,
+            'articles' => $article,
+        ], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('deleteDraft 提交待删除草稿 media_id')]
+    public function delete_draft_submits_media_id(): void
+    {
+        $service = $this->fakeService(['errcode' => 0]);
+
+        $this->assertTrue($service->deleteDraft('draft_1'));
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/draft/delete', $service->lastCall['uri']);
+        $this->assertSame(['media_id' => 'draft_1'], $service->lastCall['params']);
+    }
+
+    #[Test]
+    #[TestDox('getDraftCount 返回草稿总数')]
+    public function get_draft_count_returns_total(): void
+    {
+        $service = $this->fakeService(['total_count' => 12]);
+
+        $result = $service->getDraftCount();
+
+        $this->assertSame(12, $result['total_count']);
+        $this->assertSame('get', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/draft/count', $service->lastCall['uri']);
+    }
+
+    #[Test]
+    #[TestDox('listDrafts 修正分页范围并提交 no_content')]
+    public function list_drafts_normalizes_pagination_and_content_flag(): void
+    {
+        $service = $this->fakeService(['total_count' => 1, 'item_count' => 1, 'item' => [['media_id' => 'draft_1']]]);
+
+        $result = $service->listDrafts(-1, 21, true);
+
+        $this->assertSame('draft_1', $result['item'][0]['media_id']);
+        $this->assertSame('postJson', $service->lastCall['method']);
+        $this->assertSame('cgi-bin/draft/batchget', $service->lastCall['uri']);
+        $this->assertSame([
+            'offset' => 0,
+            'count' => 20,
+            'no_content' => 1,
+        ], $service->lastCall['params']);
+    }
 }
 
 /**

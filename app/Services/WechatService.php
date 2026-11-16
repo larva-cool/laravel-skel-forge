@@ -517,6 +517,85 @@ class WechatService
     }
 
     /**
+     * 新增草稿
+     *
+     * @param  array<int, array<string, mixed>>  $articles  图文或图片消息列表
+     * @return array<string, mixed> 含 media_id 的新增结果，失败时返回含 errcode 的数组
+     */
+    public function addDraft(array $articles): array
+    {
+        return $this->call('postJson', 'cgi-bin/draft/add', [
+            'articles' => array_values($articles),
+        ]);
+    }
+
+    /**
+     * 获取草稿详情
+     *
+     * @param  string  $mediaId  草稿 media_id
+     * @return array<string, mixed> 含 news_item 的草稿详情，失败时返回含 errcode 的数组
+     */
+    public function getDraft(string $mediaId): array
+    {
+        return $this->call('postJson', 'cgi-bin/draft/get', ['media_id' => $mediaId]);
+    }
+
+    /**
+     * 更新草稿中的指定文章
+     *
+     * @param  string  $mediaId  草稿 media_id
+     * @param  int  $index  要更新的文章位置，从 0 开始
+     * @param  array<string, mixed>  $article  图文或图片消息内容
+     */
+    public function updateDraft(string $mediaId, int $index, array $article): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/draft/update', [
+            'media_id' => $mediaId,
+            'index' => $index,
+            'articles' => $article,
+        ]));
+    }
+
+    /**
+     * 删除草稿
+     *
+     * @param  string  $mediaId  草稿 media_id
+     */
+    public function deleteDraft(string $mediaId): bool
+    {
+        return $this->isSuccessful($this->call('postJson', 'cgi-bin/draft/delete', [
+            'media_id' => $mediaId,
+        ]));
+    }
+
+    /**
+     * 获取草稿总数
+     *
+     * @return array<string, mixed> 含 total_count 的统计结果，失败时返回含 errcode 的数组
+     */
+    public function getDraftCount(): array
+    {
+        return $this->call('get', 'cgi-bin/draft/count');
+    }
+
+    /**
+     * 分页获取草稿列表
+     *
+     * @param  int  $offset  起始位置，从 0 开始
+     * @param  int  $count  获取数量，1-20，超出范围时自动修正
+     * @param  bool  $noContent  是否不返回 content 字段
+     * @return array<string, mixed> 含 total_count / item_count / item 的列表，失败时返回含 errcode 的数组
+     */
+    public function listDrafts(int $offset = 0, int $count = 20, bool $noContent = false): array
+    {
+        return $this->call('postJson', 'cgi-bin/draft/batchget', [
+            'offset' => max(0, $offset),
+            'count' => min(20, max(1, $count)),
+            'no_content' => $noContent ? 1 : 0,
+        ]);
+    }
+
+    /**
      * 发送模板消息
      *
      * @param  array<string, mixed>  $params  模板消息参数
