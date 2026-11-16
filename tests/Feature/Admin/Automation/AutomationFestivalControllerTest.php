@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Admin\Automation;
 
 use App\Enums\FestivalDateType;
-use App\Http\Controllers\Admin\AutomationFestivalController;
+use App\Http\Controllers\Admin\Automation\AutomationFestivalController;
 use App\Models\Admin\Admin;
 use App\Models\Automation\AutomationFestival;
 use Illuminate\Foundation\Testing\RefreshDatabase;

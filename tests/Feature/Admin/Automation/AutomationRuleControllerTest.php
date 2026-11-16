@@ -9,7 +9,7 @@ namespace Tests\Feature\Admin\Automation;
 
 use App\Enums\AutomationRewardType;
 use App\Enums\AutomationTriggerType;
-use App\Http\Controllers\Admin\AutomationRuleController;
+use App\Http\Controllers\Admin\Automation\AutomationRuleController;
 use App\Models\Admin\Admin;
 use App\Models\Automation\AutomationFestival;
 use App\Models\Automation\AutomationRule;

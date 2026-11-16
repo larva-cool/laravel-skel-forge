@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Admin\Automation;
 
 use App\Enums\AutomationLogStatus;
-use App\Http\Controllers\Admin\AutomationLogController;
+use App\Http\Controllers\Admin\Automation\AutomationLogController;
 use App\Models\Admin\Admin;
 use App\Models\Automation\AutomationLog;
 use App\Models\Automation\AutomationRule;

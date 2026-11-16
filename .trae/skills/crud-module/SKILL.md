@@ -9,7 +9,7 @@ Create one admin CRUD module end to end across `laravel-skel-forge` (Laravel 13 
 
 ## Before writing
 
-1. Read one existing module at every layer to copy structure exactly. Default reference: Announcement (`app/Models/Operation/Announcement.php`, `app/Http/Controllers/Admin/AnnouncementController.php`, `src/views/operation/announcement/`).
+1. Read one existing module at every layer to copy structure exactly. Default reference: Announcement (`app/Models/Operation/Announcement.php`, `app/Http/Controllers/Admin/Operation/AnnouncementController.php`, `src/views/operation/announcement/`).
 2. Confirm the entity name (singular, PascalCase) and domain folder (e.g. `Operation`, `System`, `User`, `Wallet`).
 3. Use `php artisan make:* --no-interaction` for new files; never hand-write migration/controller headers when a generator exists.
 
@@ -36,7 +36,8 @@ Create in this order:
    - Expose enum `value` plus `label()` (and `labelType()` if applicable).
    - Use `$this->when($request->routeIs('admin.{entity}.show'), ...)` to include heavy fields only in detail responses.
    - Format dates via `?->toDateTimeString()`.
-6. **Controller** in `app/Http/Controllers/Admin/{Entity}Controller.php` (flat directory):
+6. **Controller** in `app/Http/Controllers/Admin/{Domain}/{Entity}Controller.php` (module directory):
+   - Namespace is `App\Http\Controllers\Admin\{Domain}`; explicitly import and extend `App\Http\Controllers\Admin\Controller`.
    - Constructor: `$this->middleware('auth:admin')` + per-action `permission:{entities}.index/create/edit/delete` middleware.
    - Inject FormRequest for write operations; use bare `Request` or `{Entity}IndexRequest` for simple reads.
    - Returns `Resource` (single), `Resource::collection` (list/paginate), or `JsonResponse` (204 for delete).
@@ -51,7 +52,7 @@ Create in this order:
    - Menu item fields: `key`, `path`, `name`, `component` (points to frontend `src/views/...`), `title`, `icon`, `type` (`MenuType::MENU`), `sort`, `permission`, `buttons` array.
    - Each button: `['title' => '新增{entity}', 'permission' => '{entities}.create']`.
    - Permissions auto-sync to `super_admin` role at the end of `up()`.
-9. **Tests** in `tests/Feature/Admin/{Entity}ControllerTest.php`:
+9. **Tests** in `tests/Feature/Admin/{Domain}/{Entity}ControllerTest.php` with namespace `Tests\Feature\Admin\{Domain}`:
    - PHPUnit 12 attributes: `#[CoversClass({Entity}Controller::class)]`, `#[Group('admin')]`, `#[Group('{entity}')]` at class level.
    - `#[Test]` + `#[TestDox('描述')]` on every method; method names in `snake_case`.
    - `use RefreshDatabase`; extends `Tests\TestCase`.
@@ -92,7 +93,7 @@ Create in this order:
 ## Verification (run all, in order)
 
 1. `vendor/bin/pint --dirty --format agent` in laravel-skel-forge.
-2. `php artisan test --compact tests/Feature/Admin/{Entity}ControllerTest.php` plus related service tests.
+2. `php artisan test --compact tests/Feature/Admin/{Domain}/{Entity}ControllerTest.php` plus related service tests.
 3. `php artisan migrate --no-interaction` when migrations changed; verify seeded menu/permissions via `php artisan tinker --execute 'AdminMenu::query()->where("permission","{entities}.index")->exists();'`.
 4. In laravel-skel-admin: `pnpm build` (vue-tsc type check must pass).
 5. Run the automation workflow: publish new API endpoints to Apifox, update README.md, update PRD docs.

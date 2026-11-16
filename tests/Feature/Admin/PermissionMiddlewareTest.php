@@ -101,15 +101,15 @@ class PermissionMiddlewareTest extends TestCase
     public function permission_middleware_is_attached_to_admin_controllers(): void
     {
         $controllers = [
-            \App\Http\Controllers\Admin\UserController::class,
-            \App\Http\Controllers\Admin\AdminController::class,
-            \App\Http\Controllers\Admin\RoleController::class,
-            \App\Http\Controllers\Admin\MenuController::class,
-            \App\Http\Controllers\Admin\SettingController::class,
-            \App\Http\Controllers\Admin\AreaController::class,
-            \App\Http\Controllers\Admin\PhoneCodeController::class,
-            \App\Http\Controllers\Admin\MailCodeController::class,
-            \App\Http\Controllers\Admin\MonitorController::class,
+            \App\Http\Controllers\Admin\User\UserController::class,
+            \App\Http\Controllers\Admin\System\AdminController::class,
+            \App\Http\Controllers\Admin\System\RoleController::class,
+            \App\Http\Controllers\Admin\System\MenuController::class,
+            \App\Http\Controllers\Admin\System\SettingController::class,
+            \App\Http\Controllers\Admin\System\AreaController::class,
+            \App\Http\Controllers\Admin\System\PhoneCodeController::class,
+            \App\Http\Controllers\Admin\System\MailCodeController::class,
+            \App\Http\Controllers\Admin\Monitor\MonitorController::class,
         ];
 
         foreach ($controllers as $controller) {

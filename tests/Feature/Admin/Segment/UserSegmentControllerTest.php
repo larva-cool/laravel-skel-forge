@@ -24,7 +24,7 @@ use Tests\TestCase;
  *
  * 覆盖 14 个端点的核心路径 + 鉴权。
  */
-#[CoversClass(\App\Http\Controllers\Admin\UserSegmentController::class)]
+#[CoversClass(\App\Http\Controllers\Admin\Segment\UserSegmentController::class)]
 #[Group('admin')]
 #[Group('segment')]
 class UserSegmentControllerTest extends TestCase

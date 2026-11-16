@@ -9,11 +9,11 @@ namespace Tests\Feature\Admin;
 
 use App\Ai\Agents\ContentReviewer;
 use App\Ai\Agents\Copywriter;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\BannerController;
-use App\Http\Controllers\Admin\CommentController;
-use App\Http\Controllers\Admin\FeedbackController;
-use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\Content\CommentController;
+use App\Http\Controllers\Admin\Content\ReportController;
+use App\Http\Controllers\Admin\Operation\AnnouncementController;
+use App\Http\Controllers\Admin\Operation\BannerController;
+use App\Http\Controllers\Admin\Operation\FeedbackController;
 use App\Models\Admin\Admin;
 use App\Models\Content\Comment;
 use App\Models\System\SensitiveWord;

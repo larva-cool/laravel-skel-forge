@@ -20,7 +20,7 @@ use Tests\TestCase;
 /**
  * 用户列表 segment_ids 筛选测试（AND 语义）
  */
-#[CoversClass(\App\Http\Controllers\Admin\UserController::class)]
+#[CoversClass(\App\Http\Controllers\Admin\User\UserController::class)]
 #[Group('admin')]
 #[Group('segment')]
 class UserSegmentFilterTest extends TestCase
