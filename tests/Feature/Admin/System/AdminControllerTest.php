@@ -330,10 +330,13 @@ class AdminControllerTest extends TestCase
             'password' => Hash::make('Password123!'),
             'status' => 1,
         ]);
+        $target->createToken('device1', ['admin']);
+        $target->createToken('device2', ['admin']);
 
         $response = $this->actingAsAdmin()->putJson("/admin/admins/{$target->id}/toggle-status");
         $response->assertOk();
         $this->assertTrue($target->fresh()->status->value === 0);
+        $this->assertSame(0, $target->tokens()->count());
 
         $response = $this->actingAsAdmin()->putJson("/admin/admins/{$target->id}/toggle-status");
         $this->assertTrue($target->fresh()->status->value === 1);

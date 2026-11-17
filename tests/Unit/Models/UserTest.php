@@ -305,16 +305,19 @@ class UserTest extends TestCase
     }
 
     /**
-     * 测试 markFrozen 将用户标记为冻结
+     * 测试 markFrozen 将用户标记为冻结并撤销 Token
      */
     #[Test]
-    #[TestDox('markFrozen 将用户状态改为冻结')]
+    #[TestDox('markFrozen 将用户状态改为冻结并撤销 Token')]
     public function mark_frozen_sets_status_to_frozen(): void
     {
         $user = User::factory()->create();
+        $user->createToken('device1', ['user']);
+        $user->createToken('device2', ['user']);
 
         $this->assertTrue($user->markFrozen());
         $this->assertSame(UserStatus::FROZEN, $user->fresh()->status);
+        $this->assertSame(0, $user->tokens()->count());
     }
 
     /**

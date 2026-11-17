@@ -423,7 +423,7 @@ class User extends Authenticatable implements IdentityVerifiable, MustVerifyEmai
      */
     public function markFrozen(): bool
     {
-        return $this->updateQuietly(['status' => UserStatus::FROZEN]);
+        return $this->update(['status' => UserStatus::FROZEN]);
     }
 
     /**

@@ -9,7 +9,6 @@ namespace App\Services;
 
 use App\Enums\Content\ReportStatus;
 use App\Enums\Content\ReviewStatus;
-use App\Enums\User\UserStatus;
 use App\Models\Admin\Admin;
 use App\Models\Content\Comment;
 use App\Models\Content\Report;
@@ -154,9 +153,7 @@ class ReportService
             return;
         }
 
-        $user->forceFill([
-            'status' => UserStatus::FROZEN,
-        ])->saveQuietly();
+        $user->markFrozen();
     }
 
     /**

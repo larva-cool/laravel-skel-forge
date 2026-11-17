@@ -35,7 +35,9 @@ class UserObserver
      */
     public function updated(User $user): void
     {
-        //
+        if ($user->wasChanged('status') && $user->status->isFrozen()) {
+            $user->tokens()->delete();
+        }
     }
 
     /**

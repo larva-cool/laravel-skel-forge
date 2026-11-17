@@ -211,7 +211,7 @@ class AuthControllerTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('冻结用户刷新令牌返回 422')]
+    #[TestDox('冻结用户的旧刷新令牌返回 401')]
     public function frozen_user_cannot_refresh_token(): void
     {
         $loginResponse = $this->postJson('/api/v1/auth/login', [
@@ -226,8 +226,7 @@ class AuthControllerTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/auth/refresh-token');
 
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['account']);
+        $response->assertUnauthorized();
     }
 
     #[Test]

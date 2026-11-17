@@ -127,11 +127,14 @@ class UserControllerTest extends TestCase
     public function admin_can_toggle_user_status(): void
     {
         $user = User::factory()->create();
+        $user->createToken('device1', ['user']);
+        $user->createToken('device2', ['user']);
 
         // 切换为冻结
         $response = $this->actingAsAdmin()->putJson("/admin/users/{$user->id}/toggle-status");
         $response->assertOk()
             ->assertJsonPath('status.value', 0);
+        $this->assertSame(0, $user->tokens()->count());
 
         // 切换回正常
         $response = $this->actingAsAdmin()->putJson("/admin/users/{$user->id}/toggle-status");

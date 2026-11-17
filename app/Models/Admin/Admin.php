@@ -11,9 +11,11 @@ use App\Enums\System\AdminStatus;
 use App\Models\System\LoginHistory;
 use App\Models\System\Social;
 use App\Models\Traits\DateTimeFormatter;
+use App\Observers\AdminObserver;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -58,6 +60,7 @@ use Spatie\Permission\Traits\HasRoles;
 #[Table('admin_users')]
 #[Fillable(['username', 'email', 'phone', 'name', 'avatar', 'status', 'password', 'login_count', 'last_login_ip', 'last_login_at', 'last_active_at'])]
 #[Hidden(['password', 'remember_token'])]
+#[ObservedBy([AdminObserver::class])]
 class Admin extends Authenticatable
 {
     use DateTimeFormatter;
