@@ -17,7 +17,9 @@ use App\Models\Task\TaskLog;
 use App\Models\Task\TaskProgress;
 use App\Models\User;
 use App\Services\TaskService;
-use Illuminate\Database\Events\QueryExecuted;
+use Closure;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\Grammars\SQLiteGrammar;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -237,14 +239,9 @@ class TaskServiceTest extends TestCase
             'status' => TaskProgressStatus::IN_PROGRESS,
         ]);
 
-        $lockTransactionLevels = [];
-        DB::listen(function (QueryExecuted $query) use (&$lockTransactionLevels): void {
-            if (str_contains($query->sql, 'task_progress') && str_contains(strtolower($query->sql), 'for update')) {
-                $lockTransactionLevels[] = $query->connection->transactionLevel();
-            }
-        });
-
-        $this->taskService->updateProfileCompleteness($this->user, 75);
+        [, $lockTransactionLevels] = $this->captureProgressLocks(
+            fn () => $this->taskService->updateProfileCompleteness($this->user, 75)
+        );
 
         $this->assertNotEmpty($lockTransactionLevels);
         $this->assertNotContains(0, $lockTransactionLevels);
@@ -264,14 +261,9 @@ class TaskServiceTest extends TestCase
             'completed_at' => now(),
         ]);
 
-        $lockTransactionLevels = [];
-        DB::listen(function (QueryExecuted $query) use (&$lockTransactionLevels): void {
-            if (str_contains($query->sql, 'task_progress') && str_contains(strtolower($query->sql), 'for update')) {
-                $lockTransactionLevels[] = $query->connection->transactionLevel();
-            }
-        });
-
-        $claimed = $this->taskService->claimReward($this->user, $this->completeProfileTask->id);
+        [$claimed, $lockTransactionLevels] = $this->captureProgressLocks(
+            fn () => $this->taskService->claimReward($this->user, $this->completeProfileTask->id)
+        );
         $duplicate = $this->taskService->claimReward($this->user, $this->completeProfileTask->id);
 
         $this->assertNotNull($claimed);
@@ -326,5 +318,42 @@ class TaskServiceTest extends TestCase
         $results = $this->taskService->updateProfileCompleteness($this->user, 100);
         $this->assertCount(0, $results);
         $this->assertDatabaseCount('task_progress', 0);
+    }
+
+    /**
+     * 捕获 SQLite 会忽略的进度行锁，并记录锁查询所处的事务层级。
+     *
+     * @return array{0: mixed, 1: array<int, int>}
+     */
+    private function captureProgressLocks(Closure $callback): array
+    {
+        $connection = DB::connection();
+        $originalGrammar = $connection->getQueryGrammar();
+        $grammar = new class($connection) extends SQLiteGrammar
+        {
+            /** @var array<int, int> */
+            public array $progressLockTransactionLevels = [];
+
+            /**
+             * @param  bool|string  $value
+             */
+            protected function compileLock(Builder $query, $value)
+            {
+                if ($query->from === 'task_progress' && $value === true) {
+                    $this->progressLockTransactionLevels[] = $this->connection->transactionLevel();
+                }
+
+                return '';
+            }
+        };
+        $connection->setQueryGrammar($grammar);
+
+        try {
+            $result = $callback();
+        } finally {
+            $connection->setQueryGrammar($originalGrammar);
+        }
+
+        return [$result, $grammar->progressLockTransactionLevels];
     }
 }
