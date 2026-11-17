@@ -56,9 +56,9 @@ class WechatMpLoginRequest extends FormRequest
             Log::warning('登录失败，该用户未注册：'.$wUser->getId());
             validation_exception('code', trans('auth.account_does_not_exist'));
         }
-        if ($social->user->status->isFrozen()) {// 禁止掉的用户不允许登录
+        if ($social->user->status->isDisabled()) {// 被禁用的管理员不允许登录
             $social->user->tokens()->delete();
-            validation_exception('code', trans('user.blocked'));
+            validation_exception('code', trans('admin.blocked'));
         }
         $social->updateCredentials($wUser);
 

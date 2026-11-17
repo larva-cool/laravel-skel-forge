@@ -7,15 +7,20 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\Enums\Task\TaskClaimMode;
 use App\Enums\Task\TaskProgressStatus;
 use App\Enums\Task\TaskRewardType;
 use App\Enums\User\Gender;
 use App\Models\Task\Task;
 use App\Models\Task\TaskGroup;
+use App\Models\Task\TaskLog;
 use App\Models\Task\TaskProgress;
 use App\Models\User;
 use App\Services\TaskService;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -218,6 +223,81 @@ class TaskServiceTest extends TestCase
         // 金币只加了一次（50 而非 100）
         $this->user->refresh();
         $this->assertSame(50, $this->user->available_coins);
+    }
+
+    #[Test]
+    #[TestDox('更新已有进度时在事务内锁定进度行')]
+    public function update_progress_locks_existing_row_inside_transaction(): void
+    {
+        TaskProgress::create([
+            'user_id' => $this->user->id,
+            'task_id' => $this->completeProfileTask->id,
+            'period_key' => 'all',
+            'current_value' => 50,
+            'status' => TaskProgressStatus::IN_PROGRESS,
+        ]);
+
+        $lockTransactionLevels = [];
+        DB::listen(function (QueryExecuted $query) use (&$lockTransactionLevels): void {
+            if (str_contains($query->sql, 'task_progress') && str_contains(strtolower($query->sql), 'for update')) {
+                $lockTransactionLevels[] = $query->connection->transactionLevel();
+            }
+        });
+
+        $this->taskService->updateProfileCompleteness($this->user, 75);
+
+        $this->assertNotEmpty($lockTransactionLevels);
+        $this->assertNotContains(0, $lockTransactionLevels);
+    }
+
+    #[Test]
+    #[TestDox('手动领奖在事务内锁定进度且重复领取不会重复发奖')]
+    public function claim_reward_locks_progress_and_only_grants_once(): void
+    {
+        $this->completeProfileTask->update(['claim_mode' => TaskClaimMode::MANUAL]);
+        TaskProgress::create([
+            'user_id' => $this->user->id,
+            'task_id' => $this->completeProfileTask->id,
+            'period_key' => 'all',
+            'current_value' => 100,
+            'status' => TaskProgressStatus::COMPLETED,
+            'completed_at' => now(),
+        ]);
+
+        $lockTransactionLevels = [];
+        DB::listen(function (QueryExecuted $query) use (&$lockTransactionLevels): void {
+            if (str_contains($query->sql, 'task_progress') && str_contains(strtolower($query->sql), 'for update')) {
+                $lockTransactionLevels[] = $query->connection->transactionLevel();
+            }
+        });
+
+        $claimed = $this->taskService->claimReward($this->user, $this->completeProfileTask->id);
+        $duplicate = $this->taskService->claimReward($this->user, $this->completeProfileTask->id);
+
+        $this->assertNotNull($claimed);
+        $this->assertSame(TaskProgressStatus::REWARDED, $claimed->status);
+        $this->assertNull($duplicate);
+        $this->assertNotEmpty($lockTransactionLevels);
+        $this->assertNotContains(0, $lockTransactionLevels);
+        $this->assertDatabaseCount('task_logs', 1);
+        $this->assertSame(50, $this->user->fresh()->available_coins);
+    }
+
+    #[Test]
+    #[TestDox('同一用户任务周期只允许写入一条奖励日志')]
+    public function task_logs_are_unique_per_user_task_and_period(): void
+    {
+        $log = [
+            'user_id' => $this->user->id,
+            'task_id' => $this->completeProfileTask->id,
+            'period_key' => 'all',
+            'reward_type' => TaskRewardType::COIN,
+            'reward_amount' => 50,
+        ];
+        TaskLog::create($log);
+
+        $this->expectException(UniqueConstraintViolationException::class);
+        TaskLog::create($log);
     }
 
     #[Test]

@@ -63,9 +63,9 @@ class AppleLoginRequest extends FormRequest
         if (! $social || ! $social->user) {
             validation_exception('phone', trans('auth.account_does_not_exist'));
         }
-        if ($social->user->stats->isFrozen()) {// 禁止掉的用户不允许登录
+        if ($social->user->status->isDisabled()) {// 被禁用的管理员不允许登录
             $social->user->tokens()->delete();
-            validation_exception('account', trans('user.blocked'));
+            validation_exception('account', trans('admin.blocked'));
         }
 
         return $social->user;
