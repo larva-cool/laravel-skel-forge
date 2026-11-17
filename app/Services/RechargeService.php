@@ -156,18 +156,37 @@ class RechargeService
      */
     public function close(Recharge $order, ?string $remark = null): Recharge
     {
-        if ($order->pay_status->isFinal()) {
-            throw ValidationException::withMessages([
-                'order' => "订单当前状态为「{$order->pay_status->label()}」，不可关闭",
-            ]);
-        }
+        $conn = Recharge::query()->getConnection();
 
-        $order->fill([
-            'pay_status' => RechargeStatus::CLOSED,
-            'remark' => $remark ?? $order->remark,
-        ])->save();
+        return $conn->transaction(function () use ($order, $remark) {
+            /** @var Recharge|null $locked */
+            $locked = Recharge::query()->where('id', $order->id)->lockForUpdate()->first();
 
-        return $order->refresh();
+            if (! $locked) {
+                throw ValidationException::withMessages(['order' => '充值订单不存在']);
+            }
+
+            if ($locked->pay_status->isFinal()) {
+                throw ValidationException::withMessages([
+                    'order' => "订单当前状态为「{$locked->pay_status->label()}」，不可关闭",
+                ]);
+            }
+
+            $updated = Recharge::query()
+                ->where('id', $locked->id)
+                ->where('pay_status', RechargeStatus::PENDING->value)
+                ->update([
+                    'pay_status' => RechargeStatus::CLOSED->value,
+                    'remark' => $remark ?? $locked->remark,
+                    'updated_at' => Carbon::now(),
+                ]);
+
+            if ($updated !== 1) {
+                throw ValidationException::withMessages(['order' => '订单状态已变更，请刷新后重试']);
+            }
+
+            return $locked->refresh();
+        });
     }
 
     /**

@@ -250,14 +250,21 @@ class RechargeServiceTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('关闭订单：已到账订单不可关闭')]
+    #[TestDox('关闭订单：旧待支付模型不能覆盖已到账订单')]
     public function close_rejects_paid_order(): void
     {
         $order = $this->service->create($this->user, 100, PayChannel::MANUAL);
         $this->service->confirmManually($order, $this->admin);
 
-        $this->expectException(ValidationException::class);
-        $this->service->close($order->fresh());
+        try {
+            // $order 仍是待支付旧模型，模拟关闭请求在到账前已完成路由绑定
+            $this->service->close($order);
+            $this->fail('已到账订单应拒绝关闭');
+        } catch (ValidationException) {
+            $this->assertSame(RechargeStatus::SUCCESS, $order->fresh()->pay_status);
+            $this->assertSame('100.00', $this->user->fresh()->balance);
+            $this->assertSame(1, $this->user->walletTrades()->count());
+        }
     }
 
     #[Test]
