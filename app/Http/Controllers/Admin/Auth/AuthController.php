@@ -13,7 +13,6 @@ use App\Http\Requests\Admin\Auth\PasswordLoginRequest;
 use App\Http\Requests\Admin\Auth\WechatMpLoginRequest;
 use App\Http\Resources\Admin\AdminInfoResource;
 use App\Http\Resources\Api\V1\TokenResource;
-use App\Http\Resources\Api\V1\UserInfoResource;
 use App\Jobs\User\DeleteAccessTokenJob;
 use App\Models\Admin\Admin;
 use App\Models\Admin\AdminMenu;
@@ -94,9 +93,9 @@ class AuthController extends Controller
     public function refreshToken(Request $request): JsonResponse
     {
         $tokenModel = $request->user()->currentAccessToken();
-        if ($request->user()->status->isFrozen()) {// 禁止掉的用户不允许登录
+        if ($request->user()->status->isDisabled()) {// 被禁用的管理员不允许刷新令牌
             $request->user()->tokens()->delete();
-            validation_exception('account', __('auth.blocked'));
+            validation_exception('account', __('admin.blocked'));
         }
         $token = $request->user()->createToken($tokenModel->name, $tokenModel->abilities, Carbon::now()->addMinutes(1440));
         // 一分钟后删除当前这个Token
@@ -105,7 +104,7 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token->plainTextToken,
             'expires_in' => (int) $token->accessToken->expires_at?->diffInSeconds(Carbon::now()),
-            'user' => new UserInfoResource($request->user()),
+            'user' => new AdminInfoResource($request->user()),
         ]);
     }
 

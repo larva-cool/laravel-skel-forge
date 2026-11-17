@@ -238,24 +238,29 @@ class TaskService
      */
     public function claimReward(User $user, int $taskId, string $periodKey = 'all'): ?TaskProgress
     {
-        $progress = $this->getProgressWithLock($user->id, $taskId, $periodKey);
-        if (! $progress || $progress->status !== TaskProgressStatus::COMPLETED) {
-            return null;
-        }
-
-        $task = $progress->task;
-        if (! $task) {
-            return null;
-        }
-
         try {
-            DB::transaction(function () use ($progress, $task, $user) {
+            $progress = DB::transaction(function () use ($user, $taskId, $periodKey) {
+                $progress = $this->getProgressWithLock($user->id, $taskId, $periodKey);
+                if (! $progress || $progress->status !== TaskProgressStatus::COMPLETED) {
+                    return null;
+                }
+
+                $task = $progress->task;
+                if (! $task) {
+                    return null;
+                }
+
                 $this->grantReward($user, $task, $progress);
+
+                return $progress;
             });
 
-            return $progress->fresh();
+            return $progress?->fresh();
         } catch (UniqueConstraintViolationException) {
-            return $progress->fresh();
+            return TaskProgress::where('user_id', $user->id)
+                ->where('task_id', $taskId)
+                ->where('period_key', $periodKey)
+                ->first();
         }
     }
 
@@ -393,6 +398,7 @@ class TaskService
         $progress = TaskProgress::where('user_id', $userId)
             ->where('task_id', $taskId)
             ->where('period_key', $periodKey)
+            ->lockForUpdate()
             ->first();
 
         if ($progress) {
@@ -411,6 +417,7 @@ class TaskService
             return TaskProgress::where('user_id', $userId)
                 ->where('task_id', $taskId)
                 ->where('period_key', $periodKey)
+                ->lockForUpdate()
                 ->first();
         }
     }

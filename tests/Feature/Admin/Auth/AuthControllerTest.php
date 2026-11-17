@@ -105,6 +105,58 @@ class AuthControllerTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('刷新令牌返回的用户结构与登录一致（AdminInfoResource）')]
+    public function refresh_token_returns_same_user_structure_as_login(): void
+    {
+        $loginResponse = $this->postJson('/admin/auth/login', [
+            'account' => 'admin',
+            'password' => $this->adminPassword,
+        ])->assertOk();
+
+        $token = $loginResponse->json('access_token');
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/admin/auth/refresh-token');
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'access_token',
+                'user' => ['user_id', 'user_name', 'email', 'avatar', 'roles', 'buttons'],
+            ])
+            ->assertJsonPath('user.user_id', $loginResponse->json('user.user_id'))
+            ->assertJsonMissingPath('user.phone');
+    }
+
+    #[Test]
+    #[TestDox('未登录时刷新令牌返回 401')]
+    public function guest_cannot_refresh_token(): void
+    {
+        $this->postJson('/admin/auth/refresh-token')->assertUnauthorized();
+    }
+
+    #[Test]
+    #[TestDox('被禁用的管理员刷新令牌返回 422 且所有 token 被清空')]
+    public function disabled_admin_cannot_refresh_token(): void
+    {
+        $admin = Admin::query()->create([
+            'username' => 'disabled_admin',
+            'name' => 'Disabled Admin',
+            'password' => bcrypt($this->adminPassword),
+            'status' => 0,
+        ]);
+
+        $tokenResult = $admin->createToken('admin-token', ['admin']);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$tokenResult->plainTextToken)
+            ->postJson('/admin/auth/refresh-token');
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('errors.account.0', trans('admin.blocked'));
+
+        $this->assertSame(0, $admin->tokens()->count());
+    }
+
+    #[Test]
     #[TestDox('退出登录返回 204')]
     public function logout_successfully(): void
     {

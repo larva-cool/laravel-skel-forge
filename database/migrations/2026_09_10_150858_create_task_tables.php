@@ -90,6 +90,7 @@ return new class extends Migration
             $table->text('remark')->nullable()->comment('备注');
             $table->timestamp('created_at')->useCurrent()->comment('记录时间');
 
+            $table->unique(['user_id', 'task_id', 'period_key'], 'task_logs_period_unique');
             $table->index(['user_id', 'task_id']);
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->comment('任务完成/奖励发放日志表');
