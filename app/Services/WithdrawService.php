@@ -54,21 +54,28 @@ class WithdrawService
      */
     public function submit(User $user, float $amount, WithdrawAccount $account, ?string $clientIp = null): Withdraw
     {
+        // 事务外的快速失败校验：只依赖静态配置，与并发无关
         $this->assertWithdrawEnabled();
         $this->assertAmountInRange($amount);
-        $this->assertDailyLimit($user);
-        $this->assertHasPendingWithdraw($user);
-        $this->assertAccountAvailable($user, $account);
 
         $fee = $this->calculateFee($amount);
 
         try {
             return DB::transaction(function () use ($user, $amount, $fee, $account, $clientIp) {
+                // 事务开始即对用户行加锁，串行化同一用户的并发提现请求；
+                // 每日次数、待审单、账户可用等校验必须在锁内基于加锁后的最新数据执行，
+                // 否则并发请求会同时通过校验并创建多笔提现
+                $lockedUser = $this->lockUser($user);
+
+                $this->assertDailyLimit($lockedUser);
+                $this->assertHasPendingWithdraw($lockedUser);
+                $this->assertAccountAvailable($lockedUser, $account);
+
                 // 先创建提现单，再冻结余额（余额不足会抛异常回滚，连带撤销提现单）
                 // 这样冻结流水的 source_type 能正确关联到 withdraw 记录，便于对账
                 $withdraw = Withdraw::create([
-                    'owner_type' => $user->getMorphClass(),
-                    'owner_id' => $user->id,
+                    'owner_type' => $lockedUser->getMorphClass(),
+                    'owner_id' => $lockedUser->id,
                     'order_no' => Withdraw::generateOrderNo(),
                     'amount' => $amount,
                     'fee' => $fee,
@@ -79,7 +86,8 @@ class WithdrawService
                     'client_ip' => $clientIp,
                 ]);
 
-                WalletHelper::freeze($user, $amount, $withdraw, '提现冻结');
+                // 用户行锁已在本事务持有，WalletHelper 内部的重复加锁不会阻塞
+                WalletHelper::freeze($lockedUser, $amount, $withdraw, '提现冻结');
 
                 // 标记账户最后使用时间
                 $account->markUsed();
@@ -233,6 +241,24 @@ class WithdrawService
         }
 
         return round($amount * $rate / 100, 2);
+    }
+
+    /**
+     * 行锁重读用户记录（必须在事务内调用）
+     *
+     * 用于提现提交：以用户行锁串行化同一用户的并发请求，
+     * 保证后续业务校验基于加锁后的最新数据。
+     */
+    protected function lockUser(User $user): User
+    {
+        /** @var User|null $locked */
+        $locked = User::query()->whereKey($user->getKey())->lockForUpdate()->first();
+
+        if (! $locked) {
+            throw ValidationException::withMessages(['amount' => '用户不存在']);
+        }
+
+        return $locked;
     }
 
     /**
