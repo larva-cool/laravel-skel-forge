@@ -119,9 +119,9 @@ class DynamicConfigServiceProvider extends ServiceProvider
 
         foreach ($task->getOptions() as $name => $value) {
             if ($value === true) {
-                $parts[] = "--{$name}";
+                $parts[] = $name;
             } else {
-                $parts[] = "--{$name}=".escapeshellarg((string) $value);
+                $parts[] = "{$name}=".escapeshellarg((string) $value);
             }
         }
 

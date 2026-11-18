@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Providers;
 
+use App\Models\System\Schedule;
 use App\Models\System\Setting;
 use App\Providers\DynamicConfigServiceProvider;
 use App\Services\SettingManagerService;
@@ -174,6 +175,29 @@ class DynamicConfigServiceProviderTest extends TestCase
         $this->bootProvider();
 
         $this->assertNull(PasswordRule::default()->appliedRules()['max']);
+    }
+
+    #[Test]
+    #[TestDox('动态计划任务命令不会重复添加选项前缀')]
+    public function artisan_command_does_not_duplicate_option_prefixes(): void
+    {
+        $task = new Schedule([
+            'command' => 'telescope:prune',
+            'options' => [['name' => 'keep-exceptions']],
+            'options_with_value' => [['name' => 'hours', 'value' => '48']],
+        ]);
+        $provider = new class($this->app) extends DynamicConfigServiceProvider
+        {
+            public function buildCommand(Schedule $task): string
+            {
+                return $this->buildArtisanCommand($task);
+            }
+        };
+
+        $command = $provider->buildCommand($task);
+
+        $this->assertStringEndsWith("telescope:prune --keep-exceptions --hours='48'", $command);
+        $this->assertStringNotContainsString('----', $command);
     }
 
     /**
