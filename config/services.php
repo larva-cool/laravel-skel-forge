@@ -98,4 +98,11 @@ return [
         'client_secret' => env('APPLE_CLIENT_SECRET'),
     ],
 
+    'librespeed' => [
+        'url' => env('LIBRESPEED_API_URL', 'https://ip.librespeed.com/s/'),
+        'key' => env('LIBRESPEED_API_KEY'),
+        'timeout' => env('LIBRESPEED_HTTP_TIMEOUT', 5.0),
+        'connect_timeout' => env('LIBRESPEED_HTTP_CONNECT_TIMEOUT', 3.0),
+    ],
+
 ];

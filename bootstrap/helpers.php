@@ -6,7 +6,9 @@
 declare(strict_types=1);
 
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 use Laravel\Telescope\Telescope;
@@ -232,10 +234,59 @@ if (! function_exists('base64_urldecode')) {
 
 /**
  * 解析IP归属地
+ *
+ * @param  string  $driver  查询驱动（ip2region 或 librespeed）
  */
 if (! function_exists('ip_location')) {
-    function ip_location(string $ip): ?string
+    function ip_location(string $ip, string $driver = 'ip2region'): ?string
     {
+        if ($driver === 'librespeed') {
+            $key = config('services.librespeed.key');
+            if (! is_string($key) || $key === '') {
+                return null;
+            }
+
+            try {
+                $response = Http::timeout((float) config('services.librespeed.timeout', 5.0))
+                    ->connectTimeout((float) config('services.librespeed.connect_timeout', 3.0))
+                    ->get((string) config('services.librespeed.url'), [
+                        'key' => $key,
+                        'ip' => $ip,
+                    ]);
+            } catch (ConnectionException) {
+                return null;
+            }
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $location = $response->json('0');
+            if (! is_array($location)) {
+                return null;
+            }
+
+            $parts = [];
+            foreach (['country', 'region', 'city'] as $field) {
+                $part = $location[$field] ?? '';
+                if (is_string($part) && $part !== '' && $part !== '0' && ! in_array($part, $parts, true)) {
+                    $parts[] = $part;
+                }
+            }
+
+            if ($parts === []) {
+                return null;
+            }
+
+            $address = implode('', $parts);
+            $isp = $location['isp'] ?? '';
+            if (is_string($isp) && $isp !== '' && $isp !== '0') {
+                $address .= "【{$isp}】";
+            }
+
+            return $address;
+        }
+
         $searcher = new Ip2Region();
 
         return $searcher->simple($ip);
